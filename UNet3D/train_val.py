@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 from tqdm import tqdm
-import os
 from pytorch_msssim import ssim
 from utils import log
 
@@ -11,17 +10,22 @@ def train_epoch(model, dataloader, optimizer, criterion, device):
     running_loss = 0.0
     l1_total, ssim_total, total_batches = 0.0, 0.0, 0
 
-    for batch_idx, (X, y) in enumerate(tqdm(dataloader, desc="Training")):
-        X, y = X.to(device), y.to(device)
+    for batch_idx, (X, y, m) in enumerate(tqdm(dataloader, desc="Training")):
+        X, y, m = X.to(device), y.to(device), m.to(device)
         X = X.contiguous().float()
         y = y.contiguous().float()
+        m = m.contiguous().unsqueeze(-1).unsqueeze(-1)  # (B, 1, D, 1, 1)
 
         output = model(X)
 
         if output.shape != y.shape:
             raise ValueError(f"Output shape {output.shape} != target shape {y.shape}")
 
-        loss = criterion(output, y)
+        # Apply mask
+        masked_output = output * m
+        masked_target = y * m
+        loss = criterion(masked_output, masked_target)
+
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
@@ -31,8 +35,8 @@ def train_epoch(model, dataloader, optimizer, criterion, device):
 
         if isinstance(criterion, SSIM_L1_Loss):
             with torch.no_grad():
-                l1_val = criterion.l1(output, y).item()
-                ssim_val = 1 - ssim(output, y, data_range=1.0).item()
+                l1_val = criterion.l1(masked_output, masked_target).item()
+                ssim_val = 1 - ssim(masked_output, masked_target, data_range=1.0).item()
                 l1_total += l1_val
                 ssim_total += ssim_val
 
@@ -46,19 +50,21 @@ def train_epoch(model, dataloader, optimizer, criterion, device):
     return avg_loss
 
 
-
 def validate_epoch(model, dataloader, criterion):
     model.eval()
     total_loss = 0.0
 
     with torch.no_grad():
-        for X, y in tqdm(dataloader, desc="Validating"):
-            X, y = X.to(next(model.parameters()).device), y.to(next(model.parameters()).device)
+        for X, y, m in tqdm(dataloader, desc="Validating"):
+            X, y, m = X.to(next(model.parameters()).device), y.to(next(model.parameters()).device), m.to(next(model.parameters()).device)
             X = X.contiguous().float()
             y = y.contiguous().float()
+            m = m.contiguous().unsqueeze(-1).unsqueeze(-1)  # (B, 1, D, 1, 1)
 
             output = model(X)
-            loss = criterion(output, y)
+            masked_output = output * m
+            masked_target = y * m
+            loss = criterion(masked_output, masked_target)
             total_loss += loss.item() * X.size(0)
 
     return total_loss / len(dataloader.dataset)
@@ -69,13 +75,16 @@ def evaluate_model_on_test(model, dataloader, criterion, device):
     total_loss = 0.0
 
     with torch.no_grad():
-        for X, y in tqdm(dataloader, desc="Testing"):
-            X, y = X.to(device), y.to(device)
+        for X, y, m in tqdm(dataloader, desc="Testing"):
+            X, y, m = X.to(device), y.to(device), m.to(device)
             X = X.contiguous().float()
             y = y.contiguous().float()
+            m = m.contiguous().unsqueeze(-1).unsqueeze(-1)
 
             output = model(X)
-            loss = criterion(output, y)
+            masked_output = output * m
+            masked_target = y * m
+            loss = criterion(masked_output, masked_target)
             total_loss += loss.item() * X.size(0)
 
     avg_loss = total_loss / len(dataloader.dataset)
@@ -83,8 +92,8 @@ def evaluate_model_on_test(model, dataloader, criterion, device):
 
 
 class SSIM_L1_Loss(nn.Module):
-    # def __init__(self, alpha=0.84):  # alpha = L1 weight, 1-alpha = SSIM weight
-    def __init__(self, alpha=0.7):  # alpha = L1 weight, 1-alpha = SSIM weight
+    def __init__(self, alpha=0.84):  # alpha = L1 weight, 1-alpha = SSIM weight
+    # def __init__(self, alpha=0.7):  # alpha = L1 weight, 1-alpha = SSIM weight
         super().__init__()
         self.alpha = alpha
         self.l1 = nn.L1Loss()

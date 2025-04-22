@@ -64,5 +64,9 @@ class OCTAInpaintingDataset(Dataset):
         stack = pad_to_multiple_16(stack)
         target = pad_to_multiple_16(target)
 
+        # return stack, target
 
-        return stack, target
+        mask_block = torch.from_numpy(np.ones((self.stack_size,), dtype=np.float32))  # Always 1s for now
+        mask_block = mask_block.unsqueeze(0)  # (1, D)
+        
+        return stack, target, mask_block

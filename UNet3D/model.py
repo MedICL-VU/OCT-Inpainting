@@ -63,7 +63,7 @@ class UNet3D(nn.Module):
         self.inc   = DoubleConv3D(in_channels, features[0])
         self.down1 = Down3D(features[0], features[1])
         self.down2 = Down3D(features[1], features[2])
-        self.down3 = Down3D(features[2], features[3])
+        self.down3 = Down3D(features[2], features[3], dropout=True)  # bottleneck with dropout
         self.down4 = Down3D(features[3], features[4], dropout=True)  # bottleneck with dropout
 
         self.up1 = Up3D(features[4], features[3])
@@ -72,6 +72,12 @@ class UNet3D(nn.Module):
         self.up4 = Up3D(features[1], features[0])
 
         self.outc = OutConv3D(features[0], out_channels)
+
+        self.refine = nn.Sequential(
+            nn.Conv3d(out_channels, out_channels, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv3d(out_channels, out_channels, kernel_size=3, padding=1)
+        )
 
     def forward(self, x):
         x1 = self.inc(x)
@@ -84,5 +90,7 @@ class UNet3D(nn.Module):
         x = self.up2(x, x3)
         x = self.up3(x, x2)
         x = self.up4(x, x1)
+
         x = self.outc(x)
+        x = self.refine(x)  # Residual refinement
         return x
