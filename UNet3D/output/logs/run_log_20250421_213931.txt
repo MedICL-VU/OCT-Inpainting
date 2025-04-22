@@ -1,0 +1,4 @@
+Starting Inpainting Pipeline
+Device: cuda
+Epochs: 50 | Batch size: 2 | Stack size: 16
+Loading datasets...

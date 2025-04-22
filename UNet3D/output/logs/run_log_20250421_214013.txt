@@ -1,0 +1,34 @@
+Starting Inpainting Pipeline
+Device: cuda
+Epochs: 50 | Batch size: 2 | Stack size: 16
+Loading datasets...
+Training volumes:
+ - 1.1_OCT_uint16_Cropped_VolumeSplit_1_Reflected_RegSeq_seqSVD_corrupted.tif
+ - 1.2_OCT_uint16_Cropped_VolumeSplit_2_Reflected_RegSeq_seqSVD_corrupted.tif
+ - 1.4_OCT_uint16_Cropped_VolumeSplit_1_Reflected_RegSeq_seqSVD_corrupted.tif
+Validation volume:
+ - 3.4_OCT_uint16_Cropped_Reflected_VolumeSplit_2_RegSeq_seqSVD_corrupted.tif
+Test volume:
+ - 5.3_OCT_uint16_Cropped_Reflected_VolumeSplit_1_RegSeq_seqSVD_corrupted.tif
+Using 3 volumes for training, 1 for testing
+Initializing model...
+Starting training...
+[Epoch 1] Train Loss: 0.0433 | Val Loss: 0.0190
+[Epoch 2] Train Loss: 0.0158 | Val Loss: 0.0163
+[Epoch 3] Train Loss: 0.0140 | Val Loss: 0.0155
+[Epoch 4] Train Loss: 0.0129 | Val Loss: 0.0136
+[Epoch 5] Train Loss: 0.0123 | Val Loss: 0.0134
+[Epoch 6] Train Loss: 0.0121 | Val Loss: 0.0138
+[Epoch 7] Train Loss: 0.0118 | Val Loss: 0.0131
+[Epoch 8] Train Loss: 0.0117 | Val Loss: 0.0126
+[Epoch 9] Train Loss: 0.0117 | Val Loss: 0.0128
+[Epoch 10] Train Loss: 0.0115 | Val Loss: 0.0125
+[Epoch 11] Train Loss: 0.0113 | Val Loss: 0.0125
+[Epoch 12] Train Loss: 0.0113 | Val Loss: 0.0126
+[Epoch 13] Train Loss: 0.0112 | Val Loss: 0.0127
+Early stopping triggered at epoch 13
+Training completed.
+Evaluating on held-out test volume...
+Final test loss: 0.0107
+Inpainting held-out test volume...
+Inpainted volume saved to: /media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing/5.3_OCT_uint16_Cropped_Reflected_VolumeSplit_1_RegSeq_seqSVD_inpainted_3DUNet.tif
