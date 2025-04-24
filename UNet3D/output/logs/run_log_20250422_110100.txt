@@ -1,0 +1,170 @@
+Starting Inpainting Pipeline
+Device: cuda
+Epochs: 50 | Batch size: 4 | Stack size: 16
+Loading datasets...
+Training volumes:
+ - 1.1_OCT_uint16_Cropped_VolumeSplit_1_Reflected_RegSeq_seqSVD_corrupted.tif
+ - 1.2_OCT_uint16_Cropped_VolumeSplit_2_Reflected_RegSeq_seqSVD_corrupted.tif
+ - 1.4_OCT_uint16_Cropped_VolumeSplit_1_Reflected_RegSeq_seqSVD_corrupted.tif
+Validation volume:
+ - 3.4_OCT_uint16_Cropped_Reflected_VolumeSplit_2_RegSeq_seqSVD_corrupted.tif
+Test volume:
+ - 5.3_OCT_uint16_Cropped_Reflected_VolumeSplit_1_RegSeq_seqSVD_corrupted.tif
+Using 3 volumes for training, 1 for testing
+Initializing model...
+Starting training...
+Train SSIM-L1 Breakdown | Avg Loss: 0.2886 | L1: 0.1506 | SSIM: 1.0125
+[Epoch 1] Train Loss: 0.2886 | Val Loss: 0.2520
+Validation loss improved to 0.251974
+Train SSIM-L1 Breakdown | Avg Loss: 0.1784 | L1: 0.0702 | SSIM: 0.7460
+[Epoch 2] Train Loss: 0.1784 | Val Loss: 0.1215
+Validation loss improved to 0.121513
+Train SSIM-L1 Breakdown | Avg Loss: 0.0834 | L1: 0.0321 | SSIM: 0.3525
+[Epoch 3] Train Loss: 0.0834 | Val Loss: 0.0781
+Validation loss improved to 0.078098
+Train SSIM-L1 Breakdown | Avg Loss: 0.0643 | L1: 0.0235 | SSIM: 0.2783
+[Epoch 4] Train Loss: 0.0643 | Val Loss: 0.0679
+Validation loss improved to 0.067877
+Train SSIM-L1 Breakdown | Avg Loss: 0.0566 | L1: 0.0201 | SSIM: 0.2480
+[Epoch 5] Train Loss: 0.0566 | Val Loss: 0.0612
+Validation loss improved to 0.061193
+Train SSIM-L1 Breakdown | Avg Loss: 0.0530 | L1: 0.0183 | SSIM: 0.2348
+[Epoch 6] Train Loss: 0.0530 | Val Loss: 0.0579
+Validation loss improved to 0.057903
+Train SSIM-L1 Breakdown | Avg Loss: 0.0500 | L1: 0.0169 | SSIM: 0.2236
+[Epoch 7] Train Loss: 0.0500 | Val Loss: 0.0562
+Validation loss improved to 0.056182
+Train SSIM-L1 Breakdown | Avg Loss: 0.0481 | L1: 0.0159 | SSIM: 0.2167
+[Epoch 8] Train Loss: 0.0481 | Val Loss: 0.0529
+Validation loss improved to 0.052905
+Train SSIM-L1 Breakdown | Avg Loss: 0.0467 | L1: 0.0152 | SSIM: 0.2120
+[Epoch 9] Train Loss: 0.0467 | Val Loss: 0.0534
+No improvement (1/5)
+Train SSIM-L1 Breakdown | Avg Loss: 0.0452 | L1: 0.0146 | SSIM: 0.2058
+[Epoch 10] Train Loss: 0.0452 | Val Loss: 0.0516
+Validation loss improved to 0.051573
+Train SSIM-L1 Breakdown | Avg Loss: 0.0443 | L1: 0.0142 | SSIM: 0.2020
+[Epoch 11] Train Loss: 0.0443 | Val Loss: 0.0482
+Validation loss improved to 0.048187
+Train SSIM-L1 Breakdown | Avg Loss: 0.0436 | L1: 0.0139 | SSIM: 0.1994
+[Epoch 12] Train Loss: 0.0436 | Val Loss: 0.0481
+No improvement (1/5)
+Train SSIM-L1 Breakdown | Avg Loss: 0.0421 | L1: 0.0134 | SSIM: 0.1930
+[Epoch 13] Train Loss: 0.0421 | Val Loss: 0.0467
+Validation loss improved to 0.046699
+Train SSIM-L1 Breakdown | Avg Loss: 0.0413 | L1: 0.0131 | SSIM: 0.1895
+[Epoch 14] Train Loss: 0.0413 | Val Loss: 0.0466
+No improvement (1/5)
+Train SSIM-L1 Breakdown | Avg Loss: 0.0410 | L1: 0.0129 | SSIM: 0.1883
+[Epoch 15] Train Loss: 0.0410 | Val Loss: 0.0453
+Validation loss improved to 0.045286
+Train SSIM-L1 Breakdown | Avg Loss: 0.0409 | L1: 0.0129 | SSIM: 0.1883
+[Epoch 16] Train Loss: 0.0409 | Val Loss: 0.0461
+No improvement (1/5)
+Train SSIM-L1 Breakdown | Avg Loss: 0.0402 | L1: 0.0127 | SSIM: 0.1851
+[Epoch 17] Train Loss: 0.0402 | Val Loss: 0.0439
+Validation loss improved to 0.043887
+Train SSIM-L1 Breakdown | Avg Loss: 0.0394 | L1: 0.0124 | SSIM: 0.1810
+[Epoch 18] Train Loss: 0.0394 | Val Loss: 0.0436
+Validation loss improved to 0.043588
+Train SSIM-L1 Breakdown | Avg Loss: 0.0391 | L1: 0.0123 | SSIM: 0.1798
+[Epoch 19] Train Loss: 0.0391 | Val Loss: 0.0437
+No improvement (1/5)
+Train SSIM-L1 Breakdown | Avg Loss: 0.0387 | L1: 0.0122 | SSIM: 0.1778
+[Epoch 20] Train Loss: 0.0387 | Val Loss: 0.0423
+Validation loss improved to 0.042260
+Train SSIM-L1 Breakdown | Avg Loss: 0.0383 | L1: 0.0121 | SSIM: 0.1759
+[Epoch 21] Train Loss: 0.0383 | Val Loss: 0.0426
+No improvement (1/5)
+Train SSIM-L1 Breakdown | Avg Loss: 0.0380 | L1: 0.0120 | SSIM: 0.1749
+[Epoch 22] Train Loss: 0.0380 | Val Loss: 0.0418
+Validation loss improved to 0.041847
+Train SSIM-L1 Breakdown | Avg Loss: 0.0378 | L1: 0.0119 | SSIM: 0.1739
+[Epoch 23] Train Loss: 0.0378 | Val Loss: 0.0420
+No improvement (1/5)
+Train SSIM-L1 Breakdown | Avg Loss: 0.0376 | L1: 0.0119 | SSIM: 0.1725
+[Epoch 24] Train Loss: 0.0376 | Val Loss: 0.0426
+No improvement (2/5)
+Train SSIM-L1 Breakdown | Avg Loss: 0.0373 | L1: 0.0118 | SSIM: 0.1712
+[Epoch 25] Train Loss: 0.0373 | Val Loss: 0.0417
+Validation loss improved to 0.041690
+Train SSIM-L1 Breakdown | Avg Loss: 0.0374 | L1: 0.0118 | SSIM: 0.1717
+[Epoch 26] Train Loss: 0.0374 | Val Loss: 0.0410
+Validation loss improved to 0.041048
+Train SSIM-L1 Breakdown | Avg Loss: 0.0367 | L1: 0.0116 | SSIM: 0.1680
+[Epoch 27] Train Loss: 0.0367 | Val Loss: 0.0403
+Validation loss improved to 0.040284
+Train SSIM-L1 Breakdown | Avg Loss: 0.0363 | L1: 0.0116 | SSIM: 0.1663
+[Epoch 28] Train Loss: 0.0363 | Val Loss: 0.0402
+No improvement (1/5)
+Train SSIM-L1 Breakdown | Avg Loss: 0.0362 | L1: 0.0115 | SSIM: 0.1656
+[Epoch 29] Train Loss: 0.0362 | Val Loss: 0.0403
+No improvement (2/5)
+Train SSIM-L1 Breakdown | Avg Loss: 0.0359 | L1: 0.0115 | SSIM: 0.1641
+[Epoch 30] Train Loss: 0.0359 | Val Loss: 0.0400
+Validation loss improved to 0.040015
+Train SSIM-L1 Breakdown | Avg Loss: 0.0357 | L1: 0.0114 | SSIM: 0.1631
+[Epoch 31] Train Loss: 0.0357 | Val Loss: 0.0399
+Validation loss improved to 0.039863
+Train SSIM-L1 Breakdown | Avg Loss: 0.0356 | L1: 0.0114 | SSIM: 0.1626
+[Epoch 32] Train Loss: 0.0356 | Val Loss: 0.0391
+Validation loss improved to 0.039086
+Train SSIM-L1 Breakdown | Avg Loss: 0.0354 | L1: 0.0114 | SSIM: 0.1614
+[Epoch 33] Train Loss: 0.0354 | Val Loss: 0.0389
+Validation loss improved to 0.038913
+Train SSIM-L1 Breakdown | Avg Loss: 0.0350 | L1: 0.0113 | SSIM: 0.1598
+[Epoch 34] Train Loss: 0.0350 | Val Loss: 0.0395
+No improvement (1/5)
+Train SSIM-L1 Breakdown | Avg Loss: 0.0351 | L1: 0.0113 | SSIM: 0.1599
+[Epoch 35] Train Loss: 0.0351 | Val Loss: 0.0386
+Validation loss improved to 0.038616
+Train SSIM-L1 Breakdown | Avg Loss: 0.0347 | L1: 0.0112 | SSIM: 0.1580
+[Epoch 36] Train Loss: 0.0347 | Val Loss: 0.0388
+No improvement (1/5)
+Train SSIM-L1 Breakdown | Avg Loss: 0.0346 | L1: 0.0112 | SSIM: 0.1576
+[Epoch 37] Train Loss: 0.0346 | Val Loss: 0.0387
+No improvement (2/5)
+Train SSIM-L1 Breakdown | Avg Loss: 0.0344 | L1: 0.0112 | SSIM: 0.1565
+[Epoch 38] Train Loss: 0.0344 | Val Loss: 0.0378
+Validation loss improved to 0.037840
+Train SSIM-L1 Breakdown | Avg Loss: 0.0343 | L1: 0.0111 | SSIM: 0.1560
+[Epoch 39] Train Loss: 0.0343 | Val Loss: 0.0374
+Validation loss improved to 0.037419
+Train SSIM-L1 Breakdown | Avg Loss: 0.0342 | L1: 0.0111 | SSIM: 0.1552
+[Epoch 40] Train Loss: 0.0342 | Val Loss: 0.0373
+Validation loss improved to 0.037310
+Train SSIM-L1 Breakdown | Avg Loss: 0.0339 | L1: 0.0111 | SSIM: 0.1538
+[Epoch 41] Train Loss: 0.0339 | Val Loss: 0.0370
+Validation loss improved to 0.037022
+Train SSIM-L1 Breakdown | Avg Loss: 0.0338 | L1: 0.0110 | SSIM: 0.1531
+[Epoch 42] Train Loss: 0.0338 | Val Loss: 0.0370
+No improvement (1/5)
+Train SSIM-L1 Breakdown | Avg Loss: 0.0336 | L1: 0.0110 | SSIM: 0.1524
+[Epoch 43] Train Loss: 0.0336 | Val Loss: 0.0377
+No improvement (2/5)
+Train SSIM-L1 Breakdown | Avg Loss: 0.0334 | L1: 0.0110 | SSIM: 0.1512
+[Epoch 44] Train Loss: 0.0334 | Val Loss: 0.0366
+Validation loss improved to 0.036615
+Train SSIM-L1 Breakdown | Avg Loss: 0.0332 | L1: 0.0109 | SSIM: 0.1504
+[Epoch 45] Train Loss: 0.0332 | Val Loss: 0.0364
+Validation loss improved to 0.036438
+Train SSIM-L1 Breakdown | Avg Loss: 0.0362 | L1: 0.0116 | SSIM: 0.1652
+[Epoch 46] Train Loss: 0.0362 | Val Loss: 0.0383
+No improvement (1/5)
+Train SSIM-L1 Breakdown | Avg Loss: 0.0336 | L1: 0.0110 | SSIM: 0.1525
+[Epoch 47] Train Loss: 0.0336 | Val Loss: 0.0386
+No improvement (2/5)
+Train SSIM-L1 Breakdown | Avg Loss: 0.0333 | L1: 0.0109 | SSIM: 0.1505
+[Epoch 48] Train Loss: 0.0333 | Val Loss: 0.0372
+No improvement (3/5)
+Train SSIM-L1 Breakdown | Avg Loss: 0.0342 | L1: 0.0111 | SSIM: 0.1553
+[Epoch 49] Train Loss: 0.0342 | Val Loss: 0.0372
+No improvement (4/5)
+Train SSIM-L1 Breakdown | Avg Loss: 0.0337 | L1: 0.0110 | SSIM: 0.1530
+[Epoch 50] Train Loss: 0.0337 | Val Loss: 0.0360
+Validation loss improved to 0.036033
+Training completed.
+Evaluating on held-out test volume...
+Final test loss: 0.0308
+Inpainting held-out test volume...
+Inpainted volume saved to: /media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing/5.3_OCT_uint16_Cropped_Reflected_VolumeSplit_1_RegSeq_seqSVD_inpainted_3DUNet.tif

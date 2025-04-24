@@ -58,7 +58,7 @@ def split_volumes(triplets):
 import argparse
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Run 2.5D Inpainting Pipeline")
+    parser = argparse.ArgumentParser(description="Run 3D Inpainting Pipeline")
     parser.add_argument('--epochs', type=int, default=20, help='Number of training epochs')
     parser.add_argument('--batch_size', type=int, default=8)
     parser.add_argument('--stack_size', type=int, default=16)
@@ -204,7 +204,7 @@ def main():
 if __name__ == "__main__":
     main()
 
-    # # === 5. Compare Linear Interpolation, 2.5D CNN, Ground Truth ===
+    # # === 5. Compare Linear Interpolation, 3D CNN, Ground Truth ===
     # log("Comparing results...")
 
     # # Load all volumes for comparison

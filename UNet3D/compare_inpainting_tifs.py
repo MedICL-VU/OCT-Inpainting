@@ -54,4 +54,4 @@ def run_comparison(gt_path, linear_path, predicted_path):
 
     # Compare volumes
     compare_volumes(gt, linear, "Linear Interpolation")
-    compare_volumes(gt, predicted, "2.5D CNN Prediction")
+    compare_volumes(gt, predicted, "3D CNN Prediction")
