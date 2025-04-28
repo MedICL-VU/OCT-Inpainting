@@ -49,11 +49,11 @@ import argparse
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Run 2.5D Inpainting Pipeline")
-    parser.add_argument('--epochs', type=int, default=20, help='Number of training epochs')
+    parser.add_argument('--epochs', type=int, default=50, help='Number of training epochs')
     parser.add_argument('--batch_size', type=int, default=8)
     parser.add_argument('--stack_size', type=int, default=16)
-    parser.add_argument('--lr', type=float, default=1e-4)
-    # parser.add_argument('--lr', type=float, default=5e-5)
+    # parser.add_argument('--lr', type=float, default=1e-4)
+    parser.add_argument('--lr', type=float, default=5e-5)
     parser.add_argument('--cuda', action='store_true', help='Use CUDA if available')
     return parser.parse_args()
 
@@ -96,7 +96,7 @@ def main():
     # Generate output filename based on test volume name
     base_name = os.path.basename(test_corrupted_path).replace("_corrupted.tif", "")
     predicted_output_path = os.path.join(
-        "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing", f"{base_name}_inpainted_2p5DUNet_v2.tif"
+        "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing", f"{base_name}_inpainted_2p5DUNet_v3.tif"
     )
 
     log(f"Using {len(train_vols)} volumes for training, {len(val_vols)} for validation, {len(test_vols)} for testing")
@@ -114,8 +114,8 @@ def main():
     # === 2. Initialize Model ===
     log("Initializing model...")
     model = UNet2p5D(in_channels=stack_size, out_channels=1).to(device)
-    criterion = torch.nn.L1Loss()
-    # criterion = SSIM_L1_Loss(alpha=0.84)
+    # criterion = torch.nn.L1Loss()
+    criterion = SSIM_L1_Loss(alpha=0.84)
     # criterion = SSIM_L1_Loss(alpha=0.7)
     optimizer = Adam(model.parameters(), lr=learning_rate)
     # optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=1e-5)

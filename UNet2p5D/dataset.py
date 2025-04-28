@@ -33,7 +33,7 @@ class OCTAInpaintingDataset(Dataset):
             for idx in np.where(mask == 1)[0]:  # Only missing slices are used
                 stack = padded[idx:idx + stack_size]  # shape: (stack_size, H, W)
                 target = clean[idx]                  # shape: (H, W)
-                self.data.append((stack, target))
+                self.data.append((stack, target))  # Only stack and target
 
     def __len__(self):
         return len(self.data)
