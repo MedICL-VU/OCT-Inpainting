@@ -96,7 +96,7 @@ def main():
     # Generate output filename based on test volume name
     base_name = os.path.basename(test_corrupted_path).replace("_corrupted.tif", "")
     predicted_output_path = os.path.join(
-        "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing", f"{base_name}_inpainted_2p5DUNet_v3.tif"
+        "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing", f"{base_name}_inpainted_2p5DUNet_v4.tif"
     )
 
     log(f"Using {len(train_vols)} volumes for training, {len(val_vols)} for validation, {len(test_vols)} for testing")
@@ -114,13 +114,12 @@ def main():
     # === 2. Initialize Model ===
     log("Initializing model...")
     model = UNet2p5D(in_channels=stack_size, out_channels=1).to(device)
-    # criterion = torch.nn.L1Loss()
     criterion = SSIM_L1_GlobalLoss(alpha=0.8, beta=0.1)
     # criterion = SSIM_L1_Loss(alpha=0.84)
     # criterion = SSIM_L1_Loss(alpha=0.7)
-    optimizer = Adam(model.parameters(), lr=learning_rate)
-    # optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=1e-5)
-    # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', patience=4, factor=0.5, verbose=True)
+    # optimizer = Adam(model.parameters(), lr=learning_rate)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=1e-5)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', patience=4, factor=0.5, verbose=True)
     early_stopping = EarlyStopping(patience=5, min_delta=1e-4, verbose=True)
 
 
@@ -134,7 +133,7 @@ def main():
 
         log(f"[Epoch {epoch}] Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f}")
 
-        # scheduler.step(val_loss)
+        scheduler.step(val_loss)
 
         # Save best model
         if val_loss < best_val_loss:

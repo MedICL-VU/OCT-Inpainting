@@ -1,0 +1,92 @@
+Starting Inpainting Pipeline
+Device: cuda
+Epochs: 50 | Batch size: 8 | Stack size: 5
+Loading datasets...
+Training volumes:
+ - 1.1_OCT_uint16_Cropped_VolumeSplit_1_Reflected_RegSeq_seqSVD_corrupted.tif
+ - 1.2_OCT_uint16_Cropped_VolumeSplit_2_Reflected_RegSeq_seqSVD_corrupted.tif
+ - 1.4_OCT_uint16_Cropped_VolumeSplit_1_Reflected_RegSeq_seqSVD_corrupted.tif
+Validation volume:
+ - 3.4_OCT_uint16_Cropped_Reflected_VolumeSplit_2_RegSeq_seqSVD_corrupted.tif
+Test volume:
+ - 5.3_OCT_uint16_Cropped_Reflected_VolumeSplit_1_RegSeq_seqSVD_corrupted.tif
+Using 3 volumes for training, 1 for testing
+Using 3 volumes for training, 1 for validation, 1 for testing
+Initializing model...
+Starting training...
+[Epoch 1] Train Loss: 0.3761 | Val Loss: 0.2595
+Validation loss improved to 0.259470
+[Epoch 2] Train Loss: 0.2609 | Val Loss: 0.2184
+Validation loss improved to 0.218420
+[Epoch 3] Train Loss: 0.2003 | Val Loss: 0.1724
+Validation loss improved to 0.172449
+[Epoch 4] Train Loss: 0.1420 | Val Loss: 0.1251
+Validation loss improved to 0.125064
+[Epoch 5] Train Loss: 0.1040 | Val Loss: 0.0923
+Validation loss improved to 0.092259
+[Epoch 6] Train Loss: 0.0907 | Val Loss: 0.0796
+Validation loss improved to 0.079614
+[Epoch 7] Train Loss: 0.0772 | Val Loss: 0.0687
+Validation loss improved to 0.068713
+[Epoch 8] Train Loss: 0.0655 | Val Loss: 0.0644
+Validation loss improved to 0.064440
+[Epoch 9] Train Loss: 0.0694 | Val Loss: 0.0672
+No improvement (1/5)
+[Epoch 10] Train Loss: 0.0629 | Val Loss: 0.0637
+Validation loss improved to 0.063667
+[Epoch 11] Train Loss: 0.0592 | Val Loss: 0.0576
+Validation loss improved to 0.057585
+[Epoch 12] Train Loss: 0.0559 | Val Loss: 0.0597
+No improvement (1/5)
+[Epoch 13] Train Loss: 0.0534 | Val Loss: 0.0564
+Validation loss improved to 0.056373
+[Epoch 14] Train Loss: 0.0521 | Val Loss: 0.0550
+Validation loss improved to 0.055005
+[Epoch 15] Train Loss: 0.0519 | Val Loss: 0.0546
+Validation loss improved to 0.054591
+[Epoch 16] Train Loss: 0.0517 | Val Loss: 0.0536
+Validation loss improved to 0.053592
+[Epoch 17] Train Loss: 0.0505 | Val Loss: 0.0527
+Validation loss improved to 0.052706
+[Epoch 18] Train Loss: 0.0520 | Val Loss: 0.0605
+No improvement (1/5)
+[Epoch 19] Train Loss: 0.0532 | Val Loss: 0.0569
+No improvement (2/5)
+[Epoch 20] Train Loss: 0.0506 | Val Loss: 0.0550
+No improvement (3/5)
+[Epoch 21] Train Loss: 0.0481 | Val Loss: 0.0516
+Validation loss improved to 0.051612
+[Epoch 22] Train Loss: 0.0481 | Val Loss: 0.0535
+No improvement (1/5)
+[Epoch 23] Train Loss: 0.0480 | Val Loss: 0.0564
+No improvement (2/5)
+[Epoch 24] Train Loss: 0.0492 | Val Loss: 0.0511
+Validation loss improved to 0.051070
+[Epoch 25] Train Loss: 0.0484 | Val Loss: 0.0513
+No improvement (1/5)
+[Epoch 26] Train Loss: 0.0469 | Val Loss: 0.0515
+No improvement (2/5)
+[Epoch 27] Train Loss: 0.0481 | Val Loss: 0.0545
+No improvement (3/5)
+[Epoch 28] Train Loss: 0.0474 | Val Loss: 0.0505
+Validation loss improved to 0.050521
+[Epoch 29] Train Loss: 0.0467 | Val Loss: 0.0509
+No improvement (1/5)
+[Epoch 30] Train Loss: 0.0461 | Val Loss: 0.0498
+Validation loss improved to 0.049793
+[Epoch 31] Train Loss: 0.0465 | Val Loss: 0.0526
+No improvement (1/5)
+[Epoch 32] Train Loss: 0.0474 | Val Loss: 0.0513
+No improvement (2/5)
+[Epoch 33] Train Loss: 0.0464 | Val Loss: 0.0515
+No improvement (3/5)
+[Epoch 34] Train Loss: 0.0454 | Val Loss: 0.0499
+No improvement (4/5)
+[Epoch 35] Train Loss: 0.0465 | Val Loss: 0.0501
+No improvement (5/5)
+Early stopping triggered at epoch 35
+Training completed.
+Evaluating on held-out test volume...
+Final test loss: 0.0414
+Inpainting volume...
+Inpainted volume saved to: /media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing/5.3_OCT_uint16_Cropped_Reflected_VolumeSplit_1_RegSeq_seqSVD_inpainted_2p5DUNet_v3.tif
