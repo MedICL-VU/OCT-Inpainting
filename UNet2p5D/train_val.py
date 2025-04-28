@@ -64,16 +64,37 @@ def evaluate_model_on_test(model, dataloader, criterion, device):
 
     return total_loss / len(dataloader.dataset)
 
-class SSIM_L1_Loss(nn.Module):
-    def __init__(self, alpha=0.84):  # alpha = L1 weight, 1-alpha = SSIM weight
+
+# class SSIM_L1_Loss(nn.Module):
+#     def __init__(self, alpha=0.84):  # alpha = L1 weight, 1-alpha = SSIM weight
+#         super().__init__()
+#         self.alpha = alpha
+#         self.l1 = nn.L1Loss()
+
+#     def forward(self, pred, target):
+#         l1_loss = self.l1(pred, target)
+#         ssim_loss = 1 - ssim(pred, target, data_range=1.0)
+#         return self.alpha * l1_loss + (1 - self.alpha) * ssim_loss
+
+class SSIM_L1_GlobalLoss(nn.Module):
+    def __init__(self, alpha=0.8, beta=0.1):
+        """
+        alpha = weight for L1 vs SSIM
+        beta = weight for global mean intensity matching
+        """
         super().__init__()
         self.alpha = alpha
+        self.beta = beta
         self.l1 = nn.L1Loss()
 
     def forward(self, pred, target):
         l1_loss = self.l1(pred, target)
         ssim_loss = 1 - ssim(pred, target, data_range=1.0)
-        return self.alpha * l1_loss + (1 - self.alpha) * ssim_loss
+
+        mean_loss = torch.abs(torch.mean(pred) - torch.mean(target))
+
+        return self.alpha * l1_loss + (1 - self.alpha) * ssim_loss + self.beta * mean_loss
+
 
 class EarlyStopping:
     def __init__(self, patience=5, min_delta=0.0, verbose=True):

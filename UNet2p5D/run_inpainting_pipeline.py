@@ -9,8 +9,8 @@ from tqdm import tqdm
 # Import your modules (assumes they are saved in .py files)
 from dataset import OCTAInpaintingDataset
 from model import UNet2p5D
-from train_val import train_epoch, validate_epoch, evaluate_model_on_test, EarlyStopping, SSIM_L1_Loss
-from save_inpainted import inpaint_volume_with_model, rescale_reconstructed_volume
+from train_val import train_epoch, validate_epoch, evaluate_model_on_test, EarlyStopping, SSIM_L1_GlobalLoss
+from save_inpainted import inpaint_volume_with_model, smooth_rescale_reconstructed_volume
 # from compare_inpainting_tifs import run_comparison, normalize, load_volume
 from utils import log
 
@@ -115,7 +115,8 @@ def main():
     log("Initializing model...")
     model = UNet2p5D(in_channels=stack_size, out_channels=1).to(device)
     # criterion = torch.nn.L1Loss()
-    criterion = SSIM_L1_Loss(alpha=0.84)
+    criterion = SSIM_L1_GlobalLoss(alpha=0.8, beta=0.1)
+    # criterion = SSIM_L1_Loss(alpha=0.84)
     # criterion = SSIM_L1_Loss(alpha=0.7)
     optimizer = Adam(model.parameters(), lr=learning_rate)
     # optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=1e-5)
@@ -178,12 +179,19 @@ def main():
     log(f"Inpainted volume saved to: {predicted_output_path}")
 
 
-    # Post-processing: Brightness Rescaling and Normalization
-    corrected_inpainted_volume = rescale_reconstructed_volume(
+    corrected_inpainted_volume = smooth_rescale_reconstructed_volume(
         inpainted_volume,
         corrupted_volume,
-        mask
+        mask,
+        blend_factor=0.5  # or 0.6 or 0.7 based on visual tuning
     )
+
+    # Post-processing: Brightness Rescaling and Normalization
+    # corrected_inpainted_volume = rescale_reconstructed_volume(
+    #     inpainted_volume,
+    #     corrupted_volume,
+    #     mask
+    # )
 
     predicted_output_path_corrected = os.path.join(
         os.path.dirname(predicted_output_path),
@@ -191,7 +199,8 @@ def main():
     )
 
     # Then save corrected_inpainted_volume instead
-    tiff.imwrite(predicted_output_path_corrected, corrected_inpainted_volume.astype(np.uint16))
+    tiff.imwrite(predicted_output_path_corrected, corrected_inpainted_volume)
+    # tiff.imwrite(predicted_output_path_corrected, corrected_inpainted_volume.astype(np.uint16))
 
 
 if __name__ == "__main__":
