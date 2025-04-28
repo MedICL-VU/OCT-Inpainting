@@ -5,28 +5,15 @@ from torch.optim import Adam
 import tifffile as tiff
 import numpy as np
 from tqdm import tqdm
-from utils import log
 
 # Import your modules (assumes they are saved in .py files)
 from dataset import OCTAInpaintingDataset
 from model import UNet2p5D
-from train_val import train_epoch, validate_epoch, evaluate_model_on_test, EarlyStopping
+from train_val import train_epoch, validate_epoch, evaluate_model_on_test, EarlyStopping, SSIM_L1_Loss
 from save_inpainted import inpaint_volume_with_model
-from compare_inpainting_tifs import compare_volumes, normalize, load_volume
+# from compare_inpainting_tifs import run_comparison, normalize, load_volume
+from utils import log
 
-import argparse
-
-def parse_args():
-    parser = argparse.ArgumentParser(description="Run 2.5D Inpainting Pipeline")
-    parser.add_argument('--epochs', type=int, default=20, help='Number of training epochs')
-    parser.add_argument('--batch_size', type=int, default=8)
-    parser.add_argument('--stack_size', type=int, default=5)
-    parser.add_argument('--lr', type=float, default=1e-4)
-    parser.add_argument('--cuda', action='store_true', help='Use CUDA if available')
-    return parser.parse_args()
-
-
-import os
 
 def load_volume_triplets(data_dir):
     """
@@ -58,6 +45,19 @@ def split_volumes(triplets):
     return train, val, test
 
 
+import argparse
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Run 2.5D Inpainting Pipeline")
+    parser.add_argument('--epochs', type=int, default=20, help='Number of training epochs')
+    parser.add_argument('--batch_size', type=int, default=8)
+    parser.add_argument('--stack_size', type=int, default=16)
+    parser.add_argument('--lr', type=float, default=1e-4)
+    # parser.add_argument('--lr', type=float, default=5e-5)
+    parser.add_argument('--cuda', action='store_true', help='Use CUDA if available')
+    return parser.parse_args()
+
+
 def main():
     args = parse_args()
     device = torch.device('cuda' if args.cuda and torch.cuda.is_available() else 'cpu')
@@ -73,21 +73,20 @@ def main():
     learning_rate = args.lr
 
     # === Configurations ===
-    corrupted_path = "OCTA_corrupted.tif"
-    clean_path = "OCTA_ground_truth.tif"
-    mask_path = "OCTA_mask.tif"
-    linear_interp_path = "OCTA_linear_interp.tif"
-
-    predicted_output_path = "OCTA_predicted_2p5D.tif"
-    best_model_path = "best_model.pth"
-
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    best_model_path = "output/best_model.pth"
 
     # === 1. Load Dataset ===
     log("Loading datasets...")
     # Load and split volumes
-    volume_triplets = load_volume_triplets("data/")
+    volume_triplets = load_volume_triplets("/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing/")
     train_vols, val_vols, test_vols = split_volumes(volume_triplets)
+
+    log("Training volumes:")
+    for v in train_vols: log(f" - {os.path.basename(v[0])}")
+    log("Validation volume:")
+    log(f" - {os.path.basename(val_vols[0][0])}")
+    log("Test volume:")
+    log(f" - {os.path.basename(test_vols[0][0])}")
 
     log(f"Using {len(train_vols)} volumes for training, {len(test_vols)} for testing")
 
@@ -97,11 +96,10 @@ def main():
     # Generate output filename based on test volume name
     base_name = os.path.basename(test_corrupted_path).replace("_corrupted.tif", "")
     predicted_output_path = os.path.join(
-        "results", f"{base_name}_inpainted_2p5DUNet.tif"
+        "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing", f"{base_name}_inpainted_2p5DUNet_v2.tif"
     )
 
-    # Ensure output folder exists
-    os.makedirs("results", exist_ok=True)
+    log(f"Using {len(train_vols)} volumes for training, {len(val_vols)} for validation, {len(test_vols)} for testing")
 
 
     # Build datasets
@@ -109,25 +107,21 @@ def main():
     val_dataset   = OCTAInpaintingDataset(val_vols, stack_size=args.stack_size)
     test_dataset  = OCTAInpaintingDataset(test_vols, stack_size=args.stack_size)
 
-    train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=4)
-    val_loader   = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False, num_workers=4)
-    test_loader  = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=4)
-
-
-    log("Training volumes:")
-    for v in train_vols: log(f" - {os.path.basename(v[0])}")
-    log("Validation volume:")
-    log(f" - {os.path.basename(val_vols[0][0])}")
-    log("Test volume:")
-    log(f" - {os.path.basename(test_vols[0][0])}")
-
+    train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=0)
+    val_loader   = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False, num_workers=0)
+    test_loader  = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=0)
 
     # === 2. Initialize Model ===
     log("Initializing model...")
     model = UNet2p5D(in_channels=stack_size, out_channels=1).to(device)
     criterion = torch.nn.L1Loss()
+    # criterion = SSIM_L1_Loss(alpha=0.84)
+    # criterion = SSIM_L1_Loss(alpha=0.7)
     optimizer = Adam(model.parameters(), lr=learning_rate)
+    # optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=1e-5)
+    # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', patience=4, factor=0.5, verbose=True)
     early_stopping = EarlyStopping(patience=5, min_delta=1e-4, verbose=True)
+
 
     # === 3. Train Model ===
     log("Starting training...")
@@ -135,10 +129,11 @@ def main():
 
     for epoch in range(1, num_epochs + 1):
         train_loss = train_epoch(model, train_loader, optimizer, criterion, device)
-        val_loss = validate_epoch(model, val_loader, criterion)
+        val_loss = validate_epoch(model, val_loader, criterion, device)
 
-        # Log
         log(f"[Epoch {epoch}] Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f}")
+
+        # scheduler.step(val_loss)
 
         # Save best model
         if val_loss < best_val_loss:
@@ -162,10 +157,10 @@ def main():
     test_loss = evaluate_model_on_test(model, test_loader, criterion, device)
     log(f"Final test loss: {test_loss:.4f}")
 
-    # === 4. Inpaint Full Volume with Trained Model ===
+    # === 4. Inpaint Test Volume with Trained Model ===
     log("Inpainting volume...")
-    corrupted_volume = tiff.imread(corrupted_path)
-    mask_volume = tiff.imread(mask_path)
+    corrupted_volume = tiff.imread(test_corrupted_path)
+    mask_volume = tiff.imread(test_mask_path)
     if mask_volume.ndim == 3:
         mask = (mask_volume[:, 0, 0] > 0).astype(np.uint8)
     else:
@@ -173,6 +168,7 @@ def main():
 
     # Load best model
     model.load_state_dict(torch.load(best_model_path))
+    model.to(device)
     model.eval()
 
     # Inpaint and save
@@ -181,21 +177,24 @@ def main():
 
     log(f"Inpainted volume saved to: {predicted_output_path}")
 
-    # === 5. Compare Linear Interpolation, 2.5D CNN, Ground Truth ===
-    log("Comparing results...")
-
-    # Load all volumes for comparison
-    gt = normalize(load_volume(test_gt_path))
-    linear = normalize(load_volume(test_corrupted_path.replace("_corrupted.tif", "_LinearInterp.tif")))
-    predicted = normalize(load_volume(predicted_output_path))
-
-
-    assert gt.shape == linear.shape == predicted.shape, "Volumes must match shape!"
-
-    # Run comparison
-    compare_volumes(gt, linear, "Linear Interpolation")
-    compare_volumes(gt, predicted, "2.5D CNN Prediction")
-
 
 if __name__ == "__main__":
     main()
+
+
+    # # === 5. Compare Linear Interpolation, 2.5D CNN, Ground Truth ===
+    # log("Comparing results...")
+
+    # # Load all volumes for comparison
+    # gt = normalize(load_volume(test_gt_path))
+    # linear = normalize(load_volume(test_corrupted_path.replace("_corrupted.tif", "_LinearInterp.tif")))
+    # predicted = normalize(load_volume(predicted_output_path))
+
+    # assert gt.shape == linear.shape == predicted.shape, "Volumes must match shape!"
+    
+    # === Run Comparison ===
+    # run_comparison(
+    #     gt_path="/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing/1.1_OCT_uint16_Preprocessed_Volume1_VertCropped_seqSVD.tif",
+    #     linear_path="/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing/1.1_OCT_uint16_Preprocessed_Volume1_VertCropped_seqSVD_Corrupted_LinearInterp_28percent_2to8sizeblock.tif",
+    #     predicted_path="/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing/1.1_OCT_uint16_Preprocessed_Volume1_VertCropped_seqSVD_Corrupted_2p5DUNet_28percent_2to8sizeblock.tif"
+    # )

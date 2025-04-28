@@ -1,4 +1,5 @@
 import tifffile as tiff
+import torch
 import numpy as np
 
 def inpaint_volume_with_model(model, corrupted_volume, mask, device, stack_size=5):

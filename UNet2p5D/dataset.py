@@ -41,25 +41,10 @@ class OCTAInpaintingDataset(Dataset):
     def __getitem__(self, idx):
         stack, target = self.data[idx]
 
-        # Replace missing input slices with linear interpolation
-        # Optional: could be zeros or blurred versions instead
-        stack = stack.astype(np.float32)
-        target = target.astype(np.float32)
-
-        # Check for low-intensity (empty) slices — assume those are missing
-        mean_vals = stack.mean(axis=(1, 2))
-        low_mask = mean_vals < 1500  # threshold for 16-bit darkness (~black)
-
-        # Simple interpolation for missing slices (in-place modification)
-        for i in range(stack.shape[0]):
-            if low_mask[i]:
-                prev_i = max(i - 1, 0)
-                next_i = min(i + 1, stack.shape[0] - 1)
-                stack[i] = 0.5 * (stack[prev_i] + stack[next_i])
-
         if self.transform:
             stack, target = self.transform(stack, target)
 
+        # Convert to torch tensors and normalize to [0, 1]
         stack = torch.from_numpy(stack).float() / 65535.0             # (stack_size, H, W)
         target = torch.from_numpy(target).float().unsqueeze(0) / 65535.0  # (1, H, W)
 

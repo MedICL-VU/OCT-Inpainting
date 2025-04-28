@@ -111,7 +111,7 @@ def main():
         "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing", f"{base_name}_inpainted_3DUNet.tif"
     )
 
-    log(f"Using {len(train_vols)} volumes for training, {len(test_vols)} for testing")
+    log(f"Using {len(train_vols)} volumes for training, {len(val_vols)} for validation, {len(test_vols)} for testing")
 
     # Build datasets
     # train_dataset = OCTAInpaintingDataset(train_vols, stack_size=args.stack_size)

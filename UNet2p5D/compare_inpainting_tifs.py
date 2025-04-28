@@ -18,7 +18,16 @@ def compare_volumes(gt, method, method_name):
         gt_slice = gt[i]
         pred_slice = method[i]
 
-        psnr_score = psnr(gt_slice, pred_slice, data_range=1.0)
+        # Compute MSE
+        mse = np.mean((gt_slice - pred_slice) ** 2)
+
+        # Handle MSE = 0 to avoid PSNR = inf
+        if mse == 0:
+            psnr_score = 100.0  # Assign a very high PSNR value
+        else:
+            psnr_score = psnr(gt_slice, pred_slice, data_range=1.0)
+
+        # Compute SSIM
         ssim_score = ssim(gt_slice, pred_slice, data_range=1.0)
 
         psnr_list.append(psnr_score)
@@ -27,26 +36,22 @@ def compare_volumes(gt, method, method_name):
     avg_psnr = np.mean(psnr_list)
     avg_ssim = np.mean(ssim_list)
 
-    log(f"🔍 {method_name}:")
+    log(f"{method_name}:")
     log(f"  Mean PSNR: {avg_psnr:.2f} dB")
     log(f"  Mean SSIM: {avg_ssim:.4f}")
     log("-" * 40)
 
     return psnr_list, ssim_list
 
-# === File Paths ===
-gt_path = "OCTA_ground_truth.tif"
-linear_path = "OCTA_linear_interp.tif"
-predicted_path = "OCTA_predicted_2p5D.tif"
+def run_comparison(gt_path, linear_path, predicted_path):
+    # Load volumes
+    gt = normalize(load_volume(gt_path))
+    linear = normalize(load_volume(linear_path))
+    predicted = normalize(load_volume(predicted_path))
 
-# === Load Volumes ===
-gt = normalize(load_volume(gt_path))
-linear = normalize(load_volume(linear_path))
-predicted = normalize(load_volume(predicted_path))
+    # Ensure shapes match
+    assert gt.shape == linear.shape == predicted.shape, "Volumes must match in shape!"
 
-# === Shape Check ===
-assert gt.shape == linear.shape == predicted.shape, "Volumes must match in shape!"
-
-# === Compare ===
-compare_volumes(gt, linear, "Linear Interpolation")
-compare_volumes(gt, predicted, "2.5D CNN Prediction")
+    # Compare volumes
+    compare_volumes(gt, linear, "Linear Interpolation")
+    compare_volumes(gt, predicted, "2.5D CNN Prediction")
