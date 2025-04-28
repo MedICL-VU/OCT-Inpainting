@@ -10,7 +10,7 @@ from tqdm import tqdm
 from dataset import OCTAInpaintingDataset
 from model import UNet2p5D
 from train_val import train_epoch, validate_epoch, evaluate_model_on_test, EarlyStopping, SSIM_L1_Loss
-from save_inpainted import inpaint_volume_with_model, rescale_reconstructed_volume
+from save_inpainted import inpaint_volume_with_model, smooth_rescale_reconstructed_volume
 # from compare_inpainting_tifs import run_comparison, normalize, load_volume
 from utils import log
 
@@ -123,30 +123,30 @@ def main():
     early_stopping = EarlyStopping(patience=5, min_delta=1e-4, verbose=True)
 
 
-    # === 3. Train Model ===
-    log("Starting training...")
-    best_val_loss = float('inf')
+    # # === 3. Train Model ===
+    # log("Starting training...")
+    # best_val_loss = float('inf')
 
-    for epoch in range(1, num_epochs + 1):
-        train_loss = train_epoch(model, train_loader, optimizer, criterion, device)
-        val_loss = validate_epoch(model, val_loader, criterion, device)
+    # for epoch in range(1, num_epochs + 1):
+    #     train_loss = train_epoch(model, train_loader, optimizer, criterion, device)
+    #     val_loss = validate_epoch(model, val_loader, criterion, device)
 
-        log(f"[Epoch {epoch}] Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f}")
+    #     log(f"[Epoch {epoch}] Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f}")
 
-        # scheduler.step(val_loss)
+    #     # scheduler.step(val_loss)
 
-        # Save best model
-        if val_loss < best_val_loss:
-            best_val_loss = val_loss
-            torch.save(model.state_dict(), best_model_path)
+    #     # Save best model
+    #     if val_loss < best_val_loss:
+    #         best_val_loss = val_loss
+    #         torch.save(model.state_dict(), best_model_path)
 
-        # Early stopping check
-        early_stopping.step(val_loss)
-        if early_stopping.should_stop:
-            log(f"Early stopping triggered at epoch {epoch}")
-            break
+    #     # Early stopping check
+    #     early_stopping.step(val_loss)
+    #     if early_stopping.should_stop:
+    #         log(f"Early stopping triggered at epoch {epoch}")
+    #         break
 
-    log("Training completed.")
+    # log("Training completed.")
 
     model.load_state_dict(torch.load(best_model_path))
     model.eval()
@@ -178,12 +178,19 @@ def main():
     log(f"Inpainted volume saved to: {predicted_output_path}")
 
 
-    # Post-processing: Brightness Rescaling and Normalization
-    corrected_inpainted_volume = rescale_reconstructed_volume(
+    corrected_inpainted_volume = smooth_rescale_reconstructed_volume(
         inpainted_volume,
         corrupted_volume,
-        mask
+        mask,
+        blend_factor=0.5  # or 0.6 or 0.7 based on visual tuning
     )
+
+    # Post-processing: Brightness Rescaling and Normalization
+    # corrected_inpainted_volume = rescale_reconstructed_volume(
+    #     inpainted_volume,
+    #     corrupted_volume,
+    #     mask
+    # )
 
     predicted_output_path_corrected = os.path.join(
         os.path.dirname(predicted_output_path),
@@ -191,7 +198,8 @@ def main():
     )
 
     # Then save corrected_inpainted_volume instead
-    tiff.imwrite(predicted_output_path_corrected, corrected_inpainted_volume.astype(np.uint16))
+    tiff.imwrite(predicted_output_path_corrected, corrected_inpainted_volume)
+    # tiff.imwrite(predicted_output_path_corrected, corrected_inpainted_volume.astype(np.uint16))
 
 
 if __name__ == "__main__":
