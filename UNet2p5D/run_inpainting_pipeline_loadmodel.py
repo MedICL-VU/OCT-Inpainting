@@ -9,7 +9,7 @@ from tqdm import tqdm
 # Import your modules (assumes they are saved in .py files)
 from dataset import OCTAInpaintingDataset
 from model import UNet2p5D
-from train_val import train_epoch, validate_epoch, evaluate_model_on_test, EarlyStopping, SSIM_L1_Loss
+from train_val import train_epoch, validate_epoch, evaluate_model_on_test, EarlyStopping, SSIM_L1_GlobalLoss
 from save_inpainted import inpaint_volume_with_model, smooth_rescale_reconstructed_volume
 # from compare_inpainting_tifs import run_comparison, normalize, load_volume
 from utils import log
@@ -115,7 +115,8 @@ def main():
     log("Initializing model...")
     model = UNet2p5D(in_channels=stack_size, out_channels=1).to(device)
     # criterion = torch.nn.L1Loss()
-    criterion = SSIM_L1_Loss(alpha=0.84)
+    criterion = SSIM_L1_GlobalLoss(alpha=0.8, beta=0.1)
+    # criterion = SSIM_L1_Loss(alpha=0.84)
     # criterion = SSIM_L1_Loss(alpha=0.7)
     optimizer = Adam(model.parameters(), lr=learning_rate)
     # optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=1e-5)
@@ -182,7 +183,7 @@ def main():
         inpainted_volume,
         corrupted_volume,
         mask,
-        blend_factor=0.5  # or 0.6 or 0.7 based on visual tuning
+        blend_factor=0.7  # or 0.6 or 0.7 based on visual tuning
     )
 
     # Post-processing: Brightness Rescaling and Normalization
@@ -194,7 +195,7 @@ def main():
 
     predicted_output_path_corrected = os.path.join(
         os.path.dirname(predicted_output_path),
-        os.path.splitext(os.path.basename(predicted_output_path))[0] + "_brightcorr.tif"
+        os.path.splitext(os.path.basename(predicted_output_path))[0] + "_brightcorr0p7.tif"
     )
 
     # Then save corrected_inpainted_volume instead
