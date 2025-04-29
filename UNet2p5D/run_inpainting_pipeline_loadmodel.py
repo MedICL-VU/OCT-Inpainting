@@ -183,7 +183,7 @@ def main():
         inpainted_volume,
         corrupted_volume,
         mask,
-        blend_factor=0.7  # or 0.6 or 0.7 based on visual tuning
+        blend_factor=0.5  # or 0.6 or 0.7 based on visual tuning
     )
 
     # Post-processing: Brightness Rescaling and Normalization

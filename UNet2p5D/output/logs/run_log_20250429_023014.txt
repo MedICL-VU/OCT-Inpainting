@@ -1,0 +1,20 @@
+Linear Interpolation:
+  Mean PSNR: 89.56 dB
+  Mean SSIM: 0.9673
+----------------------------------------
+2.5D CNN Prediction:
+  Mean PSNR: 89.76 dB
+  Mean SSIM: 0.9753
+----------------------------------------
+Linear Interpolation:
+  Mean PSNR (missing slices only): 34.78 dB
+  Mean SSIM (missing slices only): 0.7956
+  Mean MAE  (missing slices only): 0.012557
+  Mean MSE  (missing slices only): 0.000335
+----------------------------------------
+2.5D CNN Prediction:
+  Mean PSNR (missing slices only): 36.03 dB
+  Mean SSIM (missing slices only): 0.8457
+  Mean MAE  (missing slices only): 0.010603
+  Mean MSE  (missing slices only): 0.000252
+----------------------------------------
