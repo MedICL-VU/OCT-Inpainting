@@ -4,7 +4,7 @@ import numpy as np
 
 def inpaint_volume_with_model(model, corrupted_volume, mask, device, stack_size=5):
     """
-    Apply 2.5D model to missing slices in a volume.
+    Apply 2.5D model to missing slices in a volume using stack + validity mask.
     
     Args:
         model: trained UNet2p5D model
@@ -23,10 +23,18 @@ def inpaint_volume_with_model(model, corrupted_volume, mask, device, stack_size=
 
     with torch.no_grad():
         for idx in np.where(mask == 1)[0]:
-            stack = padded[idx:idx + stack_size]  # (stack_size, H, W)
-            # stack = torch.from_numpy(stack).unsqueeze(0).float().cuda() / 65535.0  # (1, 5, H, W)
-            stack = torch.from_numpy(stack).unsqueeze(0).float().to(device) / 65535.0
-            output = model(stack)  # (1, 1, H, W)
+            # Extract stack
+            stack = padded[idx:idx + stack_size]  # shape: (stack_size, H, W)
+            stack_tensor = torch.from_numpy(stack).unsqueeze(0).float().to(device) / 65535.0  # (1, stack_size, H, W)
+
+            # Build corresponding validity mask: 1.0 where > 0, else 0.0
+            validity = (stack_tensor > 0).float()  # (1, stack_size, H, W)
+
+            # Concatenate stack + validity mask
+            model_input = torch.cat([stack_tensor, validity], dim=1)  # shape: (1, 2*stack_size, H, W)
+
+            # Predict
+            output = model(model_input)  # (1, 1, H, W)
             pred = output.squeeze().cpu().numpy() * 65535.0
             inpainted[idx] = np.clip(pred, 0, 65535).astype(np.uint16)
 

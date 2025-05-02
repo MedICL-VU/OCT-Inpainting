@@ -38,14 +38,29 @@ class OCTAInpaintingDataset(Dataset):
     def __len__(self):
         return len(self.data)
 
+    # def __getitem__(self, idx):
+    #     stack, target = self.data[idx]
+
+    #     if self.transform:
+    #         stack, target = self.transform(stack, target)
+
+    #     # Convert to torch tensors and normalize to [0, 1]
+    #     stack = torch.from_numpy(stack).float() / 65535.0             # (stack_size, H, W)
+    #     target = torch.from_numpy(target).float().unsqueeze(0) / 65535.0  # (1, H, W)
+
+    #     return stack, target
+
     def __getitem__(self, idx):
         stack, target = self.data[idx]
 
         if self.transform:
             stack, target = self.transform(stack, target)
 
-        # Convert to torch tensors and normalize to [0, 1]
-        stack = torch.from_numpy(stack).float() / 65535.0             # (stack_size, H, W)
-        target = torch.from_numpy(target).float().unsqueeze(0) / 65535.0  # (1, H, W)
+        # Normalize and convert to tensors
+        stack = torch.from_numpy(stack).float() / 65535.0  # shape (stack_size, H, W)
+        target = torch.from_numpy(target).float().unsqueeze(0) / 65535.0  # shape (1, H, W)
 
-        return stack, target
+        # Validity mask: 1 where pixel > 0, 0 where black
+        validity_mask = (stack > 0).float()
+
+        return stack, validity_mask, target

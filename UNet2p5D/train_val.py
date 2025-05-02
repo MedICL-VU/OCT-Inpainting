@@ -8,8 +8,9 @@ def train_epoch(model, dataloader, optimizer, criterion, device):
     model.train()
     running_loss = 0.0
 
-    for batch_idx, (X, y) in enumerate(tqdm(dataloader, desc="Training")):
-        X, y = X.to(device), y.to(device)
+    for batch_idx, (stack, validity, y) in enumerate(tqdm(dataloader, desc="Training")):
+        X = torch.cat([stack, validity], dim=1).to(device)
+        y = y.to(device)
 
         X = X.contiguous().float()
         y = y.contiguous().float()
@@ -29,13 +30,15 @@ def train_epoch(model, dataloader, optimizer, criterion, device):
 
     return running_loss / len(dataloader.dataset)
 
+
 def validate_epoch(model, dataloader, criterion, device):
     model.eval()
     total_loss = 0.0
 
     with torch.no_grad():
-        for X, y in tqdm(dataloader, desc="Validating"):
-            X, y = X.to(device), y.to(device)
+        for stack, validity, y in tqdm(dataloader, desc="Validating"):
+            X = torch.cat([stack, validity], dim=1).to(device)
+            y = y.to(device)
 
             X = X.contiguous().float()
             y = y.contiguous().float()
@@ -46,13 +49,15 @@ def validate_epoch(model, dataloader, criterion, device):
 
     return total_loss / len(dataloader.dataset)
 
+
 def evaluate_model_on_test(model, dataloader, criterion, device):
     model.eval()
     total_loss = 0.0
 
     with torch.no_grad():
-        for X, y in tqdm(dataloader, desc="Testing"):
-            X, y = X.to(device), y.to(device)
+        for stack, validity, y in tqdm(dataloader, desc="Testing"):
+            X = torch.cat([stack, validity], dim=1).to(device)
+            y = y.to(device)
 
             X = X.contiguous().float()
             y = y.contiguous().float()

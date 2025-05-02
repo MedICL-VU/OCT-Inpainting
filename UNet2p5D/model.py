@@ -59,7 +59,8 @@ class OutConv(nn.Module):
 class UNet2p5D(nn.Module):
     def __init__(self, in_channels=5, out_channels=1, features=[64, 128, 256, 512]):
         super().__init__()
-        self.inc = DoubleConv(in_channels, features[0])
+        # self.inc = DoubleConv(in_channels, features[0])
+        self.inc = DoubleConv(in_channels * 2, features[0])  # stack + validity mask
         self.down1 = Down(features[0], features[1])
         self.down2 = Down(features[1], features[2])
         self.down3 = Down(features[2], features[3])
