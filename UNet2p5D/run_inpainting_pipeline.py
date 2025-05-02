@@ -96,7 +96,7 @@ def main():
     # Generate output filename based on test volume name
     base_name = os.path.basename(test_corrupted_path).replace("_corrupted.tif", "")
     predicted_output_path = os.path.join(
-        "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing", f"{base_name}_inpainted_2p5DUNet_v4.tif"
+        "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing", f"{base_name}_inpainted_2p5DUNet_v4_recursive.tif"
     )
 
     log(f"Using {len(train_vols)} volumes for training, {len(val_vols)} for validation, {len(test_vols)} for testing")
