@@ -126,7 +126,7 @@ def main():
         base_name = os.path.basename(test_corrupted_path).replace("_corrupted.tif", "")
         predicted_output_path = os.path.join(
             "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing",
-            f"{base_name}_inpainted_2p5DUNet_fold{fold_idx+1}.tif"
+            f"{base_name}_inpainted_2p5DUNet_fold{fold_idx+1}_v2.tif"
         )
 
         log(f"Using {len(train_vols)} volumes for training, {len(val_vols)} for validation, {len(test_vols)} for testing")
@@ -145,9 +145,6 @@ def main():
         log("Initializing model...")
         model = UNet2p5D(in_channels=args.stack_size, out_channels=1).to(device)
         criterion = SSIM_L1_GlobalLoss(alpha=0.8, beta=0.1)
-        # criterion = SSIM_L1_Loss(alpha=0.84)
-        # criterion = SSIM_L1_Loss(alpha=0.7)
-        # optimizer = Adam(model.parameters(), lr=args.lr)
         optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=1e-5)
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', patience=4, factor=0.5, verbose=True)
         early_stopping = EarlyStopping(patience=5, min_delta=1e-4, verbose=True)
@@ -217,21 +214,12 @@ def main():
             blend_factor=0.5  # or 0.6 or 0.7 based on visual tuning
         )
 
-        # Post-processing: Brightness Rescaling and Normalization
-        # corrected_inpainted_volume = rescale_reconstructed_volume(
-        #     inpainted_volume,
-        #     corrupted_volume,
-        #     mask
-        # )
-
         predicted_output_path_corrected = os.path.join(
             os.path.dirname(predicted_output_path),
             os.path.splitext(os.path.basename(predicted_output_path))[0] + "_brightcorr.tif"
         )
 
-        # Then save corrected_inpainted_volume instead
         tiff.imwrite(predicted_output_path_corrected, corrected_inpainted_volume)
-        # tiff.imwrite(predicted_output_path_corrected, corrected_inpainted_volume.astype(np.uint16))
 
 
         # === 5. Volume-Wise Evaluation ===
@@ -270,3 +258,4 @@ if __name__ == "__main__":
     #     linear_path="/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing/1.1_OCT_uint16_Preprocessed_Volume1_VertCropped_seqSVD_Corrupted_LinearInterp_28percent_2to8sizeblock.tif",
     #     predicted_path="/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing/1.1_OCT_uint16_Preprocessed_Volume1_VertCropped_seqSVD_Corrupted_2p5DUNet_28percent_2to8sizeblock.tif"
     # )
+    
