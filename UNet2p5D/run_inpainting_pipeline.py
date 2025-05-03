@@ -1,5 +1,7 @@
 import os
 import torch
+from pytorch_msssim import ssim as compute_ssim
+import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from torch.optim import Adam
 import tifffile as tiff
@@ -14,6 +16,24 @@ from train_val import train_epoch, validate_epoch, evaluate_model_on_test, Early
 from save_inpainted import inpaint_volume_with_model, smooth_rescale_reconstructed_volume
 # from compare_inpainting_tifs import run_comparison, normalize, load_volume
 from utils import log
+
+
+def evaluate_volume_metrics(gt, pred, mask):
+    """Evaluate metrics on the masked (corrupted) regions only."""
+    assert gt.shape == pred.shape, "Shapes must match"
+    gt = torch.from_numpy(gt).unsqueeze(0).unsqueeze(0).float() / 65535.0  # (1, 1, D, H, W)
+    pred = torch.from_numpy(pred).unsqueeze(0).unsqueeze(0).float() / 65535.0
+    mask = torch.from_numpy(mask).view(1, 1, -1, 1, 1).float()  # (1, 1, D, 1, 1)
+
+    l1 = F.l1_loss(pred * mask, gt * mask).item()
+    mean_diff = torch.abs(pred.mean() - gt.mean()).item()
+    ssim_score = compute_ssim(pred.squeeze(0), gt.squeeze(0), data_range=1.0)
+
+    return {
+        "L1": round(l1, 4),
+        "SSIM": round(ssim_score.item(), 4),
+        "MeanIntensityError": round(mean_diff, 4)
+    }
 
 
 def load_volume_triplets(data_dir):
@@ -212,6 +232,19 @@ def main():
         # Then save corrected_inpainted_volume instead
         tiff.imwrite(predicted_output_path_corrected, corrected_inpainted_volume)
         # tiff.imwrite(predicted_output_path_corrected, corrected_inpainted_volume.astype(np.uint16))
+
+
+        # === 5. Volume-Wise Evaluation ===
+        log("Evaluating inpainted volume metrics...")
+
+        gt_volume = tiff.imread(test_gt_path)
+        metrics = evaluate_volume_metrics(gt_volume, corrected_inpainted_volume, mask)
+
+        log(f"Volume Metrics for {base_name}:")
+        log(f" - L1 Loss: {metrics['L1']}")
+        log(f" - SSIM: {metrics['SSIM']}")
+        log(f" - Mean Intensity Diff: {metrics['MeanIntensityError']}")
+
 
     mean_test_loss = np.mean(test_losses)
     log(f"\n===== K-FOLD AVERAGE TEST LOSS: {mean_test_loss:.4f} =====")
