@@ -75,12 +75,12 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Run 2.5D Inpainting Pipeline")
     parser.add_argument('--epochs', type=int, default=50, help='Number of training epochs')
     parser.add_argument('--batch_size', type=int, default=8)
-    parser.add_argument('--stack_size', type=int, default=16)
+    parser.add_argument('--stack_size', type=int, default=9)
     # parser.add_argument('--lr', type=float, default=1e-4)
     parser.add_argument('--lr', type=float, default=5e-5)
     parser.add_argument('--cuda', action='store_true', help='Use CUDA if available')
     parser.add_argument('--kfold', action='store_true', help='Run full k-fold cross-validation')
-    parser.add_argument('--fold_idx', type=int, default=1, help='If not kfold mode, which fold to run (default: 2)')
+    parser.add_argument('--fold_idx', type=int, default=0, help='If not kfold mode, which fold to run (default: 0)')
     return parser.parse_args()
 
 
