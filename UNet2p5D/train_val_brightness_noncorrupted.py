@@ -4,12 +4,15 @@ from tqdm import tqdm
 from pytorch_msssim import ssim
 from utils import log
 
-def train_epoch_brightnessawareness(model, dataloader, optimizer, criterion, device):
+
+def train_epoch_brightness_noncorrupted(model, dataloader, optimizer, criterion, device):
     model.train()
     running_loss = 0.0
 
-    for batch_idx, (X, y, valid_mask) in enumerate(tqdm(dataloader, desc="Training")):
-        X, y, valid_mask = X.to(device), y.to(device), valid_mask.to(device)
+    for stack, valid_pixelwise, y, valid_slicewise in dataloader:
+        X = torch.cat([stack, valid_pixelwise], dim=1).to(device)     # Input to model
+        y = y.to(device)
+        valid_slicewise = valid_slicewise.to(device)
 
         X = X.contiguous().float()
         y = y.contiguous().float()
@@ -19,7 +22,7 @@ def train_epoch_brightnessawareness(model, dataloader, optimizer, criterion, dev
         if output.shape != y.shape:
             raise ValueError(f"Output shape {output.shape} != target shape {y.shape}")
 
-        loss = criterion(output, y, X, valid_mask)  # X is stack input
+        loss = criterion(output, y, stack.to(device), valid_slicewise)
 
         optimizer.zero_grad()
         loss.backward()
@@ -29,41 +32,47 @@ def train_epoch_brightnessawareness(model, dataloader, optimizer, criterion, dev
 
     return running_loss / len(dataloader.dataset)
 
-def validate_epoch_brightnessawareness(model, dataloader, criterion, device):
+
+def validate_epoch_brightness_noncorrupted(model, dataloader, criterion, device):
     model.eval()
-    running_loss = 0.0
+    total_loss = 0.0
 
     with torch.no_grad():
-        for batch_idx, (X, y, valid_mask) in enumerate(tqdm(dataloader, desc="Validating")):
-            X, y, valid_mask = X.to(device), y.to(device), valid_mask.to(device)
+        for stack, valid_pixelwise, y, valid_slicewise in dataloader:
+            X = torch.cat([stack, valid_pixelwise], dim=1).to(device)     # Input to model
+            y = y.to(device)
+            valid_slicewise = valid_slicewise.to(device)
 
             X = X.contiguous().float()
             y = y.contiguous().float()
 
             output = model(X)
-            loss = criterion(output, y, X, valid_mask)  # X is stack input
+            loss = criterion(output, y, stack.to(device), valid_slicewise)
 
-            running_loss += loss.item() * X.size(0)
+            total_loss += loss.item() * X.size(0)
 
-    return running_loss / len(dataloader.dataset)
+    return total_loss / len(dataloader.dataset)
 
-def evaluate_model_on_test_brightnessawareness(model, dataloader, criterion, device):
+
+def evaluate_model_on_test_brightness_noncorrupted(model, dataloader, criterion, device):
     model.eval()
-    running_loss = 0.0
+    total_loss = 0.0
 
     with torch.no_grad():
-        for batch_idx, (X, y, valid_mask) in enumerate(tqdm(dataloader, desc="Testing")):
-            X, y, valid_mask = X.to(device), y.to(device), valid_mask.to(device)
+        for stack, valid_pixelwise, y, valid_slicewise in dataloader:
+            X = torch.cat([stack, valid_pixelwise], dim=1).to(device)     # Input to model
+            y = y.to(device)
+            valid_slicewise = valid_slicewise.to(device)
 
             X = X.contiguous().float()
             y = y.contiguous().float()
 
             output = model(X)
-            loss = criterion(output, y, X, valid_mask)  # X is stack input
+            loss = criterion(output, y, stack.to(device), valid_slicewise)
 
-            running_loss += loss.item() * X.size(0)
+            total_loss += loss.item() * X.size(0)
 
-    return running_loss / len(dataloader.dataset)
+    return total_loss / len(dataloader.dataset)
 
 
 class SSIM_L1_BrightnessAwareLoss(nn.Module):
@@ -71,7 +80,7 @@ class SSIM_L1_BrightnessAwareLoss(nn.Module):
         """
         alpha = L1 vs SSIM balance
         beta  = predicted vs target global brightness match
-        gamma = predicted vs neighbor slice brightness match
+        gamma = predicted vs neighbor slice brightness match (using valid stack slices only)
         """
         super().__init__()
         self.alpha = alpha
@@ -79,9 +88,10 @@ class SSIM_L1_BrightnessAwareLoss(nn.Module):
         self.gamma = gamma
         self.l1 = nn.L1Loss()
 
-    def forward(self, pred, target, stack, valid_mask=None):
+    def forward(self, pred, target, stack, valid_mask):
         # pred, target: (B, 1, H, W)
-        # stack: (B, S, H, W), valid_mask: (B, S)
+        # stack: (B, S, H, W)
+        # valid_mask: (B, S)
 
         l1_loss = self.l1(pred, target)
         ssim_loss = 1 - ssim(pred, target, data_range=1.0)

@@ -1,0 +1,193 @@
+=== SANITY CHECK: 24-Config Forward-Pass Only ===
+
+[CONFIG] Loss=global, Augment=False, MaskedLoss=False, StackSize=5
+✅ Dataset sample shapes:
+  input[0]: torch.Size([5, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([1, 165, 400]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+✅ Loss computed: 0.178297
+
+[CONFIG] Loss=global, Augment=False, MaskedLoss=False, StackSize=9
+✅ Dataset sample shapes:
+  input[0]: torch.Size([9, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([1, 165, 400]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+✅ Loss computed: 0.074839
+
+[CONFIG] Loss=global, Augment=False, MaskedLoss=False, StackSize=13
+✅ Dataset sample shapes:
+  input[0]: torch.Size([13, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([1, 165, 400]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+✅ Loss computed: 0.394982
+
+[CONFIG] Loss=global, Augment=False, MaskedLoss=True, StackSize=5
+✅ Dataset sample shapes:
+  input[0]: torch.Size([5, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([5, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([1, 165, 400]) dtype=torch.float32
+❌ ERROR in configuration: Loss=global, Augment=False, MaskedLoss=True, StackSize=5
+Given groups=1, weight of size [64, 10, 3, 3], expected input[1, 5, 165, 400] to have 10 channels, but got 5 channels instead
+
+[CONFIG] Loss=global, Augment=False, MaskedLoss=True, StackSize=9
+✅ Dataset sample shapes:
+  input[0]: torch.Size([9, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([9, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([1, 165, 400]) dtype=torch.float32
+❌ ERROR in configuration: Loss=global, Augment=False, MaskedLoss=True, StackSize=9
+Given groups=1, weight of size [64, 18, 3, 3], expected input[1, 9, 165, 400] to have 18 channels, but got 9 channels instead
+
+[CONFIG] Loss=global, Augment=False, MaskedLoss=True, StackSize=13
+✅ Dataset sample shapes:
+  input[0]: torch.Size([13, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([13, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([1, 165, 400]) dtype=torch.float32
+❌ ERROR in configuration: Loss=global, Augment=False, MaskedLoss=True, StackSize=13
+Given groups=1, weight of size [64, 26, 3, 3], expected input[1, 13, 165, 400] to have 26 channels, but got 13 channels instead
+
+[CONFIG] Loss=global, Augment=True, MaskedLoss=False, StackSize=5
+✅ Dataset sample shapes:
+  input[0]: torch.Size([5, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([1, 165, 400]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+✅ Loss computed: 0.118307
+
+[CONFIG] Loss=global, Augment=True, MaskedLoss=False, StackSize=9
+✅ Dataset sample shapes:
+  input[0]: torch.Size([9, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([1, 165, 400]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+✅ Loss computed: 0.347350
+
+[CONFIG] Loss=global, Augment=True, MaskedLoss=False, StackSize=13
+✅ Dataset sample shapes:
+  input[0]: torch.Size([13, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([1, 165, 400]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+✅ Loss computed: 0.412117
+
+[CONFIG] Loss=global, Augment=True, MaskedLoss=True, StackSize=5
+✅ Dataset sample shapes:
+  input[0]: torch.Size([5, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([5, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([1, 165, 400]) dtype=torch.float32
+❌ ERROR in configuration: Loss=global, Augment=True, MaskedLoss=True, StackSize=5
+Given groups=1, weight of size [64, 10, 3, 3], expected input[1, 5, 165, 400] to have 10 channels, but got 5 channels instead
+
+[CONFIG] Loss=global, Augment=True, MaskedLoss=True, StackSize=9
+✅ Dataset sample shapes:
+  input[0]: torch.Size([9, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([9, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([1, 165, 400]) dtype=torch.float32
+❌ ERROR in configuration: Loss=global, Augment=True, MaskedLoss=True, StackSize=9
+Given groups=1, weight of size [64, 18, 3, 3], expected input[1, 9, 165, 400] to have 18 channels, but got 9 channels instead
+
+[CONFIG] Loss=global, Augment=True, MaskedLoss=True, StackSize=13
+✅ Dataset sample shapes:
+  input[0]: torch.Size([13, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([13, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([1, 165, 400]) dtype=torch.float32
+❌ ERROR in configuration: Loss=global, Augment=True, MaskedLoss=True, StackSize=13
+Given groups=1, weight of size [64, 26, 3, 3], expected input[1, 13, 165, 400] to have 26 channels, but got 13 channels instead
+
+[CONFIG] Loss=brightness_aware, Augment=False, MaskedLoss=False, StackSize=5
+✅ Dataset sample shapes:
+  input[0]: torch.Size([5, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([1, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([5]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+❌ Loss computation failed: not enough values to unpack (expected 4, got 2)
+
+[CONFIG] Loss=brightness_aware, Augment=False, MaskedLoss=False, StackSize=9
+✅ Dataset sample shapes:
+  input[0]: torch.Size([9, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([1, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([9]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+❌ Loss computation failed: not enough values to unpack (expected 4, got 2)
+
+[CONFIG] Loss=brightness_aware, Augment=False, MaskedLoss=False, StackSize=13
+✅ Dataset sample shapes:
+  input[0]: torch.Size([13, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([1, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([13]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+❌ Loss computation failed: not enough values to unpack (expected 4, got 2)
+
+[CONFIG] Loss=brightness_aware, Augment=False, MaskedLoss=True, StackSize=5
+✅ Dataset sample shapes:
+  input[0]: torch.Size([5, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([5, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([1, 165, 400]) dtype=torch.float32
+  input[3]: torch.Size([5]) dtype=torch.float32
+❌ ERROR in configuration: Loss=brightness_aware, Augment=False, MaskedLoss=True, StackSize=5
+Given groups=1, weight of size [64, 10, 3, 3], expected input[1, 5, 165, 400] to have 10 channels, but got 5 channels instead
+
+[CONFIG] Loss=brightness_aware, Augment=False, MaskedLoss=True, StackSize=9
+✅ Dataset sample shapes:
+  input[0]: torch.Size([9, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([9, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([1, 165, 400]) dtype=torch.float32
+  input[3]: torch.Size([9]) dtype=torch.float32
+❌ ERROR in configuration: Loss=brightness_aware, Augment=False, MaskedLoss=True, StackSize=9
+Given groups=1, weight of size [64, 18, 3, 3], expected input[1, 9, 165, 400] to have 18 channels, but got 9 channels instead
+
+[CONFIG] Loss=brightness_aware, Augment=False, MaskedLoss=True, StackSize=13
+✅ Dataset sample shapes:
+  input[0]: torch.Size([13, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([13, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([1, 165, 400]) dtype=torch.float32
+  input[3]: torch.Size([13]) dtype=torch.float32
+❌ ERROR in configuration: Loss=brightness_aware, Augment=False, MaskedLoss=True, StackSize=13
+Given groups=1, weight of size [64, 26, 3, 3], expected input[1, 13, 165, 400] to have 26 channels, but got 13 channels instead
+
+[CONFIG] Loss=brightness_aware, Augment=True, MaskedLoss=False, StackSize=5
+✅ Dataset sample shapes:
+  input[0]: torch.Size([5, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([1, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([5]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+❌ Loss computation failed: not enough values to unpack (expected 4, got 2)
+
+[CONFIG] Loss=brightness_aware, Augment=True, MaskedLoss=False, StackSize=9
+✅ Dataset sample shapes:
+  input[0]: torch.Size([9, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([1, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([9]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+❌ Loss computation failed: not enough values to unpack (expected 4, got 2)
+
+[CONFIG] Loss=brightness_aware, Augment=True, MaskedLoss=False, StackSize=13
+✅ Dataset sample shapes:
+  input[0]: torch.Size([13, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([1, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([13]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+❌ Loss computation failed: not enough values to unpack (expected 4, got 2)
+
+[CONFIG] Loss=brightness_aware, Augment=True, MaskedLoss=True, StackSize=5
+✅ Dataset sample shapes:
+  input[0]: torch.Size([5, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([5, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([1, 165, 400]) dtype=torch.float32
+  input[3]: torch.Size([5]) dtype=torch.float32
+❌ ERROR in configuration: Loss=brightness_aware, Augment=True, MaskedLoss=True, StackSize=5
+Given groups=1, weight of size [64, 10, 3, 3], expected input[1, 5, 165, 400] to have 10 channels, but got 5 channels instead
+
+[CONFIG] Loss=brightness_aware, Augment=True, MaskedLoss=True, StackSize=9
+✅ Dataset sample shapes:
+  input[0]: torch.Size([9, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([9, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([1, 165, 400]) dtype=torch.float32
+  input[3]: torch.Size([9]) dtype=torch.float32
+❌ ERROR in configuration: Loss=brightness_aware, Augment=True, MaskedLoss=True, StackSize=9
+Given groups=1, weight of size [64, 18, 3, 3], expected input[1, 9, 165, 400] to have 18 channels, but got 9 channels instead
+
+[CONFIG] Loss=brightness_aware, Augment=True, MaskedLoss=True, StackSize=13
+✅ Dataset sample shapes:
+  input[0]: torch.Size([13, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([13, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([1, 165, 400]) dtype=torch.float32
+  input[3]: torch.Size([13]) dtype=torch.float32
+❌ ERROR in configuration: Loss=brightness_aware, Augment=True, MaskedLoss=True, StackSize=13
+Given groups=1, weight of size [64, 26, 3, 3], expected input[1, 13, 165, 400] to have 26 channels, but got 13 channels instead

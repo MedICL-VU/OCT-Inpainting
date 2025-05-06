@@ -8,22 +8,11 @@ import tifffile as tiff
 import numpy as np
 from tqdm import tqdm
 from sklearn.model_selection import KFold
+import argparse
+import itertools
 
-# Import your modules (assumes they are saved in .py files)
-from dataset import OCTAInpaintingDataset, IntensityAugment
-from model import UNet2p5D
-from train_val import train_epoch, validate_epoch, evaluate_model_on_test, EarlyStopping, SSIM_L1_GlobalLoss
 from save_inpainted import inpaint_volume_with_model, smooth_rescale_reconstructed_volume
-# from compare_inpainting_tifs import run_comparison, normalize, load_volume
 from utils import log
-
-from model_noncorruptedslices import UNet2p5D_NonCorruptedSlices
-from dataset_brightnessawareness import OCTAInpaintingDataset_BrightnessAware
-from dataset_noncorruptedslices import OCTAInpaintingDataset_NonCorruptedSlices
-from train_val_brightnessawareness import train_epoch_brightnessawareness, validate_epoch_brightnessawareness, \
-    evaluate_model_on_test_brightnessawareness, SSIM_L1_GSSIM_L1_BrightnessAwareLosslobalLoss
-from train_val_noncorruptedslices import train_epoch_noncorruptedslices, validate_epoch_noncorruptedslices, \
-    evaluate_model_on_test_noncorruptedslices, SSIM_L1_NonCorruptedSlicesLoss
 
 
 def evaluate_volume_metrics(gt, pred, mask):
@@ -77,8 +66,6 @@ def get_kfold_splits(triplets, k=5, seed=42):
     return folds
 
 
-import argparse
-
 def parse_args():
     parser = argparse.ArgumentParser(description="Run 2.5D Inpainting Pipeline")
     parser.add_argument('--epochs', type=int, default=50, help='Number of training epochs')
@@ -96,177 +83,239 @@ def main():
     args = parse_args()
     device = torch.device('cuda' if args.cuda and torch.cuda.is_available() else 'cpu')
 
-    log("Starting Inpainting Pipeline")
-    log(f"Device: {device}")
-    log(f"Epochs: {args.epochs} | Batch size: {args.batch_size} | Stack size: {args.stack_size}")
-
-    test_losses = []
-
-    # === 1. Load Dataset ===
-    log("Loading datasets...")
-    # Load and split volumes
+    log("=== SANITY CHECK: 24-Config Forward-Pass Only ===")
     volume_triplets = load_volume_triplets("/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing/")
-
     folds = get_kfold_splits(volume_triplets, k=5)
-    if args.kfold:
-        fold_range = range(len(folds))
-    else:
-        fold_range = [args.fold_idx]
+
+    fold_range = [args.fold_idx]  # Only 1 fold to keep testing fast
+
+    # All combinations
+    loss_types = ['global', 'brightness_aware']
+    augment_flags = [False, True]
+    validity_loss_flags = [False, True]
+    stack_sizes = [5, 9, 13]
+
+    for loss_type, augment, use_valid_mask_loss, stack_size in itertools.product(loss_types, augment_flags, validity_loss_flags, stack_sizes):
+        for fold_idx in fold_range:
+            log(f"\n[CONFIG] Loss={loss_type}, Augment={augment}, MaskedLoss={use_valid_mask_loss}, StackSize={stack_size}")
+            try:
+                run_single_experiment(
+                    fold_idx=fold_idx,
+                    triplet_folds=folds,
+                    device=device,
+                    args=args,
+                    loss_type=loss_type,
+                    augment=augment,
+                    use_valid_mask_loss=use_valid_mask_loss,
+                    stack_size=stack_size,
+                    test_only=True  # 🆕 Skip training
+                )
+            except Exception as e:
+                log(f"❌ ERROR in configuration: Loss={loss_type}, Augment={augment}, MaskedLoss={use_valid_mask_loss}, StackSize={stack_size}\n{e}")
 
 
-    for fold_idx in fold_range:
-        train_vols, val_vols, test_vols = folds[fold_idx]
-        log(f"\n========== Fold {fold_idx + 1} ==========")
-        log("Training volumes:")
-        for v in train_vols: log(f" - {os.path.basename(v[0])}")
-        log("Validation volume:")
-        for v in val_vols: log(f" - {os.path.basename(v[0])}")
-        log("Test volume:")
-        for v in test_vols: log(f" - {os.path.basename(v[0])}")
+def run_single_experiment(fold_idx, triplet_folds, device, args, loss_type, augment, use_valid_mask_loss, stack_size, test_only=False):
+    from model import UNet2p5D
+    from dataset import OCTAInpaintingDataset, IntensityAugment
+    from dataset_brightnessawareness import OCTAInpaintingDataset_BrightnessAware
+    from dataset_noncorruptedslices import OCTAInpaintingDataset_NonCorruptedSlices
+    from dataset_brightness_noncorrupted import OCTAInpaintingDataset_Combined
+    from train_val import SSIM_L1_GlobalLoss
+    from train_val_brightnessawareness import SSIM_L1_BrightnessAwareLoss
 
-        # === Identify test volume metadata ===
-        test_corrupted_path, test_gt_path, test_mask_path = test_vols[0]
+    train_vols, val_vols, _ = triplet_folds[fold_idx]
 
-        # === Configurations ===
-        best_model_path = f"output/best_model_fold{fold_idx + 1}.pth"
-
-        # Generate output filename based on test volume name
-        base_name = os.path.basename(test_corrupted_path).replace("_corrupted.tif", "")
-        predicted_output_path = os.path.join(
-            "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing",
-            f"{base_name}_inpainted_2p5DUNet_fold{fold_idx+1}_v2.tif"
-        )
-
-        log(f"Using {len(train_vols)} volumes for training, {len(val_vols)} for validation, {len(test_vols)} for testing")
-
-
-        # Build datasets
-        # augment = IntensityAugment(scale_range=(0.95, 1.05), noise_std=0.005, bias_range=(-0.02, 0.02))
-        # train_dataset = OCTAInpaintingDataset(train_vols, stack_size=args.stack_size, transform=augment)
-        train_dataset = OCTAInpaintingDataset(train_vols, stack_size=args.stack_size)
-        val_dataset   = OCTAInpaintingDataset(val_vols, stack_size=args.stack_size)
-        test_dataset  = OCTAInpaintingDataset(test_vols, stack_size=args.stack_size)
-
-        train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=0)
-        val_loader   = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False, num_workers=0)
-        test_loader  = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=0)
-
-        # === 2. Initialize Model ===
-        log("Initializing model...")
-        model = UNet2p5D(in_channels=args.stack_size, out_channels=1).to(device)
+    # === Select configuration
+    if loss_type == "brightness_aware" and use_valid_mask_loss:
+        model = UNet2p5D(in_channels=2 * stack_size, out_channels=1).to(device)
+        dataset_cls = OCTAInpaintingDataset_Combined
+        criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.8, beta=0.1, gamma=0.1)
+    elif loss_type == "brightness_aware":
+        model = UNet2p5D(in_channels=stack_size, out_channels=1).to(device)
+        dataset_cls = OCTAInpaintingDataset_BrightnessAware
+        criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.8, beta=0.1, gamma=0.0)
+    elif use_valid_mask_loss:
+        model = UNet2p5D(in_channels=2 * stack_size, out_channels=1).to(device)
+        dataset_cls = OCTAInpaintingDataset_NonCorruptedSlices
         criterion = SSIM_L1_GlobalLoss(alpha=0.8, beta=0.1)
-        # criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.8, beta=0.1, gamma=0.1)
-        optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=1e-5)
-        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', patience=4, factor=0.5, verbose=True)
-        early_stopping = EarlyStopping(patience=5, min_delta=1e-4, verbose=True)
+    else:
+        model = UNet2p5D(in_channels=stack_size, out_channels=1).to(device)
+        dataset_cls = OCTAInpaintingDataset
+        criterion = SSIM_L1_GlobalLoss(alpha=0.8, beta=0.1)
+
+    transform = IntensityAugment(scale_range=(0.95, 1.05), noise_std=0.005, bias_range=(-0.02, 0.02)) if augment else None
+    dataset = dataset_cls(train_vols, stack_size=stack_size, transform=transform)
+    sample = dataset[0]
+
+    if isinstance(sample, tuple):
+        log(f"✅ Dataset sample shapes:")
+        for i, part in enumerate(sample):
+            log(f"  input[{i}]: {part.shape} dtype={part.dtype}")
+    else:
+        log(f"⚠ Unexpected dataset sample format: {type(sample)}")
+
+    model.eval()
+    with torch.no_grad():
+        inputs = [x.unsqueeze(0).float().to(device) if isinstance(x, torch.Tensor) else torch.tensor(x).unsqueeze(0).float().to(device) for x in sample]
+        # inputs = [torch.tensor(x).unsqueeze(0).float().to(device) for x in sample if isinstance(x, np.ndarray)]
+        output = model(inputs[0])
+        log(f"✅ Model output shape: {output.shape}")
+
+        try:
+            if "brightness" in loss_type:
+                loss = criterion(output, inputs[1], inputs[2])
+            elif use_valid_mask_loss:
+                loss = criterion(output[inputs[2] == 1], inputs[1][inputs[2] == 1])
+            else:
+                loss = criterion(output, inputs[1])
+            log(f"✅ Loss computed: {loss.item():.6f}")
+        except Exception as e:
+            log(f"❌ Loss computation failed: {e}")
 
 
-        # === 3. Train Model ===
-        log("Starting training...")
-        best_val_loss = float('inf')
+# def main():
+#     args = parse_args()
+#     device = torch.device('cuda' if args.cuda and torch.cuda.is_available() else 'cpu')
 
-        for epoch in range(1, args.epochs + 1):
-            train_loss = train_epoch(model, train_loader, optimizer, criterion, device)
-            val_loss = validate_epoch(model, val_loader, criterion, device)
+#     log("Starting Ablation Study Pipeline")
+#     volume_triplets = load_volume_triplets("/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing/")
+#     folds = get_kfold_splits(volume_triplets, k=5)
 
-            log(f"[Epoch {epoch}] Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f}")
+#     if args.kfold:
+#         fold_range = range(len(folds))
+#     else:
+#         fold_range = [args.fold_idx]
 
-            scheduler.step(val_loss)
+#     # === Configuration Grid ===
+#     loss_types = ['global', 'brightness_aware']
+#     augment_flags = [False, True]
+#     validity_loss_flags = [False, True]
+#     stack_sizes = [5, 9, 13]
 
-            # Save best model
-            if val_loss < best_val_loss:
-                best_val_loss = val_loss
-                torch.save(model.state_dict(), best_model_path)
+#     combinations = list(itertools.product(loss_types, augment_flags, validity_loss_flags, stack_sizes))
 
-            # Early stopping check
-            early_stopping.step(val_loss)
-            if early_stopping.should_stop:
-                log(f"Early stopping triggered at epoch {epoch}")
-                break
+#     for loss_type, augment, use_valid_mask_loss, stack_size in combinations:
+#         log(f"\n--- Running configuration: "
+#             f"Loss={loss_type}, Augment={augment}, MaskedLoss={use_valid_mask_loss}, StackSize={stack_size} ---\n")
 
-        log("Training completed.")
-
-        model.load_state_dict(torch.load(best_model_path))
-        model.eval()
-
-
-        # === 3.5: Evaluate on Held-Out Test Volume ===
-        log("Evaluating on held-out test volume...")
-        test_loss = evaluate_model_on_test(model, test_loader, criterion, device)
-        log(f"Final test loss: {test_loss:.4f}")
-        
-        test_losses.append(test_loss)
-
-        # === 4. Inpaint Test Volume with Trained Model ===
-        log("Inpainting volume...")
-        corrupted_volume = tiff.imread(test_corrupted_path)
-        mask_volume = tiff.imread(test_mask_path)
-        if mask_volume.ndim == 3:
-            mask = (mask_volume[:, 0, 0] > 0).astype(np.uint8)
-        else:
-            mask = mask_volume.astype(np.uint8)
-
-        # Load best model
-        model.load_state_dict(torch.load(best_model_path))
-        model.to(device)
-        model.eval()
-
-        # Inpaint and save
-        inpainted_volume = inpaint_volume_with_model(model, corrupted_volume, mask, device, stack_size=args.stack_size)
-        tiff.imwrite(predicted_output_path, inpainted_volume.astype(np.uint16))
-
-        log(f"Inpainted volume saved to: {predicted_output_path}")
+#         for fold_idx in fold_range:
+#             run_single_experiment(
+#                 fold_idx=fold_idx,
+#                 triplet_folds=folds,
+#                 device=device,
+#                 args=args,
+#                 loss_type=loss_type,
+#                 augment=augment,
+#                 use_valid_mask_loss=use_valid_mask_loss,
+#                 stack_size=stack_size
+#             )
 
 
-        corrected_inpainted_volume = smooth_rescale_reconstructed_volume(
-            inpainted_volume,
-            corrupted_volume,
-            mask,
-            blend_factor=0.5  # or 0.6 or 0.7 based on visual tuning
-        )
+# def run_single_experiment(fold_idx, triplet_folds, device, args, loss_type, augment, use_valid_mask_loss, stack_size):
+#     from model import UNet2p5D
+#     from dataset import OCTAInpaintingDataset, IntensityAugment
+#     from dataset_brightnessawareness import OCTAInpaintingDataset_BrightnessAware
+#     from dataset_noncorruptedslices import OCTAInpaintingDataset_NonCorruptedSlices
+#     from dataset_brightness_noncorrupted import OCTAInpaintingDataset_Combined
+#     from train_val import train_epoch, validate_epoch, evaluate_model_on_test, EarlyStopping, SSIM_L1_GlobalLoss
+#     from train_val_brightnessawareness import train_epoch_brightnessawareness, validate_epoch_brightnessawareness, \
+#         evaluate_model_on_test_brightnessawareness, SSIM_L1_BrightnessAwareLoss
+#     from train_val_noncorruptedslices import train_epoch_noncorruptedslices, validate_epoch_noncorruptedslices, \
+#         evaluate_model_on_test_noncorruptedslices
+#     from train_val_brightness_noncorrupted import train_epoch_brightness_noncorrupted, validate_epoch_brightness_noncorrupted, \
+#         evaluate_model_on_test_brightness_noncorrupted
 
-        predicted_output_path_corrected = os.path.join(
-            os.path.dirname(predicted_output_path),
-            os.path.splitext(os.path.basename(predicted_output_path))[0] + "_brightcorr.tif"
-        )
+#     train_vols, val_vols, test_vols = triplet_folds[fold_idx]
+#     test_corrupted_path, test_gt_path, test_mask_path = test_vols[0]
+#     base_name = os.path.basename(test_corrupted_path).replace("_corrupted.tif", "")
 
-        tiff.imwrite(predicted_output_path_corrected, corrected_inpainted_volume)
+#     # === Select config ===
+#     if loss_type == "brightness_aware" and use_valid_mask_loss:
+#         model = UNet2p5D(in_channels=2 * stack_size, out_channels=1).to(device)
+#         train_epoch_fn = train_epoch_brightness_noncorrupted
+#         validate_epoch_fn = validate_epoch_brightness_noncorrupted
+#         evaluate_model_fn = evaluate_model_on_test_brightness_noncorrupted
+#         criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.8, beta=0.1, gamma=0.1)
+#         dataset_cls = OCTAInpaintingDataset_Combined
+#     elif loss_type == "brightness_aware":
+#         model = UNet2p5D(in_channels=stack_size, out_channels=1).to(device)
+#         train_epoch_fn = train_epoch_brightnessawareness
+#         validate_epoch_fn = validate_epoch_brightnessawareness
+#         evaluate_model_fn = evaluate_model_on_test_brightnessawareness
+#         criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.8, beta=0.1, gamma=0.0)
+#         dataset_cls = OCTAInpaintingDataset_BrightnessAware
+#     elif use_valid_mask_loss:
+#         model = UNet2p5D(in_channels=2 * stack_size, out_channels=1).to(device)
+#         train_epoch_fn = train_epoch_noncorruptedslices
+#         validate_epoch_fn = validate_epoch_noncorruptedslices
+#         evaluate_model_fn = evaluate_model_on_test_noncorruptedslices
+#         criterion = SSIM_L1_GlobalLoss(alpha=0.8, beta=0.1)
+#         dataset_cls = OCTAInpaintingDataset_NonCorruptedSlices
+#     else:
+#         model = UNet2p5D(in_channels=stack_size, out_channels=1).to(device)
+#         train_epoch_fn = train_epoch
+#         validate_epoch_fn = validate_epoch
+#         evaluate_model_fn = evaluate_model_on_test
+#         criterion = SSIM_L1_GlobalLoss(alpha=0.8, beta=0.1)
+#         dataset_cls = OCTAInpaintingDataset
 
+#     # === Datasets and Augment ===
+#     transform = IntensityAugment(scale_range=(0.95, 1.05), noise_std=0.005, bias_range=(-0.02, 0.02)) if augment else None
+#     train_dataset = dataset_cls(train_vols, stack_size=stack_size, transform=transform)
+#     val_dataset   = dataset_cls(val_vols, stack_size=stack_size)
+#     test_dataset  = dataset_cls(test_vols, stack_size=stack_size)
 
-        # === 5. Volume-Wise Evaluation ===
-        log("Evaluating inpainted volume metrics...")
+#     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=0)
+#     val_loader   = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False, num_workers=0)
+#     test_loader  = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=0)
 
-        gt_volume = tiff.imread(test_gt_path)
-        metrics = evaluate_volume_metrics(gt_volume, corrected_inpainted_volume, mask)
+#     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=1e-5)
+#     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', patience=4, factor=0.5, verbose=False)
+#     early_stopping = EarlyStopping(patience=5, min_delta=1e-4, verbose=False)
 
-        log(f"Volume Metrics for {base_name}:")
-        log(f" - L1 Loss: {metrics['L1']}")
-        log(f" - SSIM: {metrics['SSIM']}")
-        log(f" - Mean Intensity Diff: {metrics['MeanIntensityError']}")
+#     best_model_path = f"output/best_model_f{fold_idx}_{loss_type}_aug{augment}_vmask{use_valid_mask_loss}_s{stack_size}.pth"
 
+#     # === Train ===
+#     best_val_loss = float('inf')
+#     for epoch in range(1, args.epochs + 1):
+#         train_loss = train_epoch_fn(model, train_loader, optimizer, criterion, device)
+#         val_loss = validate_epoch_fn(model, val_loader, criterion, device)
+#         scheduler.step(val_loss)
 
-    mean_test_loss = np.mean(test_losses)
-    log(f"\n===== K-FOLD AVERAGE TEST LOSS: {mean_test_loss:.4f} =====")
+#         if val_loss < best_val_loss:
+#             best_val_loss = val_loss
+#             torch.save(model.state_dict(), best_model_path)
+
+#         early_stopping.step(val_loss)
+#         if early_stopping.should_stop:
+#             break
+
+#     # === Test + Save ===
+#     model.load_state_dict(torch.load(best_model_path))
+#     model.eval()
+#     test_loss = evaluate_model_fn(model, test_loader, criterion, device)
+
+#     # Inpainting
+#     corrupted_volume = tiff.imread(test_corrupted_path)
+#     mask = tiff.imread(test_mask_path)
+#     if mask.ndim == 3:
+#         mask = (mask[:, 0, 0] > 0).astype(np.uint8)
+#     else:
+#         mask = mask.astype(np.uint8)
+
+#     inpainted = inpaint_volume_with_model(model, corrupted_volume, mask, device, stack_size=stack_size)
+#     corrected = smooth_rescale_reconstructed_volume(inpainted, corrupted_volume, mask, blend_factor=0.5)
+
+#     tag = f"inpainted_L{loss_type}_aug{augment}_vmask{use_valid_mask_loss}_s{stack_size}.tif"
+#     out_path = os.path.join(os.path.dirname(test_corrupted_path), f"{base_name}_{tag}")
+#     tiff.imwrite(out_path, corrected.astype(np.uint16))
+#     log(f"Saved: {out_path}")
+
+#     # Evaluate metrics
+#     gt = tiff.imread(test_gt_path)
+#     metrics = evaluate_volume_metrics(gt, corrected, mask)
+#     log(f"Metrics [{tag}]: {metrics}")
 
 
 if __name__ == "__main__":
     main()
-
-
-    # # === 5. Compare Linear Interpolation, 2.5D CNN, Ground Truth ===
-    # log("Comparing results...")
-
-    # # Load all volumes for comparison
-    # gt = normalize(load_volume(test_gt_path))
-    # linear = normalize(load_volume(test_corrupted_path.replace("_corrupted.tif", "_LinearInterp.tif")))
-    # predicted = normalize(load_volume(predicted_output_path))
-
-    # assert gt.shape == linear.shape == predicted.shape, "Volumes must match shape!"
-    
-    # === Run Comparison ===
-    # run_comparison(
-    #     gt_path="/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing/1.1_OCT_uint16_Preprocessed_Volume1_VertCropped_seqSVD.tif",
-    #     linear_path="/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing/1.1_OCT_uint16_Preprocessed_Volume1_VertCropped_seqSVD_Corrupted_LinearInterp_28percent_2to8sizeblock.tif",
-    #     predicted_path="/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing/1.1_OCT_uint16_Preprocessed_Volume1_VertCropped_seqSVD_Corrupted_2p5DUNet_28percent_2to8sizeblock.tif"
-    # )
-    
