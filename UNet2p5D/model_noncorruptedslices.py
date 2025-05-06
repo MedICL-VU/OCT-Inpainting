@@ -56,7 +56,7 @@ class OutConv(nn.Module):
     def forward(self, x):
         return self.out_conv(x)
 
-class UNet2p5D(nn.Module):
+class UNet2p5D_NonCorruptedSlices(nn.Module):
     def __init__(self, in_channels=5, out_channels=1, features=[64, 128, 256, 512]):
         super().__init__()
         # self.inc = DoubleConv(in_channels, features[0])

@@ -3,7 +3,7 @@ from torch.utils.data import Dataset
 import tifffile as tiff
 import numpy as np
 
-class OCTAInpaintingDataset_NonCorruptedSlices(Dataset):
+class OCTAInpaintingDataset_BrightnessAware(Dataset):
     def __init__(self, volume_triples: list, stack_size=5, transform=None):
         """
         Args:
@@ -38,30 +38,18 @@ class OCTAInpaintingDataset_NonCorruptedSlices(Dataset):
     def __len__(self):
         return len(self.data)
 
-    # def __getitem__(self, idx):
-    #     stack, target = self.data[idx]
-
-    #     if self.transform:
-    #         stack, target = self.transform(stack, target)
-
-    #     # Convert to torch tensors and normalize to [0, 1]
-    #     stack = torch.from_numpy(stack).float() / 65535.0             # (stack_size, H, W)
-    #     target = torch.from_numpy(target).float().unsqueeze(0) / 65535.0  # (1, H, W)
-
-    #     return stack, target
-
     def __getitem__(self, idx):
         stack, target = self.data[idx]
 
         if self.transform:
             stack, target = self.transform(stack, target)
 
-        # Normalize and convert to tensors
-        stack = torch.from_numpy(stack).float() / 65535.0  # shape (stack_size, H, W)
-        target = torch.from_numpy(target).float().unsqueeze(0) / 65535.0  # shape (1, H, W)
+        # Convert to torch tensors and normalize to [0, 1]
+        stack = torch.from_numpy(stack).float() / 65535.0             # (stack_size, H, W)
+        target = torch.from_numpy(target).float().unsqueeze(0) / 65535.0  # (1, H, W)
 
-        # Validity mask: 1 where pixel > 0, 0 where black
-        validity_mask = (stack > 0).float()
+        # Build valid mask from non-zero slices in stack
+        valid_mask_stack = (stack.sum(dim=(1, 2)) > 1e-3).float()  # (stack_size,)
 
-        return stack, validity_mask, target
+        return stack, target, valid_mask_stack
     

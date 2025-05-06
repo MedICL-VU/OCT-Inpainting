@@ -10,12 +10,20 @@ from tqdm import tqdm
 from sklearn.model_selection import KFold
 
 # Import your modules (assumes they are saved in .py files)
-from dataset import OCTAInpaintingDataset
+from dataset import OCTAInpaintingDataset, IntensityAugment
 from model import UNet2p5D
 from train_val import train_epoch, validate_epoch, evaluate_model_on_test, EarlyStopping, SSIM_L1_GlobalLoss
 from save_inpainted import inpaint_volume_with_model, smooth_rescale_reconstructed_volume
 # from compare_inpainting_tifs import run_comparison, normalize, load_volume
 from utils import log
+
+from model_noncorruptedslices import UNet2p5D_NonCorruptedSlices
+from dataset_brightnessawareness import OCTAInpaintingDataset_BrightnessAware
+from dataset_noncorruptedslices import OCTAInpaintingDataset_NonCorruptedSlices
+from train_val_brightnessawareness import train_epoch_brightnessawareness, validate_epoch_brightnessawareness, \
+    evaluate_model_on_test_brightnessawareness, SSIM_L1_GSSIM_L1_BrightnessAwareLosslobalLoss
+from train_val_noncorruptedslices import train_epoch_noncorruptedslices, validate_epoch_noncorruptedslices, \
+    evaluate_model_on_test_noncorruptedslices, SSIM_L1_NonCorruptedSlicesLoss
 
 
 def evaluate_volume_metrics(gt, pred, mask):
@@ -133,6 +141,8 @@ def main():
 
 
         # Build datasets
+        # augment = IntensityAugment(scale_range=(0.95, 1.05), noise_std=0.005, bias_range=(-0.02, 0.02))
+        # train_dataset = OCTAInpaintingDataset(train_vols, stack_size=args.stack_size, transform=augment)
         train_dataset = OCTAInpaintingDataset(train_vols, stack_size=args.stack_size)
         val_dataset   = OCTAInpaintingDataset(val_vols, stack_size=args.stack_size)
         test_dataset  = OCTAInpaintingDataset(test_vols, stack_size=args.stack_size)
@@ -145,6 +155,7 @@ def main():
         log("Initializing model...")
         model = UNet2p5D(in_channels=args.stack_size, out_channels=1).to(device)
         criterion = SSIM_L1_GlobalLoss(alpha=0.8, beta=0.1)
+        # criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.8, beta=0.1, gamma=0.1)
         optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=1e-5)
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', patience=4, factor=0.5, verbose=True)
         early_stopping = EarlyStopping(patience=5, min_delta=1e-4, verbose=True)

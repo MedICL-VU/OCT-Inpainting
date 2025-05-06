@@ -4,7 +4,7 @@ from tqdm import tqdm
 from pytorch_msssim import ssim
 from utils import log
 
-def train_epoch(model, dataloader, optimizer, criterion, device):
+def train_epoch_noncorruptedslices(model, dataloader, optimizer, criterion, device):
     model.train()
     running_loss = 0.0
 
@@ -31,7 +31,7 @@ def train_epoch(model, dataloader, optimizer, criterion, device):
     return running_loss / len(dataloader.dataset)
 
 
-def validate_epoch(model, dataloader, criterion, device):
+def validate_epoch_noncorruptedslices(model, dataloader, criterion, device):
     model.eval()
     total_loss = 0.0
 
@@ -50,7 +50,7 @@ def validate_epoch(model, dataloader, criterion, device):
     return total_loss / len(dataloader.dataset)
 
 
-def evaluate_model_on_test(model, dataloader, criterion, device):
+def evaluate_model_on_test_noncorruptedslices(model, dataloader, criterion, device):
     model.eval()
     total_loss = 0.0
 
