@@ -80,6 +80,7 @@ class SSIM_L1_BrightnessAwareLoss(nn.Module):
         self.l1 = nn.L1Loss()
 
     def forward(self, pred, target, stack, valid_mask=None):
+    # def forward(self, pred, target, stack, valid_mask):
         # pred, target: (B, 1, H, W)
         # stack: (B, S, H, W), valid_mask: (B, S)
 

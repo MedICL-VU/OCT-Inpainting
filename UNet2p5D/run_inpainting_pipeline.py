@@ -306,7 +306,7 @@ def run_single_experiment(fold_idx, triplet_folds, device, args, loss_type, augm
 #     inpainted = inpaint_volume_with_model(model, corrupted_volume, mask, device, stack_size=stack_size)
 #     corrected = smooth_rescale_reconstructed_volume(inpainted, corrupted_volume, mask, blend_factor=0.5)
 
-#     tag = f"inpainted_L{loss_type}_aug{augment}_vmask{use_valid_mask_loss}_s{stack_size}.tif"
+#     tag = f"AblationOutput/inpainted_L{loss_type}_aug{augment}_vmask{use_valid_mask_loss}_s{stack_size}.tif"
 #     out_path = os.path.join(os.path.dirname(test_corrupted_path), f"{base_name}_{tag}")
 #     tiff.imwrite(out_path, corrected.astype(np.uint16))
 #     log(f"Saved: {out_path}")
