@@ -122,63 +122,73 @@ def inpaint_volume_with_model_noncorruptedslices(model, corrupted_volume, mask, 
     return inpainted
 
 
-def inpaint_volume_recursive_noncorruptedslices_hybrid(model, volume, valid_mask, device, stack_size=5):
+def get_contiguous_missing_regions(mask):
     """
-    Recursively inpaints missing slices in a volume from the outside-in using validity-aware context.
-
-    Args:
-        model (torch.nn.Module): Trained PyTorch inpainting model.
-        volume (np.ndarray): Input volume of shape (D, H, W), where D is number of B-scans.
-        valid_mask (np.ndarray): Binary array of shape (D,) indicating valid (1) vs. missing (0) slices.
-        stack_size (int): Number of slices to include as input to the model.
-        device (str): Device for inference.
-
-    Returns:
-        volume (np.ndarray): Inpainted volume of shape (D, H, W).
-        valid_mask (np.ndarray): Updated mask with 1's for all inpainted slices.
+    Given a 1D binary mask (1 = missing), return a list of contiguous missing regions.
+    Each region is a list of indices.
     """
+    regions = []
+    current = []
+
+    for i, val in enumerate(mask):
+        if val == 1:
+            current.append(i)
+        elif current:
+            regions.append(current)
+            current = []
+    if current:
+        regions.append(current)
+
+    return regions
+
+
+def inpaint_volume_recursive_noncorruptedslices_hybrid(model, volume, mask, device, stack_size=5):
+    """
+    Recursively inpaints missing slices from outside-in using only valid slices in the stack.
+    Mirrors the validity-aware logic from noncorruptedslices() and uses recursive updating.
+    """
+    model.eval()
+    volume = volume.copy().astype(np.float32)
     D, H, W = volume.shape
-    half = stack_size // 2
-    volume = volume.copy()
-    valid_mask = valid_mask.copy()
+    pad = stack_size // 2
 
-    def get_valid_stack(center_idx):
-        indices = list(range(center_idx - half, center_idx + half + 1))
-        stack = []
-        for i in indices:
-            if 0 <= i < D and valid_mask[i] == 1:
-                stack.append(volume[i])
-            else:
-                stack.append(np.zeros((H, W), dtype=np.float32))
-        return np.stack(stack, axis=0)
+    # Initialize reconstructed volume and mask
+    reconstructed = volume.copy()
+    reconstructed_mask = 1 - mask.copy()  # 1 = valid, 0 = missing
 
-    def find_missing_ranges(mask):
-        missing = np.where(mask == 0)[0]
-        if len(missing) == 0:
-            return []
-        groups = []
-        start = missing[0]
-        for i in range(1, len(missing)):
-            if missing[i] != missing[i - 1] + 1:
-                groups.append((start, missing[i - 1]))
-                start = missing[i]
-        groups.append((start, missing[-1]))
-        return groups
+    # Pad volume and mask for easier indexing near boundaries
+    padded_volume = np.pad(reconstructed, ((pad, pad), (0, 0), (0, 0)), mode='edge')
+    padded_mask = np.pad(reconstructed_mask, (pad,), mode='edge')
 
-    for start, end in find_missing_ranges(valid_mask):
-        left, right = start, end
-        while left <= right:
-            for idx in [left, right] if left != right else [left]:
-                input_stack = get_valid_stack(idx)
-                input_tensor = torch.from_numpy(input_stack).unsqueeze(0).to(device).float() / 65535.0
-                with torch.no_grad():
-                    pred = model(input_tensor).cpu().squeeze().numpy() * 65535.0
-                volume[idx] = pred
-                valid_mask[idx] = 1
-            left += 1
-            right -= 1
+    regions = get_contiguous_missing_regions(mask)
 
-    return volume, valid_mask
+    with torch.no_grad():
+        for region in regions:
+            queue = region.copy()
+            while queue:
+                i = queue.pop(0) if abs(queue[0] - region[0]) <= abs(queue[-1] - region[-1]) else queue.pop()
+
+                padded_idx = i + pad  # Shift due to padding
+                stack = padded_volume[padded_idx - pad:padded_idx + pad + 1]  # (stack_size, H, W)
+                validity = padded_mask[padded_idx - pad:padded_idx + pad + 1]  # (stack_size,)
+
+                # Stack tensors
+                stack_tensor = torch.tensor(stack, dtype=torch.float32).unsqueeze(0).to(device) / 65535.0  # (1, stack_size, H, W)
+                validity_tensor = torch.tensor(validity, dtype=torch.float32).view(1, stack_size, 1, 1).to(device)
+                validity_tensor = validity_tensor.expand(-1, -1, H, W)
+
+                # Concatenate input and validity
+                model_input = torch.cat([stack_tensor, validity_tensor], dim=1)  # (1, 2*stack_size, H, W)
+                output = model(model_input).squeeze().cpu().numpy() * 65535.0
+                output = np.clip(output, 0, 65535).astype(np.uint16)
+
+                # Update volume and padded version for recursive use
+                reconstructed[i] = output
+                reconstructed_mask[i] = 1
+                padded_volume[padded_idx] = output
+                padded_mask[padded_idx] = 1
+
+    return reconstructed.astype(np.uint16)
 
 
 def smooth_rescale_reconstructed_volume(reconstructed_volume, corrupted_volume, mask, blend_factor=0.5):

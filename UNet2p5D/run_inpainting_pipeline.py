@@ -243,7 +243,7 @@ def run_single_experiment(fold_idx, triplet_folds, device, args, loss_type, augm
     }
 
     for strategy_name, inpaint_fn in inpainting_strategies.items():
-        if not use_valid_mask_loss and strategy_name in ["noncorrupted"]:
+        if not use_valid_mask_loss and strategy_name in ["noncorrupted", "hybrid"]:
             log(f"⚠️ Skipping '{strategy_name}' inpainting (requires valid mask loss model).")
             continue
         if use_valid_mask_loss and strategy_name in ["original", "outsidein"]:
