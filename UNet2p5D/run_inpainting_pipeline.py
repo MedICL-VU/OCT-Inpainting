@@ -1,6 +1,6 @@
 import os
 import torch
-from pytorch_msssim import ssim as compute_ssim
+from piq import ssim
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from torch.optim import Adam
@@ -19,20 +19,38 @@ from utils import log
 
 
 def evaluate_volume_metrics(gt, pred, mask):
-    """Evaluate metrics on the masked (corrupted) regions only."""
+    """Evaluate L1, SSIM, and intensity error over corrupted (masked) slices only."""
     assert gt.shape == pred.shape, "Shapes must match"
-    gt = torch.from_numpy(gt).unsqueeze(0).unsqueeze(0).float() / 65535.0  # (1, 1, D, H, W)
-    pred = torch.from_numpy(pred).unsqueeze(0).unsqueeze(0).float() / 65535.0
-    mask = torch.from_numpy(mask).view(1, 1, -1, 1, 1).float()  # (1, 1, D, 1, 1)
+    
+    gt = torch.from_numpy(gt).float() / 65535.0  # (D, H, W)
+    pred = torch.from_numpy(pred).float() / 65535.0
+    mask = torch.from_numpy(mask).float()  # (D,) where 1 = corrupted
 
-    l1 = F.l1_loss(pred * mask, gt * mask).item()
-    mean_diff = torch.abs(pred.mean() - gt.mean()).item()
-    ssim_score = compute_ssim(pred.squeeze(0), gt.squeeze(0), data_range=1.0)
+    D, H, W = gt.shape
+    l1_vals = []
+    ssim_vals = []
+    num_masked = 0
+
+    for i in range(D):
+        if mask[i] == 1:
+            gt_slice = gt[i]
+            pred_slice = pred[i]
+            l1_vals.append(F.l1_loss(pred_slice, gt_slice, reduction='mean').item())
+            ssim_vals.append(ssim(pred_slice.unsqueeze(0).unsqueeze(0), gt_slice.unsqueeze(0).unsqueeze(0), data_range=1.0).item())
+            num_masked += 1
+
+    if num_masked == 0:
+        return {
+            "L1": None,
+            "SSIM": None,
+            "MeanIntensityError": torch.abs(pred.mean() - gt.mean()).item(),
+            "Note": "No masked slices to evaluate"
+        }
 
     return {
-        "L1": round(l1, 4),
-        "SSIM": round(ssim_score.item(), 4),
-        "MeanIntensityError": round(mean_diff, 4)
+        "L1": round(sum(l1_vals) / num_masked, 4),
+        "SSIM": round(sum(ssim_vals) / num_masked, 4),
+        "MeanIntensityError": round(torch.abs(pred.mean() - gt.mean()).item(), 4)
     }
 
 
