@@ -1,0 +1,35 @@
+Starting Ablation Study Pipeline
+
+--- Running configuration: Loss=global, Augment=False, MaskedLoss=False, StackSize=5 ---
+
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_original_Lglobal_augFalse_vmaskFalse_s5.tif]: {'L1': 0.0287, 'SSIM': 0.5024, 'MeanIntensityError': 0.0015}
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_outsidein_Lglobal_augFalse_vmaskFalse_s5.tif]: {'L1': 0.0294, 'SSIM': 0.5075, 'MeanIntensityError': 0.0011}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+
+--- Running configuration: Loss=global, Augment=False, MaskedLoss=False, StackSize=9 ---
+
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_original_Lglobal_augFalse_vmaskFalse_s9.tif]: {'L1': 0.0178, 'SSIM': 0.707, 'MeanIntensityError': 0.0005}
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_outsidein_Lglobal_augFalse_vmaskFalse_s9.tif]: {'L1': 0.0242, 'SSIM': 0.6895, 'MeanIntensityError': 0.0022}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+
+--- Running configuration: Loss=global, Augment=False, MaskedLoss=False, StackSize=13 ---
+
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_original_Lglobal_augFalse_vmaskFalse_s13.tif]: {'L1': 0.016, 'SSIM': 0.7305, 'MeanIntensityError': 0.0001}
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_outsidein_Lglobal_augFalse_vmaskFalse_s13.tif]: {'L1': 0.0184, 'SSIM': 0.7232, 'MeanIntensityError': 0.0009}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+
+--- Running configuration: Loss=global, Augment=False, MaskedLoss=True, StackSize=5 ---
+
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lglobal_augFalse_vmaskTrue_s5.tif]: {'L1': 0.079, 'SSIM': 0.1601, 'MeanIntensityError': 0.0077}

@@ -1,0 +1,38 @@
+Starting Ablation Study Pipeline
+
+--- Running configuration: Loss=global, Augment=False, MaskedLoss=False, StackSize=5 ---
+
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_original_Lglobal_augFalse_vmaskFalse_s5.tif]: {'L1': 0.0238, 'SSIM': 0.6094, 'MeanIntensityError': 0.0005}
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_outsidein_Lglobal_augFalse_vmaskFalse_s5.tif]: {'L1': 0.0281, 'SSIM': 0.5431, 'MeanIntensityError': 0.0002}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_hybrid_Lglobal_augFalse_vmaskFalse_s5.tif]: {'L1': 0.0335, 'SSIM': 0.1224, 'MeanIntensityError': 0.3814}
+
+--- Running configuration: Loss=global, Augment=False, MaskedLoss=False, StackSize=9 ---
+
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_original_Lglobal_augFalse_vmaskFalse_s9.tif]: {'L1': 0.0187, 'SSIM': 0.6852, 'MeanIntensityError': 0.0001}
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_outsidein_Lglobal_augFalse_vmaskFalse_s9.tif]: {'L1': 0.0196, 'SSIM': 0.6765, 'MeanIntensityError': 0.0003}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_hybrid_Lglobal_augFalse_vmaskFalse_s9.tif]: {'L1': 0.0335, 'SSIM': 0.1224, 'MeanIntensityError': 0.3675}
+
+--- Running configuration: Loss=global, Augment=False, MaskedLoss=False, StackSize=13 ---
+
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_original_Lglobal_augFalse_vmaskFalse_s13.tif]: {'L1': 0.0162, 'SSIM': 0.7417, 'MeanIntensityError': 0.0002}
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_outsidein_Lglobal_augFalse_vmaskFalse_s13.tif]: {'L1': 0.0174, 'SSIM': 0.7353, 'MeanIntensityError': 0.0008}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_hybrid_Lglobal_augFalse_vmaskFalse_s13.tif]: {'L1': 0.0335, 'SSIM': 0.1224, 'MeanIntensityError': 0.3729}
+
+--- Running configuration: Loss=global, Augment=False, MaskedLoss=True, StackSize=5 ---
+
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lglobal_augFalse_vmaskTrue_s5.tif]: {'L1': 0.0502, 'SSIM': 0.1587, 'MeanIntensityError': 0.0001}

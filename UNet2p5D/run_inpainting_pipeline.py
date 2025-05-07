@@ -11,8 +11,6 @@ from tqdm import tqdm
 from sklearn.model_selection import KFold
 import argparse
 import itertools
-
-from save_inpainted import inpaint_volume_with_model, smooth_rescale_reconstructed_volume
 from utils import log
 
 
@@ -102,6 +100,8 @@ def main():
     args = parse_args()
     device = torch.device('cuda' if args.cuda and torch.cuda.is_available() else 'cpu')
 
+    results = []  # List to collect metrics for all runs
+
     log("Starting Ablation Study Pipeline")
     volume_triplets = load_volume_triplets("/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing/")
     folds = get_kfold_splits(volume_triplets, k=5)
@@ -118,8 +118,6 @@ def main():
     stack_sizes = [5, 9, 13]
 
     combinations = list(itertools.product(loss_types, augment_flags, validity_loss_flags, stack_sizes))
-
-    results = []  # List to collect metrics for all runs
 
     for loss_type, augment, use_valid_mask_loss, stack_size in combinations:
         log(f"\n--- Running configuration: "
@@ -139,7 +137,7 @@ def main():
             )
 
     df = pd.DataFrame(results)
-    df.to_csv("AblationOutput/inpainting_ablation_metrics.csv", index=False)
+    df.to_csv("/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing/inpainting_ablation_metrics.csv", index=False)
     print("Metrics saved to AblationOutput/inpainting_ablation_metrics.csv")
 
 
@@ -156,6 +154,8 @@ def run_single_experiment(fold_idx, triplet_folds, device, args, loss_type, augm
         evaluate_model_on_test_noncorruptedslices
     from train_val_brightness_noncorrupted import train_epoch_brightness_noncorrupted, validate_epoch_brightness_noncorrupted, \
         evaluate_model_on_test_brightness_noncorrupted
+    from save_inpainted import inpaint_volume_with_model_original, inpaint_volume_with_model_recursive_outsidein, \
+        inpaint_volume_with_model_noncorruptedslices, inpaint_volume_recursive_noncorruptedslices_hybrid, smooth_rescale_reconstructed_volume
 
     train_vols, val_vols, test_vols = triplet_folds[fold_idx]
     test_corrupted_path, test_gt_path, test_mask_path = test_vols[0]
@@ -235,30 +235,50 @@ def run_single_experiment(fold_idx, triplet_folds, device, args, loss_type, augm
     else:
         mask = mask.astype(np.uint8)
 
-    inpainted = inpaint_volume_with_model(model, corrupted_volume, mask, device, stack_size=stack_size)
-    corrected = smooth_rescale_reconstructed_volume(inpainted, corrupted_volume, mask, blend_factor=0.5)
+    inpainting_strategies = {
+        "original": inpaint_volume_with_model_original,
+        "outsidein": inpaint_volume_with_model_recursive_outsidein,
+        "noncorrupted": inpaint_volume_with_model_noncorruptedslices,
+        "hybrid": inpaint_volume_recursive_noncorruptedslices_hybrid
+    }
 
-    tag = f"AblationOutput/inpainted_L{loss_type}_aug{augment}_vmask{use_valid_mask_loss}_s{stack_size}.tif"
-    out_path = os.path.join(os.path.dirname(test_corrupted_path), f"{base_name}_{tag}")
-    tiff.imwrite(out_path, corrected.astype(np.uint16))
-    log(f"Saved: {out_path}")
+    for strategy_name, inpaint_fn in inpainting_strategies.items():
+        if not use_valid_mask_loss and strategy_name in ["noncorrupted"]:
+            log(f"⚠️ Skipping '{strategy_name}' inpainting (requires valid mask loss model).")
+            continue
+        if use_valid_mask_loss and strategy_name in ["original", "outsidein"]:
+            log(f"⚠️ Skipping '{strategy_name}' inpainting (requires model trained without valid mask loss).")
+            continue
 
-    # Evaluate metrics
-    gt = tiff.imread(test_gt_path)
-    metrics = evaluate_volume_metrics(gt, corrected, mask)
-    log(f"Metrics [{tag}]: {metrics}")
+        inpainted = inpaint_fn(model, corrupted_volume, mask, device, stack_size)
+        if isinstance(inpainted, tuple):
+            inpainted_volume = inpainted[0]
+        else:
+            inpainted_volume = inpainted
 
-    results.append({
-        "LossType": loss_type,
-        "Augment": augment,
-        "MaskedLoss": use_valid_mask_loss,
-        "StackSize": stack_size,
-        "Fold": fold_idx,
-        "L1": metrics["L1"],
-        "SSIM": metrics["SSIM"],
-        "MeanIntensityError": metrics["MeanIntensityError"]
-    })
+        corrected = smooth_rescale_reconstructed_volume(inpainted_volume, corrupted_volume, mask, blend_factor=0.5)
 
+        tag = f"inpainted_{strategy_name}_L{loss_type}_aug{augment}_vmask{use_valid_mask_loss}_s{stack_size}.tif"
+        out_path = os.path.join(os.path.dirname(test_corrupted_path), f"AblationOutput/{base_name}_{tag}")
+        tiff.imwrite(out_path, corrected.astype(np.uint16))
+        log(f"Saved: {base_name}")
+
+        # Evaluate metrics
+        gt = tiff.imread(test_gt_path)
+        metrics = evaluate_volume_metrics(gt, corrected, mask)
+        log(f"Metrics [{tag}]: {metrics}")
+
+        results.append({
+            "LossType": loss_type,
+            "Augment": augment,
+            "MaskedLoss": use_valid_mask_loss,
+            "StackSize": stack_size,
+            "Fold": fold_idx,
+            "InpaintMethod": strategy_name,
+            "L1": metrics["L1"],
+            "SSIM": metrics["SSIM"],
+            "MeanIntensityError": metrics["MeanIntensityError"]
+        })
 
 
 if __name__ == "__main__":

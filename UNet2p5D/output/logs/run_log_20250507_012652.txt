@@ -1,0 +1,8 @@
+Starting Ablation Study Pipeline
+
+--- Running configuration: Loss=global, Augment=False, MaskedLoss=False, StackSize=5 ---
+
+Saved: /media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing/AblationOutput/1.2_OCTA_Vol2_Processed_Cropped_inpainted_original_Lglobal_augFalse_vmaskFalse_s5.tif
+Metrics [inpainted_original_Lglobal_augFalse_vmaskFalse_s5.tif]: {'L1': 0.0193, 'SSIM': 0.6934, 'MeanIntensityError': 0.0008}
+Saved: /media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing/AblationOutput/1.2_OCTA_Vol2_Processed_Cropped_inpainted_outsidein_Lglobal_augFalse_vmaskFalse_s5.tif
+Metrics [inpainted_outsidein_Lglobal_augFalse_vmaskFalse_s5.tif]: {'L1': 0.0294, 'SSIM': 0.6713, 'MeanIntensityError': 0.0036}
