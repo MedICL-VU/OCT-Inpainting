@@ -1,0 +1,193 @@
+=== SANITY CHECK: 24-Config Forward-Pass Only ===
+
+[CONFIG] Loss=global, Augment=False, MaskedLoss=False, StackSize=5
+✅ Dataset sample shapes:
+  input[0]: torch.Size([5, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([1, 165, 400]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+✅ Loss computed: 0.079123
+
+[CONFIG] Loss=global, Augment=False, MaskedLoss=False, StackSize=9
+✅ Dataset sample shapes:
+  input[0]: torch.Size([9, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([1, 165, 400]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+✅ Loss computed: 0.127069
+
+[CONFIG] Loss=global, Augment=False, MaskedLoss=False, StackSize=13
+✅ Dataset sample shapes:
+  input[0]: torch.Size([13, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([1, 165, 400]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+✅ Loss computed: 0.085639
+
+[CONFIG] Loss=global, Augment=False, MaskedLoss=True, StackSize=5
+✅ Dataset sample shapes:
+  input[0]: torch.Size([5, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([5, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([1, 165, 400]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+✅ Loss computed: 0.165432
+
+[CONFIG] Loss=global, Augment=False, MaskedLoss=True, StackSize=9
+✅ Dataset sample shapes:
+  input[0]: torch.Size([9, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([9, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([1, 165, 400]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+✅ Loss computed: 0.383581
+
+[CONFIG] Loss=global, Augment=False, MaskedLoss=True, StackSize=13
+✅ Dataset sample shapes:
+  input[0]: torch.Size([13, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([13, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([1, 165, 400]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+✅ Loss computed: 0.401768
+
+[CONFIG] Loss=global, Augment=True, MaskedLoss=False, StackSize=5
+✅ Dataset sample shapes:
+  input[0]: torch.Size([5, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([1, 165, 400]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+✅ Loss computed: 0.084150
+
+[CONFIG] Loss=global, Augment=True, MaskedLoss=False, StackSize=9
+✅ Dataset sample shapes:
+  input[0]: torch.Size([9, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([1, 165, 400]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+✅ Loss computed: 0.084476
+
+[CONFIG] Loss=global, Augment=True, MaskedLoss=False, StackSize=13
+✅ Dataset sample shapes:
+  input[0]: torch.Size([13, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([1, 165, 400]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+✅ Loss computed: 0.372381
+
+[CONFIG] Loss=global, Augment=True, MaskedLoss=True, StackSize=5
+✅ Dataset sample shapes:
+  input[0]: torch.Size([5, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([5, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([1, 165, 400]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+✅ Loss computed: 0.151911
+
+[CONFIG] Loss=global, Augment=True, MaskedLoss=True, StackSize=9
+✅ Dataset sample shapes:
+  input[0]: torch.Size([9, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([9, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([1, 165, 400]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+✅ Loss computed: 0.149210
+
+[CONFIG] Loss=global, Augment=True, MaskedLoss=True, StackSize=13
+✅ Dataset sample shapes:
+  input[0]: torch.Size([13, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([13, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([1, 165, 400]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+✅ Loss computed: 0.360329
+
+[CONFIG] Loss=brightness_aware, Augment=False, MaskedLoss=False, StackSize=5
+✅ Dataset sample shapes:
+  input[0]: torch.Size([5, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([1, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([5]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+❌ Loss computation failed: not enough values to unpack (expected 4, got 2)
+
+[CONFIG] Loss=brightness_aware, Augment=False, MaskedLoss=False, StackSize=9
+✅ Dataset sample shapes:
+  input[0]: torch.Size([9, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([1, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([9]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+❌ Loss computation failed: not enough values to unpack (expected 4, got 2)
+
+[CONFIG] Loss=brightness_aware, Augment=False, MaskedLoss=False, StackSize=13
+✅ Dataset sample shapes:
+  input[0]: torch.Size([13, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([1, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([13]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+❌ Loss computation failed: not enough values to unpack (expected 4, got 2)
+
+[CONFIG] Loss=brightness_aware, Augment=False, MaskedLoss=True, StackSize=5
+✅ Dataset sample shapes:
+  input[0]: torch.Size([5, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([5, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([1, 165, 400]) dtype=torch.float32
+  input[3]: torch.Size([5]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+❌ Loss computation failed: not enough values to unpack (expected 4, got 2)
+
+[CONFIG] Loss=brightness_aware, Augment=False, MaskedLoss=True, StackSize=9
+✅ Dataset sample shapes:
+  input[0]: torch.Size([9, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([9, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([1, 165, 400]) dtype=torch.float32
+  input[3]: torch.Size([9]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+❌ Loss computation failed: not enough values to unpack (expected 4, got 2)
+
+[CONFIG] Loss=brightness_aware, Augment=False, MaskedLoss=True, StackSize=13
+✅ Dataset sample shapes:
+  input[0]: torch.Size([13, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([13, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([1, 165, 400]) dtype=torch.float32
+  input[3]: torch.Size([13]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+❌ Loss computation failed: not enough values to unpack (expected 4, got 2)
+
+[CONFIG] Loss=brightness_aware, Augment=True, MaskedLoss=False, StackSize=5
+✅ Dataset sample shapes:
+  input[0]: torch.Size([5, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([1, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([5]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+❌ Loss computation failed: not enough values to unpack (expected 4, got 2)
+
+[CONFIG] Loss=brightness_aware, Augment=True, MaskedLoss=False, StackSize=9
+✅ Dataset sample shapes:
+  input[0]: torch.Size([9, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([1, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([9]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+❌ Loss computation failed: not enough values to unpack (expected 4, got 2)
+
+[CONFIG] Loss=brightness_aware, Augment=True, MaskedLoss=False, StackSize=13
+✅ Dataset sample shapes:
+  input[0]: torch.Size([13, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([1, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([13]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+❌ Loss computation failed: not enough values to unpack (expected 4, got 2)
+
+[CONFIG] Loss=brightness_aware, Augment=True, MaskedLoss=True, StackSize=5
+✅ Dataset sample shapes:
+  input[0]: torch.Size([5, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([5, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([1, 165, 400]) dtype=torch.float32
+  input[3]: torch.Size([5]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+❌ Loss computation failed: not enough values to unpack (expected 4, got 2)
+
+[CONFIG] Loss=brightness_aware, Augment=True, MaskedLoss=True, StackSize=9
+✅ Dataset sample shapes:
+  input[0]: torch.Size([9, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([9, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([1, 165, 400]) dtype=torch.float32
+  input[3]: torch.Size([9]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+❌ Loss computation failed: not enough values to unpack (expected 4, got 2)
+
+[CONFIG] Loss=brightness_aware, Augment=True, MaskedLoss=True, StackSize=13
+✅ Dataset sample shapes:
+  input[0]: torch.Size([13, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([13, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([1, 165, 400]) dtype=torch.float32
+  input[3]: torch.Size([13]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+❌ Loss computation failed: not enough values to unpack (expected 4, got 2)

@@ -93,12 +93,13 @@ class SSIM_L1_BrightnessAwareLoss(nn.Module):
         stack_means = stack.view(B, S, -1).mean(dim=2)           # (B, S)
         pred_means = pred.view(B, -1).mean(dim=1, keepdim=True)  # (B, 1)
 
-        # Only consider valid slices
-        valid_neighbors = stack_means * valid_mask               # (B, S)
-        num_valid = valid_mask.sum(dim=1, keepdim=True).clamp(min=1.0)
+        if valid_mask is not None:
+            # Only consider valid slices
+            valid_neighbors = stack_means * valid_mask               # (B, S)
+            num_valid = valid_mask.sum(dim=1, keepdim=True).clamp(min=1.0)
 
-        neighbor_mean = valid_neighbors.sum(dim=1, keepdim=True) / num_valid
-        brightness_consistency = torch.abs(pred_means - neighbor_mean).mean()
+            neighbor_mean = valid_neighbors.sum(dim=1, keepdim=True) / num_valid
+            brightness_consistency = torch.abs(pred_means - neighbor_mean).mean()
 
         return (self.alpha * l1_loss +
                 (1 - self.alpha) * ssim_loss +

@@ -1,0 +1,193 @@
+=== SANITY CHECK: 24-Config Forward-Pass Only ===
+
+[CONFIG] Loss=global, Augment=False, MaskedLoss=False, StackSize=5
+✅ Dataset sample shapes:
+  input[0]: torch.Size([5, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([1, 165, 400]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+✅ Loss computed: 0.163811
+
+[CONFIG] Loss=global, Augment=False, MaskedLoss=False, StackSize=9
+✅ Dataset sample shapes:
+  input[0]: torch.Size([9, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([1, 165, 400]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+✅ Loss computed: 0.076559
+
+[CONFIG] Loss=global, Augment=False, MaskedLoss=False, StackSize=13
+✅ Dataset sample shapes:
+  input[0]: torch.Size([13, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([1, 165, 400]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+✅ Loss computed: 0.083000
+
+[CONFIG] Loss=global, Augment=False, MaskedLoss=True, StackSize=5
+✅ Dataset sample shapes:
+  input[0]: torch.Size([5, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([5, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([1, 165, 400]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+❌ Loss computation failed: The shape of the mask [1, 1, 165, 400] at index 1 does not match the shape of the indexed tensor [1, 5, 165, 400] at index 1
+
+[CONFIG] Loss=global, Augment=False, MaskedLoss=True, StackSize=9
+✅ Dataset sample shapes:
+  input[0]: torch.Size([9, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([9, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([1, 165, 400]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+❌ Loss computation failed: The shape of the mask [1, 1, 165, 400] at index 1 does not match the shape of the indexed tensor [1, 9, 165, 400] at index 1
+
+[CONFIG] Loss=global, Augment=False, MaskedLoss=True, StackSize=13
+✅ Dataset sample shapes:
+  input[0]: torch.Size([13, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([13, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([1, 165, 400]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+❌ Loss computation failed: The shape of the mask [1, 1, 165, 400] at index 1 does not match the shape of the indexed tensor [1, 13, 165, 400] at index 1
+
+[CONFIG] Loss=global, Augment=True, MaskedLoss=False, StackSize=5
+✅ Dataset sample shapes:
+  input[0]: torch.Size([5, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([1, 165, 400]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+✅ Loss computed: 0.380272
+
+[CONFIG] Loss=global, Augment=True, MaskedLoss=False, StackSize=9
+✅ Dataset sample shapes:
+  input[0]: torch.Size([9, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([1, 165, 400]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+✅ Loss computed: 0.118779
+
+[CONFIG] Loss=global, Augment=True, MaskedLoss=False, StackSize=13
+✅ Dataset sample shapes:
+  input[0]: torch.Size([13, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([1, 165, 400]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+✅ Loss computed: 0.410839
+
+[CONFIG] Loss=global, Augment=True, MaskedLoss=True, StackSize=5
+✅ Dataset sample shapes:
+  input[0]: torch.Size([5, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([5, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([1, 165, 400]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+❌ Loss computation failed: The shape of the mask [1, 1, 165, 400] at index 1 does not match the shape of the indexed tensor [1, 5, 165, 400] at index 1
+
+[CONFIG] Loss=global, Augment=True, MaskedLoss=True, StackSize=9
+✅ Dataset sample shapes:
+  input[0]: torch.Size([9, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([9, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([1, 165, 400]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+❌ Loss computation failed: The shape of the mask [1, 1, 165, 400] at index 1 does not match the shape of the indexed tensor [1, 9, 165, 400] at index 1
+
+[CONFIG] Loss=global, Augment=True, MaskedLoss=True, StackSize=13
+✅ Dataset sample shapes:
+  input[0]: torch.Size([13, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([13, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([1, 165, 400]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+❌ Loss computation failed: The shape of the mask [1, 1, 165, 400] at index 1 does not match the shape of the indexed tensor [1, 13, 165, 400] at index 1
+
+[CONFIG] Loss=brightness_aware, Augment=False, MaskedLoss=False, StackSize=5
+✅ Dataset sample shapes:
+  input[0]: torch.Size([5, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([1, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([5]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+❌ Loss computation failed: not enough values to unpack (expected 4, got 2)
+
+[CONFIG] Loss=brightness_aware, Augment=False, MaskedLoss=False, StackSize=9
+✅ Dataset sample shapes:
+  input[0]: torch.Size([9, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([1, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([9]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+❌ Loss computation failed: not enough values to unpack (expected 4, got 2)
+
+[CONFIG] Loss=brightness_aware, Augment=False, MaskedLoss=False, StackSize=13
+✅ Dataset sample shapes:
+  input[0]: torch.Size([13, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([1, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([13]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+❌ Loss computation failed: not enough values to unpack (expected 4, got 2)
+
+[CONFIG] Loss=brightness_aware, Augment=False, MaskedLoss=True, StackSize=5
+✅ Dataset sample shapes:
+  input[0]: torch.Size([5, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([5, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([1, 165, 400]) dtype=torch.float32
+  input[3]: torch.Size([5]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+❌ Loss computation failed: Input images should have the same dimensions, but got torch.Size([1, 1, 165, 400]) and torch.Size([1, 5, 165, 400]).
+
+[CONFIG] Loss=brightness_aware, Augment=False, MaskedLoss=True, StackSize=9
+✅ Dataset sample shapes:
+  input[0]: torch.Size([9, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([9, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([1, 165, 400]) dtype=torch.float32
+  input[3]: torch.Size([9]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+❌ Loss computation failed: Input images should have the same dimensions, but got torch.Size([1, 1, 165, 400]) and torch.Size([1, 9, 165, 400]).
+
+[CONFIG] Loss=brightness_aware, Augment=False, MaskedLoss=True, StackSize=13
+✅ Dataset sample shapes:
+  input[0]: torch.Size([13, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([13, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([1, 165, 400]) dtype=torch.float32
+  input[3]: torch.Size([13]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+❌ Loss computation failed: Input images should have the same dimensions, but got torch.Size([1, 1, 165, 400]) and torch.Size([1, 13, 165, 400]).
+
+[CONFIG] Loss=brightness_aware, Augment=True, MaskedLoss=False, StackSize=5
+✅ Dataset sample shapes:
+  input[0]: torch.Size([5, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([1, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([5]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+❌ Loss computation failed: not enough values to unpack (expected 4, got 2)
+
+[CONFIG] Loss=brightness_aware, Augment=True, MaskedLoss=False, StackSize=9
+✅ Dataset sample shapes:
+  input[0]: torch.Size([9, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([1, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([9]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+❌ Loss computation failed: not enough values to unpack (expected 4, got 2)
+
+[CONFIG] Loss=brightness_aware, Augment=True, MaskedLoss=False, StackSize=13
+✅ Dataset sample shapes:
+  input[0]: torch.Size([13, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([1, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([13]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+❌ Loss computation failed: not enough values to unpack (expected 4, got 2)
+
+[CONFIG] Loss=brightness_aware, Augment=True, MaskedLoss=True, StackSize=5
+✅ Dataset sample shapes:
+  input[0]: torch.Size([5, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([5, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([1, 165, 400]) dtype=torch.float32
+  input[3]: torch.Size([5]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+❌ Loss computation failed: Input images should have the same dimensions, but got torch.Size([1, 1, 165, 400]) and torch.Size([1, 5, 165, 400]).
+
+[CONFIG] Loss=brightness_aware, Augment=True, MaskedLoss=True, StackSize=9
+✅ Dataset sample shapes:
+  input[0]: torch.Size([9, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([9, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([1, 165, 400]) dtype=torch.float32
+  input[3]: torch.Size([9]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+❌ Loss computation failed: Input images should have the same dimensions, but got torch.Size([1, 1, 165, 400]) and torch.Size([1, 9, 165, 400]).
+
+[CONFIG] Loss=brightness_aware, Augment=True, MaskedLoss=True, StackSize=13
+✅ Dataset sample shapes:
+  input[0]: torch.Size([13, 165, 400]) dtype=torch.float32
+  input[1]: torch.Size([13, 165, 400]) dtype=torch.float32
+  input[2]: torch.Size([1, 165, 400]) dtype=torch.float32
+  input[3]: torch.Size([13]) dtype=torch.float32
+✅ Model output shape: torch.Size([1, 1, 165, 400])
+❌ Loss computation failed: Input images should have the same dimensions, but got torch.Size([1, 1, 165, 400]) and torch.Size([1, 13, 165, 400]).

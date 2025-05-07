@@ -4,7 +4,6 @@ from tqdm import tqdm
 from pytorch_msssim import ssim
 from utils import log
 
-
 def train_epoch_brightness_noncorrupted(model, dataloader, optimizer, criterion, device):
     model.train()
     running_loss = 0.0
@@ -88,7 +87,7 @@ class SSIM_L1_BrightnessAwareLoss(nn.Module):
         self.gamma = gamma
         self.l1 = nn.L1Loss()
 
-    def forward(self, pred, target, stack, valid_mask):
+    def forward(self, pred, target, stack, valid_mask=None):
         # pred, target: (B, 1, H, W)
         # stack: (B, S, H, W)
         # valid_mask: (B, S)
@@ -102,12 +101,13 @@ class SSIM_L1_BrightnessAwareLoss(nn.Module):
         stack_means = stack.view(B, S, -1).mean(dim=2)           # (B, S)
         pred_means = pred.view(B, -1).mean(dim=1, keepdim=True)  # (B, 1)
 
-        # Only consider valid slices
-        valid_neighbors = stack_means * valid_mask               # (B, S)
-        num_valid = valid_mask.sum(dim=1, keepdim=True).clamp(min=1.0)
+        if valid_mask is not None:
+            # Only consider valid slices
+            valid_neighbors = stack_means * valid_mask               # (B, S)
+            num_valid = valid_mask.sum(dim=1, keepdim=True).clamp(min=1.0)
 
-        neighbor_mean = valid_neighbors.sum(dim=1, keepdim=True) / num_valid
-        brightness_consistency = torch.abs(pred_means - neighbor_mean).mean()
+            neighbor_mean = valid_neighbors.sum(dim=1, keepdim=True) / num_valid
+            brightness_consistency = torch.abs(pred_means - neighbor_mean).mean()
 
         return (self.alpha * l1_loss +
                 (1 - self.alpha) * ssim_loss +
