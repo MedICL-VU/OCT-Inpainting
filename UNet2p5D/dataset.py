@@ -2,6 +2,30 @@ import torch
 from torch.utils.data import Dataset
 import tifffile as tiff
 import numpy as np
+import random
+
+class IntensityAugment:
+    def __init__(self, scale_range=(0.9, 1.1), noise_std=0.01, bias_range=(-0.05, 0.05)):
+        self.scale_range = scale_range
+        self.noise_std = noise_std
+        self.bias_range = bias_range
+
+    def __call__(self, stack, target):
+        # Apply to both stack and target equally
+        scale = random.uniform(*self.scale_range)
+        bias = random.uniform(*self.bias_range)
+        noise = np.random.normal(0, self.noise_std * 65535, size=stack.shape)
+
+        # Apply scale, noise, and bias
+        stack = stack.astype(np.float32) * scale + noise + bias * 65535
+        target = target.astype(np.float32) * scale + bias * 65535
+
+        # Clip back to uint16 range
+        stack = np.clip(stack, 0, 65535).astype(np.uint16)
+        target = np.clip(target, 0, 65535).astype(np.uint16)
+
+        return stack, target
+    
 
 class OCTAInpaintingDataset(Dataset):
     def __init__(self, volume_triples: list, stack_size=5, transform=None):
