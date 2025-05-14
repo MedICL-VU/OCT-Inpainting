@@ -418,3 +418,99 @@ Predicted Volume 2:
   Mean MAE  (missing slices only): 0.010424
   Mean MSE  (missing slices only): 0.000250
 ----------------------------------------
+Predicted Volume 1:
+  Mean PSNR (missing slices only): 35.08 dB
+  Mean SSIM (missing slices only): 0.8018
+  Mean MAE  (missing slices only): 0.011726
+  Mean MSE  (missing slices only): 0.000314
+----------------------------------------
+Predicted Volume 2:
+  Mean PSNR (missing slices only): 34.97 dB
+  Mean SSIM (missing slices only): 0.7987
+  Mean MAE  (missing slices only): 0.011925
+  Mean MSE  (missing slices only): 0.000322
+----------------------------------------
+Predicted Volume 1:
+  Mean PSNR (missing slices only): 35.08 dB
+  Mean SSIM (missing slices only): 0.8018
+  Mean MAE  (missing slices only): 0.011726
+  Mean MSE  (missing slices only): 0.000314
+----------------------------------------
+Predicted Volume 2:
+  Mean PSNR (missing slices only): 35.17 dB
+  Mean SSIM (missing slices only): 0.8044
+  Mean MAE  (missing slices only): 0.011597
+  Mean MSE  (missing slices only): 0.000308
+----------------------------------------
+Predicted Volume 1:
+  Mean PSNR (missing slices only): 35.08 dB
+  Mean SSIM (missing slices only): 0.8018
+  Mean MAE  (missing slices only): 0.011726
+  Mean MSE  (missing slices only): 0.000314
+----------------------------------------
+Predicted Volume 2:
+  Mean PSNR (missing slices only): 34.75 dB
+  Mean SSIM (missing slices only): 0.7985
+  Mean MAE  (missing slices only): 0.012039
+  Mean MSE  (missing slices only): 0.000340
+----------------------------------------
+Predicted Volume 1:
+  Mean PSNR (missing slices only): 35.08 dB
+  Mean SSIM (missing slices only): 0.8018
+  Mean MAE  (missing slices only): 0.011726
+  Mean MSE  (missing slices only): 0.000314
+----------------------------------------
+Predicted Volume 2:
+  Mean PSNR (missing slices only): 35.17 dB
+  Mean SSIM (missing slices only): 0.8044
+  Mean MAE  (missing slices only): 0.011597
+  Mean MSE  (missing slices only): 0.000308
+----------------------------------------
+Predicted Volume 1:
+  Mean PSNR (missing slices only): 35.08 dB
+  Mean SSIM (missing slices only): 0.8018
+  Mean MAE  (missing slices only): 0.011726
+  Mean MSE  (missing slices only): 0.000314
+----------------------------------------
+Predicted Volume 2:
+  Mean PSNR (missing slices only): 34.86 dB
+  Mean SSIM (missing slices only): 0.7993
+  Mean MAE  (missing slices only): 0.011980
+  Mean MSE  (missing slices only): 0.000330
+----------------------------------------
+Predicted Volume 1:
+  Mean PSNR (missing slices only): 35.08 dB
+  Mean SSIM (missing slices only): 0.8018
+  Mean MAE  (missing slices only): 0.011726
+  Mean MSE  (missing slices only): 0.000314
+----------------------------------------
+Predicted Volume 2:
+  Mean PSNR (missing slices only): 32.00 dB
+  Mean SSIM (missing slices only): 0.7703
+  Mean MAE  (missing slices only): 0.014570
+  Mean MSE  (missing slices only): 0.000649
+----------------------------------------
+Predicted Volume 1:
+  Mean PSNR (missing slices only): 35.08 dB
+  Mean SSIM (missing slices only): 0.8018
+  Mean MAE  (missing slices only): 0.011726
+  Mean MSE  (missing slices only): 0.000314
+----------------------------------------
+Predicted Volume 2:
+  Mean PSNR (missing slices only): 35.02 dB
+  Mean SSIM (missing slices only): 0.8020
+  Mean MAE  (missing slices only): 0.011811
+  Mean MSE  (missing slices only): 0.000318
+----------------------------------------
+Predicted Volume 1:
+  Mean PSNR (missing slices only): 35.08 dB
+  Mean SSIM (missing slices only): 0.8018
+  Mean MAE  (missing slices only): 0.011726
+  Mean MSE  (missing slices only): 0.000314
+----------------------------------------
+Predicted Volume 2:
+  Mean PSNR (missing slices only): 35.17 dB
+  Mean SSIM (missing slices only): 0.8044
+  Mean MAE  (missing slices only): 0.011597
+  Mean MSE  (missing slices only): 0.000308
+----------------------------------------

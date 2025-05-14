@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-from tqdm import tqdm
 from pytorch_msssim import ssim
 from utils import log
 

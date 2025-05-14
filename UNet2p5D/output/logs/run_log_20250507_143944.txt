@@ -1,0 +1,793 @@
+Starting Ablation Study Pipeline
+
+--- Running configuration: Loss=global, Augment=False, MaskedLoss=False, StackSize=5 ---
+
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_original_Lglobal_augFalse_vmaskFalse_s5.tif]: {'L1': 0.0137, 'SSIM': 0.7667, 'MeanIntensityError': 0.0001}
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_outsidein_Lglobal_augFalse_vmaskFalse_s5.tif]: {'L1': 0.0136, 'SSIM': 0.7673, 'MeanIntensityError': 0.0001}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+Saved: 5.3_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_original_Lglobal_augFalse_vmaskFalse_s5.tif]: {'L1': 0.0136, 'SSIM': 0.7901, 'MeanIntensityError': 0.0001}
+Saved: 5.3_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_outsidein_Lglobal_augFalse_vmaskFalse_s5.tif]: {'L1': 0.0134, 'SSIM': 0.7931, 'MeanIntensityError': 0.0002}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+Saved: 1.4_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_original_Lglobal_augFalse_vmaskFalse_s5.tif]: {'L1': 0.012, 'SSIM': 0.7991, 'MeanIntensityError': 0.0}
+Saved: 1.4_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_outsidein_Lglobal_augFalse_vmaskFalse_s5.tif]: {'L1': 0.012, 'SSIM': 0.7988, 'MeanIntensityError': 0.0001}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+Saved: 1.1_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_original_Lglobal_augFalse_vmaskFalse_s5.tif]: {'L1': 0.0146, 'SSIM': 0.7494, 'MeanIntensityError': 0.0}
+Saved: 1.1_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_outsidein_Lglobal_augFalse_vmaskFalse_s5.tif]: {'L1': 0.0155, 'SSIM': 0.7458, 'MeanIntensityError': 0.0}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+Saved: 3.4_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_original_Lglobal_augFalse_vmaskFalse_s5.tif]: {'L1': 0.0155, 'SSIM': 0.7404, 'MeanIntensityError': 0.0}
+Saved: 3.4_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_outsidein_Lglobal_augFalse_vmaskFalse_s5.tif]: {'L1': 0.016, 'SSIM': 0.7373, 'MeanIntensityError': 0.0001}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+
+--- Running configuration: Loss=global, Augment=False, MaskedLoss=False, StackSize=9 ---
+
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_original_Lglobal_augFalse_vmaskFalse_s9.tif]: {'L1': 0.0142, 'SSIM': 0.7625, 'MeanIntensityError': 0.0001}
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_outsidein_Lglobal_augFalse_vmaskFalse_s9.tif]: {'L1': 0.0147, 'SSIM': 0.7595, 'MeanIntensityError': 0.0001}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+Saved: 5.3_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_original_Lglobal_augFalse_vmaskFalse_s9.tif]: {'L1': 0.0132, 'SSIM': 0.792, 'MeanIntensityError': 0.0001}
+Saved: 5.3_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_outsidein_Lglobal_augFalse_vmaskFalse_s9.tif]: {'L1': 0.0132, 'SSIM': 0.7922, 'MeanIntensityError': 0.0002}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+Saved: 1.4_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_original_Lglobal_augFalse_vmaskFalse_s9.tif]: {'L1': 0.0116, 'SSIM': 0.8037, 'MeanIntensityError': 0.0}
+Saved: 1.4_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_outsidein_Lglobal_augFalse_vmaskFalse_s9.tif]: {'L1': 0.0116, 'SSIM': 0.8045, 'MeanIntensityError': 0.0001}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+Saved: 1.1_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_original_Lglobal_augFalse_vmaskFalse_s9.tif]: {'L1': 0.0139, 'SSIM': 0.7593, 'MeanIntensityError': 0.0001}
+Saved: 1.1_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_outsidein_Lglobal_augFalse_vmaskFalse_s9.tif]: {'L1': 0.0144, 'SSIM': 0.757, 'MeanIntensityError': 0.0001}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+Saved: 3.4_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_original_Lglobal_augFalse_vmaskFalse_s9.tif]: {'L1': 0.0149, 'SSIM': 0.748, 'MeanIntensityError': 0.0001}
+Saved: 3.4_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_outsidein_Lglobal_augFalse_vmaskFalse_s9.tif]: {'L1': 0.0154, 'SSIM': 0.7453, 'MeanIntensityError': 0.0}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+
+--- Running configuration: Loss=global, Augment=False, MaskedLoss=False, StackSize=13 ---
+
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_original_Lglobal_augFalse_vmaskFalse_s13.tif]: {'L1': 0.0134, 'SSIM': 0.7711, 'MeanIntensityError': 0.0001}
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_outsidein_Lglobal_augFalse_vmaskFalse_s13.tif]: {'L1': 0.0135, 'SSIM': 0.7698, 'MeanIntensityError': 0.0001}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+Saved: 5.3_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_original_Lglobal_augFalse_vmaskFalse_s13.tif]: {'L1': 0.0142, 'SSIM': 0.7927, 'MeanIntensityError': 0.0}
+Saved: 5.3_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_outsidein_Lglobal_augFalse_vmaskFalse_s13.tif]: {'L1': 0.0142, 'SSIM': 0.7925, 'MeanIntensityError': 0.0}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+Saved: 1.4_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_original_Lglobal_augFalse_vmaskFalse_s13.tif]: {'L1': 0.0119, 'SSIM': 0.8006, 'MeanIntensityError': 0.0}
+Saved: 1.4_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_outsidein_Lglobal_augFalse_vmaskFalse_s13.tif]: {'L1': 0.0119, 'SSIM': 0.7996, 'MeanIntensityError': 0.0}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+Saved: 1.1_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_original_Lglobal_augFalse_vmaskFalse_s13.tif]: {'L1': 0.0137, 'SSIM': 0.7608, 'MeanIntensityError': 0.0002}
+Saved: 1.1_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_outsidein_Lglobal_augFalse_vmaskFalse_s13.tif]: {'L1': 0.0138, 'SSIM': 0.7615, 'MeanIntensityError': 0.0001}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+Saved: 3.4_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_original_Lglobal_augFalse_vmaskFalse_s13.tif]: {'L1': 0.0159, 'SSIM': 0.7485, 'MeanIntensityError': 0.0001}
+Saved: 3.4_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_outsidein_Lglobal_augFalse_vmaskFalse_s13.tif]: {'L1': 0.0205, 'SSIM': 0.7317, 'MeanIntensityError': 0.0005}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+
+--- Running configuration: Loss=global, Augment=False, MaskedLoss=True, StackSize=5 ---
+
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lglobal_augFalse_vmaskTrue_s5.tif]: {'L1': 0.0143, 'SSIM': 0.751, 'MeanIntensityError': 0.0001}
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_hybrid_Lglobal_augFalse_vmaskTrue_s5.tif]: {'L1': 0.0154, 'SSIM': 0.7424, 'MeanIntensityError': 0.0001}
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 5.3_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lglobal_augFalse_vmaskTrue_s5.tif]: {'L1': 0.0166, 'SSIM': 0.7452, 'MeanIntensityError': 0.0}
+Saved: 5.3_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_hybrid_Lglobal_augFalse_vmaskTrue_s5.tif]: {'L1': 0.0169, 'SSIM': 0.7483, 'MeanIntensityError': 0.0005}
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 1.4_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lglobal_augFalse_vmaskTrue_s5.tif]: {'L1': 0.0211, 'SSIM': 0.6704, 'MeanIntensityError': 0.0004}
+Saved: 1.4_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_hybrid_Lglobal_augFalse_vmaskTrue_s5.tif]: {'L1': 0.0178, 'SSIM': 0.7296, 'MeanIntensityError': 0.0003}
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 1.1_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lglobal_augFalse_vmaskTrue_s5.tif]: {'L1': 0.018, 'SSIM': 0.683, 'MeanIntensityError': 0.0001}
+Saved: 1.1_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_hybrid_Lglobal_augFalse_vmaskTrue_s5.tif]: {'L1': 0.0182, 'SSIM': 0.701, 'MeanIntensityError': 0.0003}
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 3.4_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lglobal_augFalse_vmaskTrue_s5.tif]: {'L1': 0.0201, 'SSIM': 0.6821, 'MeanIntensityError': 0.0001}
+Saved: 3.4_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_hybrid_Lglobal_augFalse_vmaskTrue_s5.tif]: {'L1': 0.0187, 'SSIM': 0.7163, 'MeanIntensityError': 0.0004}
+
+--- Running configuration: Loss=global, Augment=False, MaskedLoss=True, StackSize=9 ---
+
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lglobal_augFalse_vmaskTrue_s9.tif]: {'L1': 0.0149, 'SSIM': 0.7345, 'MeanIntensityError': 0.0001}
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_hybrid_Lglobal_augFalse_vmaskTrue_s9.tif]: {'L1': 0.0156, 'SSIM': 0.7425, 'MeanIntensityError': 0.0001}
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 5.3_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lglobal_augFalse_vmaskTrue_s9.tif]: {'L1': 0.0155, 'SSIM': 0.7614, 'MeanIntensityError': 0.0001}
+Saved: 5.3_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_hybrid_Lglobal_augFalse_vmaskTrue_s9.tif]: {'L1': 0.0142, 'SSIM': 0.7806, 'MeanIntensityError': 0.0}
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 1.4_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lglobal_augFalse_vmaskTrue_s9.tif]: {'L1': 0.0124, 'SSIM': 0.7908, 'MeanIntensityError': 0.0001}
+Saved: 1.4_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_hybrid_Lglobal_augFalse_vmaskTrue_s9.tif]: {'L1': 0.0137, 'SSIM': 0.7686, 'MeanIntensityError': 0.0001}
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 1.1_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lglobal_augFalse_vmaskTrue_s9.tif]: {'L1': 0.0149, 'SSIM': 0.7296, 'MeanIntensityError': 0.0001}
+Saved: 1.1_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_hybrid_Lglobal_augFalse_vmaskTrue_s9.tif]: {'L1': 0.0162, 'SSIM': 0.7206, 'MeanIntensityError': 0.0001}
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 3.4_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lglobal_augFalse_vmaskTrue_s9.tif]: {'L1': 0.015, 'SSIM': 0.7479, 'MeanIntensityError': 0.0001}
+Saved: 3.4_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_hybrid_Lglobal_augFalse_vmaskTrue_s9.tif]: {'L1': 0.0157, 'SSIM': 0.7506, 'MeanIntensityError': 0.0001}
+
+--- Running configuration: Loss=global, Augment=False, MaskedLoss=True, StackSize=13 ---
+
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lglobal_augFalse_vmaskTrue_s13.tif]: {'L1': 0.015, 'SSIM': 0.7354, 'MeanIntensityError': 0.0001}
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_hybrid_Lglobal_augFalse_vmaskTrue_s13.tif]: {'L1': 0.0161, 'SSIM': 0.7367, 'MeanIntensityError': 0.0}
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 5.3_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lglobal_augFalse_vmaskTrue_s13.tif]: {'L1': 0.0159, 'SSIM': 0.7672, 'MeanIntensityError': 0.0002}
+Saved: 5.3_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_hybrid_Lglobal_augFalse_vmaskTrue_s13.tif]: {'L1': 0.0154, 'SSIM': 0.7755, 'MeanIntensityError': 0.0001}
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 1.4_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lglobal_augFalse_vmaskTrue_s13.tif]: {'L1': 0.0124, 'SSIM': 0.7881, 'MeanIntensityError': 0.0}
+Saved: 1.4_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_hybrid_Lglobal_augFalse_vmaskTrue_s13.tif]: {'L1': 0.014, 'SSIM': 0.7668, 'MeanIntensityError': 0.0002}
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 1.1_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lglobal_augFalse_vmaskTrue_s13.tif]: {'L1': 0.0142, 'SSIM': 0.75, 'MeanIntensityError': 0.0002}
+Saved: 1.1_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_hybrid_Lglobal_augFalse_vmaskTrue_s13.tif]: {'L1': 0.0162, 'SSIM': 0.7192, 'MeanIntensityError': 0.0}
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 3.4_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lglobal_augFalse_vmaskTrue_s13.tif]: {'L1': 0.0152, 'SSIM': 0.7459, 'MeanIntensityError': 0.0001}
+Saved: 3.4_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_hybrid_Lglobal_augFalse_vmaskTrue_s13.tif]: {'L1': 0.0158, 'SSIM': 0.7479, 'MeanIntensityError': 0.0}
+
+--- Running configuration: Loss=global, Augment=True, MaskedLoss=False, StackSize=5 ---
+
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_original_Lglobal_augTrue_vmaskFalse_s5.tif]: {'L1': 0.0144, 'SSIM': 0.7571, 'MeanIntensityError': 0.0001}
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_outsidein_Lglobal_augTrue_vmaskFalse_s5.tif]: {'L1': 0.015, 'SSIM': 0.7538, 'MeanIntensityError': 0.0}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+Saved: 5.3_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_original_Lglobal_augTrue_vmaskFalse_s5.tif]: {'L1': 0.0136, 'SSIM': 0.7837, 'MeanIntensityError': 0.0001}
+Saved: 5.3_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_outsidein_Lglobal_augTrue_vmaskFalse_s5.tif]: {'L1': 0.0138, 'SSIM': 0.7862, 'MeanIntensityError': 0.0001}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+Saved: 1.4_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_original_Lglobal_augTrue_vmaskFalse_s5.tif]: {'L1': 0.0122, 'SSIM': 0.7978, 'MeanIntensityError': 0.0001}
+Saved: 1.4_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_outsidein_Lglobal_augTrue_vmaskFalse_s5.tif]: {'L1': 0.0121, 'SSIM': 0.7995, 'MeanIntensityError': 0.0001}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+Saved: 1.1_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_original_Lglobal_augTrue_vmaskFalse_s5.tif]: {'L1': 0.0148, 'SSIM': 0.7471, 'MeanIntensityError': 0.0001}
+Saved: 1.1_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_outsidein_Lglobal_augTrue_vmaskFalse_s5.tif]: {'L1': 0.0159, 'SSIM': 0.7406, 'MeanIntensityError': 0.0001}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+Saved: 3.4_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_original_Lglobal_augTrue_vmaskFalse_s5.tif]: {'L1': 0.0157, 'SSIM': 0.7406, 'MeanIntensityError': 0.0}
+Saved: 3.4_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_outsidein_Lglobal_augTrue_vmaskFalse_s5.tif]: {'L1': 0.0161, 'SSIM': 0.7392, 'MeanIntensityError': 0.0001}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+
+--- Running configuration: Loss=global, Augment=True, MaskedLoss=False, StackSize=9 ---
+
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_original_Lglobal_augTrue_vmaskFalse_s9.tif]: {'L1': 0.0137, 'SSIM': 0.7637, 'MeanIntensityError': 0.0002}
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_outsidein_Lglobal_augTrue_vmaskFalse_s9.tif]: {'L1': 0.0138, 'SSIM': 0.7645, 'MeanIntensityError': 0.0002}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+Saved: 5.3_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_original_Lglobal_augTrue_vmaskFalse_s9.tif]: {'L1': 0.0132, 'SSIM': 0.7904, 'MeanIntensityError': 0.0002}
+Saved: 5.3_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_outsidein_Lglobal_augTrue_vmaskFalse_s9.tif]: {'L1': 0.0132, 'SSIM': 0.7938, 'MeanIntensityError': 0.0001}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+Saved: 1.4_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_original_Lglobal_augTrue_vmaskFalse_s9.tif]: {'L1': 0.0119, 'SSIM': 0.7982, 'MeanIntensityError': 0.0002}
+Saved: 1.4_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_outsidein_Lglobal_augTrue_vmaskFalse_s9.tif]: {'L1': 0.0118, 'SSIM': 0.7986, 'MeanIntensityError': 0.0002}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+Saved: 1.1_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_original_Lglobal_augTrue_vmaskFalse_s9.tif]: {'L1': 0.0143, 'SSIM': 0.7521, 'MeanIntensityError': 0.0002}
+Saved: 1.1_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_outsidein_Lglobal_augTrue_vmaskFalse_s9.tif]: {'L1': 0.0145, 'SSIM': 0.7516, 'MeanIntensityError': 0.0}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+Saved: 3.4_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_original_Lglobal_augTrue_vmaskFalse_s9.tif]: {'L1': 0.0156, 'SSIM': 0.7365, 'MeanIntensityError': 0.0}
+Saved: 3.4_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_outsidein_Lglobal_augTrue_vmaskFalse_s9.tif]: {'L1': 0.0159, 'SSIM': 0.7403, 'MeanIntensityError': 0.0004}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+
+--- Running configuration: Loss=global, Augment=True, MaskedLoss=False, StackSize=13 ---
+
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_original_Lglobal_augTrue_vmaskFalse_s13.tif]: {'L1': 0.0138, 'SSIM': 0.7639, 'MeanIntensityError': 0.0001}
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_outsidein_Lglobal_augTrue_vmaskFalse_s13.tif]: {'L1': 0.0137, 'SSIM': 0.7658, 'MeanIntensityError': 0.0001}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+Saved: 5.3_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_original_Lglobal_augTrue_vmaskFalse_s13.tif]: {'L1': 0.0133, 'SSIM': 0.7894, 'MeanIntensityError': 0.0002}
+Saved: 5.3_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_outsidein_Lglobal_augTrue_vmaskFalse_s13.tif]: {'L1': 0.0134, 'SSIM': 0.7883, 'MeanIntensityError': 0.0001}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+Saved: 1.4_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_original_Lglobal_augTrue_vmaskFalse_s13.tif]: {'L1': 0.012, 'SSIM': 0.8, 'MeanIntensityError': 0.0}
+Saved: 1.4_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_outsidein_Lglobal_augTrue_vmaskFalse_s13.tif]: {'L1': 0.0121, 'SSIM': 0.8028, 'MeanIntensityError': 0.0002}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+Saved: 1.1_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_original_Lglobal_augTrue_vmaskFalse_s13.tif]: {'L1': 0.014, 'SSIM': 0.7567, 'MeanIntensityError': 0.0001}
+Saved: 1.1_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_outsidein_Lglobal_augTrue_vmaskFalse_s13.tif]: {'L1': 0.0141, 'SSIM': 0.7564, 'MeanIntensityError': 0.0}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+Saved: 3.4_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_original_Lglobal_augTrue_vmaskFalse_s13.tif]: {'L1': 0.015, 'SSIM': 0.7475, 'MeanIntensityError': 0.0002}
+Saved: 3.4_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_outsidein_Lglobal_augTrue_vmaskFalse_s13.tif]: {'L1': 0.015, 'SSIM': 0.7484, 'MeanIntensityError': 0.0002}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+
+--- Running configuration: Loss=global, Augment=True, MaskedLoss=True, StackSize=5 ---
+
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lglobal_augTrue_vmaskTrue_s5.tif]: {'L1': 0.0168, 'SSIM': 0.7131, 'MeanIntensityError': 0.0001}
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_hybrid_Lglobal_augTrue_vmaskTrue_s5.tif]: {'L1': 0.0165, 'SSIM': 0.7193, 'MeanIntensityError': 0.0}
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 5.3_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lglobal_augTrue_vmaskTrue_s5.tif]: {'L1': 0.0165, 'SSIM': 0.739, 'MeanIntensityError': 0.0003}
+Saved: 5.3_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_hybrid_Lglobal_augTrue_vmaskTrue_s5.tif]: {'L1': 0.0158, 'SSIM': 0.7506, 'MeanIntensityError': 0.0002}
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 1.4_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lglobal_augTrue_vmaskTrue_s5.tif]: {'L1': 0.0141, 'SSIM': 0.7596, 'MeanIntensityError': 0.0001}
+Saved: 1.4_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_hybrid_Lglobal_augTrue_vmaskTrue_s5.tif]: {'L1': 0.0152, 'SSIM': 0.7387, 'MeanIntensityError': 0.0004}
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 1.1_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lglobal_augTrue_vmaskTrue_s5.tif]: {'L1': 0.0161, 'SSIM': 0.7175, 'MeanIntensityError': 0.0}
+Saved: 1.1_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_hybrid_Lglobal_augTrue_vmaskTrue_s5.tif]: {'L1': 0.0171, 'SSIM': 0.7008, 'MeanIntensityError': 0.0001}
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 3.4_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lglobal_augTrue_vmaskTrue_s5.tif]: {'L1': 0.0187, 'SSIM': 0.6917, 'MeanIntensityError': 0.0005}
+Saved: 3.4_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_hybrid_Lglobal_augTrue_vmaskTrue_s5.tif]: {'L1': 0.0192, 'SSIM': 0.6986, 'MeanIntensityError': 0.0003}
+
+--- Running configuration: Loss=global, Augment=True, MaskedLoss=True, StackSize=9 ---
+
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lglobal_augTrue_vmaskTrue_s9.tif]: {'L1': 0.0207, 'SSIM': 0.6525, 'MeanIntensityError': 0.0005}
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_hybrid_Lglobal_augTrue_vmaskTrue_s9.tif]: {'L1': 0.021, 'SSIM': 0.6882, 'MeanIntensityError': 0.0003}
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 5.3_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lglobal_augTrue_vmaskTrue_s9.tif]: {'L1': 0.0165, 'SSIM': 0.7579, 'MeanIntensityError': 0.0002}
+Saved: 5.3_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_hybrid_Lglobal_augTrue_vmaskTrue_s9.tif]: {'L1': 0.0159, 'SSIM': 0.7673, 'MeanIntensityError': 0.0002}
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 1.4_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lglobal_augTrue_vmaskTrue_s9.tif]: {'L1': 0.0133, 'SSIM': 0.7789, 'MeanIntensityError': 0.0001}
+Saved: 1.4_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_hybrid_Lglobal_augTrue_vmaskTrue_s9.tif]: {'L1': 0.0144, 'SSIM': 0.7521, 'MeanIntensityError': 0.0001}
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 1.1_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lglobal_augTrue_vmaskTrue_s9.tif]: {'L1': 0.0161, 'SSIM': 0.7057, 'MeanIntensityError': 0.0}
+Saved: 1.1_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_hybrid_Lglobal_augTrue_vmaskTrue_s9.tif]: {'L1': 0.0165, 'SSIM': 0.7053, 'MeanIntensityError': 0.0001}
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 3.4_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lglobal_augTrue_vmaskTrue_s9.tif]: {'L1': 0.0179, 'SSIM': 0.7231, 'MeanIntensityError': 0.0001}
+Saved: 3.4_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_hybrid_Lglobal_augTrue_vmaskTrue_s9.tif]: {'L1': 0.0166, 'SSIM': 0.7337, 'MeanIntensityError': 0.0001}
+
+--- Running configuration: Loss=global, Augment=True, MaskedLoss=True, StackSize=13 ---
+
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lglobal_augTrue_vmaskTrue_s13.tif]: {'L1': 0.0158, 'SSIM': 0.7194, 'MeanIntensityError': 0.0002}
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_hybrid_Lglobal_augTrue_vmaskTrue_s13.tif]: {'L1': 0.0165, 'SSIM': 0.7253, 'MeanIntensityError': 0.0005}
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 5.3_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lglobal_augTrue_vmaskTrue_s13.tif]: {'L1': 0.0189, 'SSIM': 0.7214, 'MeanIntensityError': 0.0001}
+Saved: 5.3_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_hybrid_Lglobal_augTrue_vmaskTrue_s13.tif]: {'L1': 0.0181, 'SSIM': 0.7325, 'MeanIntensityError': 0.0004}
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 1.4_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lglobal_augTrue_vmaskTrue_s13.tif]: {'L1': 0.0138, 'SSIM': 0.7545, 'MeanIntensityError': 0.0002}
+Saved: 1.4_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_hybrid_Lglobal_augTrue_vmaskTrue_s13.tif]: {'L1': 0.0151, 'SSIM': 0.7452, 'MeanIntensityError': 0.0005}
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 1.1_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lglobal_augTrue_vmaskTrue_s13.tif]: {'L1': 0.0157, 'SSIM': 0.721, 'MeanIntensityError': 0.0001}
+Saved: 1.1_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_hybrid_Lglobal_augTrue_vmaskTrue_s13.tif]: {'L1': 0.016, 'SSIM': 0.7165, 'MeanIntensityError': 0.0002}
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 3.4_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lglobal_augTrue_vmaskTrue_s13.tif]: {'L1': 0.0175, 'SSIM': 0.7147, 'MeanIntensityError': 0.0}
+Saved: 3.4_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_hybrid_Lglobal_augTrue_vmaskTrue_s13.tif]: {'L1': 0.0181, 'SSIM': 0.7184, 'MeanIntensityError': 0.0003}
+
+--- Running configuration: Loss=brightness_aware, Augment=False, MaskedLoss=False, StackSize=5 ---
+
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_original_Lbrightness_aware_augFalse_vmaskFalse_s5.tif]: {'L1': 0.0138, 'SSIM': 0.765, 'MeanIntensityError': 0.0}
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_outsidein_Lbrightness_aware_augFalse_vmaskFalse_s5.tif]: {'L1': 0.0138, 'SSIM': 0.7652, 'MeanIntensityError': 0.0}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+Saved: 5.3_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_original_Lbrightness_aware_augFalse_vmaskFalse_s5.tif]: {'L1': 0.0142, 'SSIM': 0.7847, 'MeanIntensityError': 0.0001}
+Saved: 5.3_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_outsidein_Lbrightness_aware_augFalse_vmaskFalse_s5.tif]: {'L1': 0.0143, 'SSIM': 0.7868, 'MeanIntensityError': 0.0}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+Saved: 1.4_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_original_Lbrightness_aware_augFalse_vmaskFalse_s5.tif]: {'L1': 0.0138, 'SSIM': 0.7845, 'MeanIntensityError': 0.0001}
+Saved: 1.4_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_outsidein_Lbrightness_aware_augFalse_vmaskFalse_s5.tif]: {'L1': 0.0146, 'SSIM': 0.7785, 'MeanIntensityError': 0.0002}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+Saved: 1.1_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_original_Lbrightness_aware_augFalse_vmaskFalse_s5.tif]: {'L1': 0.0141, 'SSIM': 0.7526, 'MeanIntensityError': 0.0001}
+Saved: 1.1_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_outsidein_Lbrightness_aware_augFalse_vmaskFalse_s5.tif]: {'L1': 0.014, 'SSIM': 0.7538, 'MeanIntensityError': 0.0002}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+Saved: 3.4_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_original_Lbrightness_aware_augFalse_vmaskFalse_s5.tif]: {'L1': 0.0156, 'SSIM': 0.7399, 'MeanIntensityError': 0.0}
+Saved: 3.4_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_outsidein_Lbrightness_aware_augFalse_vmaskFalse_s5.tif]: {'L1': 0.0172, 'SSIM': 0.7344, 'MeanIntensityError': 0.0003}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+
+--- Running configuration: Loss=brightness_aware, Augment=False, MaskedLoss=False, StackSize=9 ---
+
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_original_Lbrightness_aware_augFalse_vmaskFalse_s9.tif]: {'L1': 0.0144, 'SSIM': 0.7529, 'MeanIntensityError': 0.0001}
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_outsidein_Lbrightness_aware_augFalse_vmaskFalse_s9.tif]: {'L1': 0.0147, 'SSIM': 0.7486, 'MeanIntensityError': 0.0001}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+Saved: 5.3_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_original_Lbrightness_aware_augFalse_vmaskFalse_s9.tif]: {'L1': 0.0134, 'SSIM': 0.7946, 'MeanIntensityError': 0.0}
+Saved: 5.3_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_outsidein_Lbrightness_aware_augFalse_vmaskFalse_s9.tif]: {'L1': 0.0134, 'SSIM': 0.7952, 'MeanIntensityError': 0.0001}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+Saved: 1.4_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_original_Lbrightness_aware_augFalse_vmaskFalse_s9.tif]: {'L1': 0.012, 'SSIM': 0.8008, 'MeanIntensityError': 0.0}
+Saved: 1.4_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_outsidein_Lbrightness_aware_augFalse_vmaskFalse_s9.tif]: {'L1': 0.012, 'SSIM': 0.8004, 'MeanIntensityError': 0.0}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+Saved: 1.1_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_original_Lbrightness_aware_augFalse_vmaskFalse_s9.tif]: {'L1': 0.0137, 'SSIM': 0.7614, 'MeanIntensityError': 0.0001}
+Saved: 1.1_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_outsidein_Lbrightness_aware_augFalse_vmaskFalse_s9.tif]: {'L1': 0.0139, 'SSIM': 0.7604, 'MeanIntensityError': 0.0001}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+Saved: 3.4_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_original_Lbrightness_aware_augFalse_vmaskFalse_s9.tif]: {'L1': 0.0147, 'SSIM': 0.7539, 'MeanIntensityError': 0.0001}
+Saved: 3.4_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_outsidein_Lbrightness_aware_augFalse_vmaskFalse_s9.tif]: {'L1': 0.0147, 'SSIM': 0.7544, 'MeanIntensityError': 0.0001}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+
+--- Running configuration: Loss=brightness_aware, Augment=False, MaskedLoss=False, StackSize=13 ---
+
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_original_Lbrightness_aware_augFalse_vmaskFalse_s13.tif]: {'L1': 0.0134, 'SSIM': 0.7728, 'MeanIntensityError': 0.0001}
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_outsidein_Lbrightness_aware_augFalse_vmaskFalse_s13.tif]: {'L1': 0.0136, 'SSIM': 0.7722, 'MeanIntensityError': 0.0001}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+Saved: 5.3_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_original_Lbrightness_aware_augFalse_vmaskFalse_s13.tif]: {'L1': 0.014, 'SSIM': 0.7941, 'MeanIntensityError': 0.0}
+Saved: 5.3_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_outsidein_Lbrightness_aware_augFalse_vmaskFalse_s13.tif]: {'L1': 0.0141, 'SSIM': 0.7944, 'MeanIntensityError': 0.0001}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+Saved: 1.4_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_original_Lbrightness_aware_augFalse_vmaskFalse_s13.tif]: {'L1': 0.0118, 'SSIM': 0.8025, 'MeanIntensityError': 0.0}
+Saved: 1.4_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_outsidein_Lbrightness_aware_augFalse_vmaskFalse_s13.tif]: {'L1': 0.0118, 'SSIM': 0.8022, 'MeanIntensityError': 0.0}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+Saved: 1.1_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_original_Lbrightness_aware_augFalse_vmaskFalse_s13.tif]: {'L1': 0.0137, 'SSIM': 0.7629, 'MeanIntensityError': 0.0001}
+Saved: 1.1_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_outsidein_Lbrightness_aware_augFalse_vmaskFalse_s13.tif]: {'L1': 0.0139, 'SSIM': 0.7629, 'MeanIntensityError': 0.0}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+Saved: 3.4_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_original_Lbrightness_aware_augFalse_vmaskFalse_s13.tif]: {'L1': 0.0155, 'SSIM': 0.7426, 'MeanIntensityError': 0.0002}
+Saved: 3.4_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_outsidein_Lbrightness_aware_augFalse_vmaskFalse_s13.tif]: {'L1': 0.016, 'SSIM': 0.7393, 'MeanIntensityError': 0.0001}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+
+--- Running configuration: Loss=brightness_aware, Augment=False, MaskedLoss=True, StackSize=5 ---
+
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lbrightness_aware_augFalse_vmaskTrue_s5.tif]: {'L1': 0.0202, 'SSIM': 0.6686, 'MeanIntensityError': 0.0002}
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_hybrid_Lbrightness_aware_augFalse_vmaskTrue_s5.tif]: {'L1': 0.0208, 'SSIM': 0.6754, 'MeanIntensityError': 0.001}
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 5.3_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lbrightness_aware_augFalse_vmaskTrue_s5.tif]: {'L1': 0.0166, 'SSIM': 0.7362, 'MeanIntensityError': 0.0001}
+Saved: 5.3_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_hybrid_Lbrightness_aware_augFalse_vmaskTrue_s5.tif]: {'L1': 0.0159, 'SSIM': 0.751, 'MeanIntensityError': 0.0001}
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 1.4_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lbrightness_aware_augFalse_vmaskTrue_s5.tif]: {'L1': 0.0166, 'SSIM': 0.7034, 'MeanIntensityError': 0.0002}
+Saved: 1.4_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_hybrid_Lbrightness_aware_augFalse_vmaskTrue_s5.tif]: {'L1': 0.0174, 'SSIM': 0.7157, 'MeanIntensityError': 0.0005}
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 1.1_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lbrightness_aware_augFalse_vmaskTrue_s5.tif]: {'L1': 0.0191, 'SSIM': 0.6628, 'MeanIntensityError': 0.0001}
+Saved: 1.1_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_hybrid_Lbrightness_aware_augFalse_vmaskTrue_s5.tif]: {'L1': 0.0177, 'SSIM': 0.7025, 'MeanIntensityError': 0.0002}
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 3.4_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lbrightness_aware_augFalse_vmaskTrue_s5.tif]: {'L1': 0.0158, 'SSIM': 0.7338, 'MeanIntensityError': 0.0001}
+Saved: 3.4_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_hybrid_Lbrightness_aware_augFalse_vmaskTrue_s5.tif]: {'L1': 0.0166, 'SSIM': 0.7409, 'MeanIntensityError': 0.0001}
+
+--- Running configuration: Loss=brightness_aware, Augment=False, MaskedLoss=True, StackSize=9 ---
+
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lbrightness_aware_augFalse_vmaskTrue_s9.tif]: {'L1': 0.0147, 'SSIM': 0.743, 'MeanIntensityError': 0.0002}
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_hybrid_Lbrightness_aware_augFalse_vmaskTrue_s9.tif]: {'L1': 0.0153, 'SSIM': 0.7468, 'MeanIntensityError': 0.0002}
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 5.3_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lbrightness_aware_augFalse_vmaskTrue_s9.tif]: {'L1': 0.0223, 'SSIM': 0.6975, 'MeanIntensityError': 0.0011}
+Saved: 5.3_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_hybrid_Lbrightness_aware_augFalse_vmaskTrue_s9.tif]: {'L1': 0.0215, 'SSIM': 0.7106, 'MeanIntensityError': 0.0011}
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 1.4_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lbrightness_aware_augFalse_vmaskTrue_s9.tif]: {'L1': 0.0141, 'SSIM': 0.7583, 'MeanIntensityError': 0.0002}
+Saved: 1.4_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_hybrid_Lbrightness_aware_augFalse_vmaskTrue_s9.tif]: {'L1': 0.0147, 'SSIM': 0.7627, 'MeanIntensityError': 0.0003}
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 1.1_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lbrightness_aware_augFalse_vmaskTrue_s9.tif]: {'L1': 0.0141, 'SSIM': 0.7519, 'MeanIntensityError': 0.0002}
+Saved: 1.1_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_hybrid_Lbrightness_aware_augFalse_vmaskTrue_s9.tif]: {'L1': 0.016, 'SSIM': 0.7232, 'MeanIntensityError': 0.0}
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 3.4_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lbrightness_aware_augFalse_vmaskTrue_s9.tif]: {'L1': 0.0167, 'SSIM': 0.7316, 'MeanIntensityError': 0.0}
+Saved: 3.4_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_hybrid_Lbrightness_aware_augFalse_vmaskTrue_s9.tif]: {'L1': 0.0167, 'SSIM': 0.7412, 'MeanIntensityError': 0.0002}
+
+--- Running configuration: Loss=brightness_aware, Augment=False, MaskedLoss=True, StackSize=13 ---
+
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lbrightness_aware_augFalse_vmaskTrue_s13.tif]: {'L1': 0.0159, 'SSIM': 0.7196, 'MeanIntensityError': 0.0001}
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_hybrid_Lbrightness_aware_augFalse_vmaskTrue_s13.tif]: {'L1': 0.0166, 'SSIM': 0.7316, 'MeanIntensityError': 0.0002}
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 5.3_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lbrightness_aware_augFalse_vmaskTrue_s13.tif]: {'L1': 0.0224, 'SSIM': 0.7108, 'MeanIntensityError': 0.0009}
+Saved: 5.3_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_hybrid_Lbrightness_aware_augFalse_vmaskTrue_s13.tif]: {'L1': 0.0193, 'SSIM': 0.745, 'MeanIntensityError': 0.0005}
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 1.4_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lbrightness_aware_augFalse_vmaskTrue_s13.tif]: {'L1': 0.0155, 'SSIM': 0.7271, 'MeanIntensityError': 0.0}
+Saved: 1.4_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_hybrid_Lbrightness_aware_augFalse_vmaskTrue_s13.tif]: {'L1': 0.0136, 'SSIM': 0.7738, 'MeanIntensityError': 0.0}
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 1.1_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lbrightness_aware_augFalse_vmaskTrue_s13.tif]: {'L1': 0.0149, 'SSIM': 0.7355, 'MeanIntensityError': 0.0001}
+Saved: 1.1_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_hybrid_Lbrightness_aware_augFalse_vmaskTrue_s13.tif]: {'L1': 0.016, 'SSIM': 0.7202, 'MeanIntensityError': 0.0}
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 3.4_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lbrightness_aware_augFalse_vmaskTrue_s13.tif]: {'L1': 0.0179, 'SSIM': 0.7128, 'MeanIntensityError': 0.0001}
+Saved: 3.4_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_hybrid_Lbrightness_aware_augFalse_vmaskTrue_s13.tif]: {'L1': 0.0168, 'SSIM': 0.7338, 'MeanIntensityError': 0.0001}
+
+--- Running configuration: Loss=brightness_aware, Augment=True, MaskedLoss=False, StackSize=5 ---
+
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_original_Lbrightness_aware_augTrue_vmaskFalse_s5.tif]: {'L1': 0.0139, 'SSIM': 0.7627, 'MeanIntensityError': 0.0001}
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_outsidein_Lbrightness_aware_augTrue_vmaskFalse_s5.tif]: {'L1': 0.014, 'SSIM': 0.7624, 'MeanIntensityError': 0.0001}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+Saved: 5.3_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_original_Lbrightness_aware_augTrue_vmaskFalse_s5.tif]: {'L1': 0.014, 'SSIM': 0.7779, 'MeanIntensityError': 0.0001}
+Saved: 5.3_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_outsidein_Lbrightness_aware_augTrue_vmaskFalse_s5.tif]: {'L1': 0.0137, 'SSIM': 0.7879, 'MeanIntensityError': 0.0}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+Saved: 1.4_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_original_Lbrightness_aware_augTrue_vmaskFalse_s5.tif]: {'L1': 0.0122, 'SSIM': 0.7902, 'MeanIntensityError': 0.0002}
+Saved: 1.4_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_outsidein_Lbrightness_aware_augTrue_vmaskFalse_s5.tif]: {'L1': 0.0122, 'SSIM': 0.7926, 'MeanIntensityError': 0.0001}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+Saved: 1.1_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_original_Lbrightness_aware_augTrue_vmaskFalse_s5.tif]: {'L1': 0.0141, 'SSIM': 0.7557, 'MeanIntensityError': 0.0002}
+Saved: 1.1_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_outsidein_Lbrightness_aware_augTrue_vmaskFalse_s5.tif]: {'L1': 0.0144, 'SSIM': 0.7577, 'MeanIntensityError': 0.0001}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+Saved: 3.4_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_original_Lbrightness_aware_augTrue_vmaskFalse_s5.tif]: {'L1': 0.0152, 'SSIM': 0.7418, 'MeanIntensityError': 0.0003}
+Saved: 3.4_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_outsidein_Lbrightness_aware_augTrue_vmaskFalse_s5.tif]: {'L1': 0.0154, 'SSIM': 0.7429, 'MeanIntensityError': 0.0001}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+
+--- Running configuration: Loss=brightness_aware, Augment=True, MaskedLoss=False, StackSize=9 ---
+
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_original_Lbrightness_aware_augTrue_vmaskFalse_s9.tif]: {'L1': 0.0137, 'SSIM': 0.767, 'MeanIntensityError': 0.0003}
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_outsidein_Lbrightness_aware_augTrue_vmaskFalse_s9.tif]: {'L1': 0.0139, 'SSIM': 0.7674, 'MeanIntensityError': 0.0003}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+Saved: 5.3_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_original_Lbrightness_aware_augTrue_vmaskFalse_s9.tif]: {'L1': 0.0133, 'SSIM': 0.7924, 'MeanIntensityError': 0.0002}
+Saved: 5.3_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_outsidein_Lbrightness_aware_augTrue_vmaskFalse_s9.tif]: {'L1': 0.0134, 'SSIM': 0.7946, 'MeanIntensityError': 0.0}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+Saved: 1.4_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_original_Lbrightness_aware_augTrue_vmaskFalse_s9.tif]: {'L1': 0.012, 'SSIM': 0.7998, 'MeanIntensityError': 0.0001}
+Saved: 1.4_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_outsidein_Lbrightness_aware_augTrue_vmaskFalse_s9.tif]: {'L1': 0.0119, 'SSIM': 0.802, 'MeanIntensityError': 0.0001}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+Saved: 1.1_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_original_Lbrightness_aware_augTrue_vmaskFalse_s9.tif]: {'L1': 0.0137, 'SSIM': 0.7616, 'MeanIntensityError': 0.0002}
+Saved: 1.1_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_outsidein_Lbrightness_aware_augTrue_vmaskFalse_s9.tif]: {'L1': 0.0137, 'SSIM': 0.762, 'MeanIntensityError': 0.0002}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+Saved: 3.4_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_original_Lbrightness_aware_augTrue_vmaskFalse_s9.tif]: {'L1': 0.0151, 'SSIM': 0.7404, 'MeanIntensityError': 0.0002}
+Saved: 3.4_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_outsidein_Lbrightness_aware_augTrue_vmaskFalse_s9.tif]: {'L1': 0.015, 'SSIM': 0.7446, 'MeanIntensityError': 0.0001}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+
+--- Running configuration: Loss=brightness_aware, Augment=True, MaskedLoss=False, StackSize=13 ---
+
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_original_Lbrightness_aware_augTrue_vmaskFalse_s13.tif]: {'L1': 0.014, 'SSIM': 0.7604, 'MeanIntensityError': 0.0002}
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_outsidein_Lbrightness_aware_augTrue_vmaskFalse_s13.tif]: {'L1': 0.0141, 'SSIM': 0.7602, 'MeanIntensityError': 0.0001}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+Saved: 5.3_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_original_Lbrightness_aware_augTrue_vmaskFalse_s13.tif]: {'L1': 0.0139, 'SSIM': 0.7847, 'MeanIntensityError': 0.0}
+Saved: 5.3_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_outsidein_Lbrightness_aware_augTrue_vmaskFalse_s13.tif]: {'L1': 0.0144, 'SSIM': 0.7795, 'MeanIntensityError': 0.0001}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+Saved: 1.4_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_original_Lbrightness_aware_augTrue_vmaskFalse_s13.tif]: {'L1': 0.0123, 'SSIM': 0.7915, 'MeanIntensityError': 0.0001}
+Saved: 1.4_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_outsidein_Lbrightness_aware_augTrue_vmaskFalse_s13.tif]: {'L1': 0.0125, 'SSIM': 0.7917, 'MeanIntensityError': 0.0}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+Saved: 1.1_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_original_Lbrightness_aware_augTrue_vmaskFalse_s13.tif]: {'L1': 0.0149, 'SSIM': 0.7428, 'MeanIntensityError': 0.0001}
+Saved: 1.1_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_outsidein_Lbrightness_aware_augTrue_vmaskFalse_s13.tif]: {'L1': 0.0153, 'SSIM': 0.742, 'MeanIntensityError': 0.0002}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+Saved: 3.4_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_original_Lbrightness_aware_augTrue_vmaskFalse_s13.tif]: {'L1': 0.0146, 'SSIM': 0.753, 'MeanIntensityError': 0.0001}
+Saved: 3.4_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_outsidein_Lbrightness_aware_augTrue_vmaskFalse_s13.tif]: {'L1': 0.0146, 'SSIM': 0.7534, 'MeanIntensityError': 0.0}
+⚠️ Skipping 'noncorrupted' inpainting (requires valid mask loss model).
+⚠️ Skipping 'hybrid' inpainting (requires valid mask loss model).
+
+--- Running configuration: Loss=brightness_aware, Augment=True, MaskedLoss=True, StackSize=5 ---
+
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lbrightness_aware_augTrue_vmaskTrue_s5.tif]: {'L1': 0.0246, 'SSIM': 0.5768, 'MeanIntensityError': 0.0009}
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_hybrid_Lbrightness_aware_augTrue_vmaskTrue_s5.tif]: {'L1': 0.0229, 'SSIM': 0.6343, 'MeanIntensityError': 0.0005}
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 5.3_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lbrightness_aware_augTrue_vmaskTrue_s5.tif]: {'L1': 0.0167, 'SSIM': 0.732, 'MeanIntensityError': 0.0002}
+Saved: 5.3_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_hybrid_Lbrightness_aware_augTrue_vmaskTrue_s5.tif]: {'L1': 0.0152, 'SSIM': 0.7544, 'MeanIntensityError': 0.0002}
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 1.4_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lbrightness_aware_augTrue_vmaskTrue_s5.tif]: {'L1': 0.0132, 'SSIM': 0.7744, 'MeanIntensityError': 0.0}
+Saved: 1.4_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_hybrid_Lbrightness_aware_augTrue_vmaskTrue_s5.tif]: {'L1': 0.0148, 'SSIM': 0.7494, 'MeanIntensityError': 0.0002}
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 1.1_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lbrightness_aware_augTrue_vmaskTrue_s5.tif]: {'L1': 0.0248, 'SSIM': 0.5888, 'MeanIntensityError': 0.001}
+Saved: 1.1_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_hybrid_Lbrightness_aware_augTrue_vmaskTrue_s5.tif]: {'L1': 0.0275, 'SSIM': 0.5554, 'MeanIntensityError': 0.0017}
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 3.4_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lbrightness_aware_augTrue_vmaskTrue_s5.tif]: {'L1': 0.0187, 'SSIM': 0.6918, 'MeanIntensityError': 0.0004}
+Saved: 3.4_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_hybrid_Lbrightness_aware_augTrue_vmaskTrue_s5.tif]: {'L1': 0.0199, 'SSIM': 0.6881, 'MeanIntensityError': 0.0}
+
+--- Running configuration: Loss=brightness_aware, Augment=True, MaskedLoss=True, StackSize=9 ---
+
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lbrightness_aware_augTrue_vmaskTrue_s9.tif]: {'L1': 0.0171, 'SSIM': 0.7102, 'MeanIntensityError': 0.0001}
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_hybrid_Lbrightness_aware_augTrue_vmaskTrue_s9.tif]: {'L1': 0.0177, 'SSIM': 0.7051, 'MeanIntensityError': 0.0002}
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 5.3_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lbrightness_aware_augTrue_vmaskTrue_s9.tif]: {'L1': 0.0175, 'SSIM': 0.7219, 'MeanIntensityError': 0.0003}
+Saved: 5.3_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_hybrid_Lbrightness_aware_augTrue_vmaskTrue_s9.tif]: {'L1': 0.017, 'SSIM': 0.7339, 'MeanIntensityError': 0.0001}
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 1.4_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lbrightness_aware_augTrue_vmaskTrue_s9.tif]: {'L1': 0.0146, 'SSIM': 0.7372, 'MeanIntensityError': 0.0004}
+Saved: 1.4_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_hybrid_Lbrightness_aware_augTrue_vmaskTrue_s9.tif]: {'L1': 0.0149, 'SSIM': 0.7575, 'MeanIntensityError': 0.0001}
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 1.1_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lbrightness_aware_augTrue_vmaskTrue_s9.tif]: {'L1': 0.018, 'SSIM': 0.6879, 'MeanIntensityError': 0.0001}
+Saved: 1.1_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_hybrid_Lbrightness_aware_augTrue_vmaskTrue_s9.tif]: {'L1': 0.0175, 'SSIM': 0.6948, 'MeanIntensityError': 0.0002}
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 3.4_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lbrightness_aware_augTrue_vmaskTrue_s9.tif]: {'L1': 0.0161, 'SSIM': 0.7327, 'MeanIntensityError': 0.0004}
+Saved: 3.4_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_hybrid_Lbrightness_aware_augTrue_vmaskTrue_s9.tif]: {'L1': 0.0163, 'SSIM': 0.7374, 'MeanIntensityError': 0.0}
+
+--- Running configuration: Loss=brightness_aware, Augment=True, MaskedLoss=True, StackSize=13 ---
+
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lbrightness_aware_augTrue_vmaskTrue_s13.tif]: {'L1': 0.0207, 'SSIM': 0.6378, 'MeanIntensityError': 0.0}
+Saved: 1.2_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_hybrid_Lbrightness_aware_augTrue_vmaskTrue_s13.tif]: {'L1': 0.0194, 'SSIM': 0.6776, 'MeanIntensityError': 0.0004}
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 5.3_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lbrightness_aware_augTrue_vmaskTrue_s13.tif]: {'L1': 0.0182, 'SSIM': 0.7139, 'MeanIntensityError': 0.0001}
+Saved: 5.3_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_hybrid_Lbrightness_aware_augTrue_vmaskTrue_s13.tif]: {'L1': 0.0202, 'SSIM': 0.6902, 'MeanIntensityError': 0.0007}
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 1.4_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lbrightness_aware_augTrue_vmaskTrue_s13.tif]: {'L1': 0.0168, 'SSIM': 0.7004, 'MeanIntensityError': 0.0003}
+Saved: 1.4_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_hybrid_Lbrightness_aware_augTrue_vmaskTrue_s13.tif]: {'L1': 0.0173, 'SSIM': 0.7173, 'MeanIntensityError': 0.0007}
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 1.1_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lbrightness_aware_augTrue_vmaskTrue_s13.tif]: {'L1': 0.0175, 'SSIM': 0.6898, 'MeanIntensityError': 0.0004}
+Saved: 1.1_OCTA_Vol1_Processed_Cropped
+Metrics [inpainted_hybrid_Lbrightness_aware_augTrue_vmaskTrue_s13.tif]: {'L1': 0.0181, 'SSIM': 0.6904, 'MeanIntensityError': 0.0001}
+⚠️ Skipping 'original' inpainting (requires model trained without valid mask loss).
+⚠️ Skipping 'outsidein' inpainting (requires model trained without valid mask loss).
+Saved: 3.4_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_noncorrupted_Lbrightness_aware_augTrue_vmaskTrue_s13.tif]: {'L1': 0.0181, 'SSIM': 0.7115, 'MeanIntensityError': 0.0002}
+Saved: 3.4_OCTA_Vol2_Processed_Cropped
+Metrics [inpainted_hybrid_Lbrightness_aware_augTrue_vmaskTrue_s13.tif]: {'L1': 0.0163, 'SSIM': 0.7352, 'MeanIntensityError': 0.0004}

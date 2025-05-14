@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-from tqdm import tqdm
 from pytorch_msssim import ssim
 from utils import log
 
@@ -8,7 +7,7 @@ def train_epoch_noncorruptedslices(model, dataloader, optimizer, criterion, devi
     model.train()
     running_loss = 0.0
 
-    for batch_idx, (stack, validity, y) in enumerate(tqdm(dataloader, desc="Training")):
+    for batch_idx, (stack, validity, y) in enumerate(dataloader):
         X = torch.cat([stack, validity], dim=1).to(device)
         y = y.to(device)
 
@@ -36,7 +35,7 @@ def validate_epoch_noncorruptedslices(model, dataloader, criterion, device):
     total_loss = 0.0
 
     with torch.no_grad():
-        for stack, validity, y in tqdm(dataloader, desc="Validating"):
+        for stack, validity, y in dataloader:
             X = torch.cat([stack, validity], dim=1).to(device)
             y = y.to(device)
 
@@ -55,7 +54,7 @@ def evaluate_model_on_test_noncorruptedslices(model, dataloader, criterion, devi
     total_loss = 0.0
 
     with torch.no_grad():
-        for stack, validity, y in tqdm(dataloader, desc="Testing"):
+        for stack, validity, y in dataloader:
             X = torch.cat([stack, validity], dim=1).to(device)
             y = y.to(device)
 

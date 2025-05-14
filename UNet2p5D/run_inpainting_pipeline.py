@@ -138,7 +138,7 @@ def main():
 
     df = pd.DataFrame(results)
     df.to_csv("/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing/inpainting_ablation_metrics.csv", index=False)
-    print("Metrics saved to AblationOutput/inpainting_ablation_metrics.csv")
+    print("Metrics saved to inpainting_ablation_metrics.csv")
 
 
 def run_single_experiment(fold_idx, triplet_folds, device, args, loss_type, augment, use_valid_mask_loss, stack_size, results):

@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-from tqdm import tqdm
 from pytorch_msssim import ssim
 from utils import log
 
@@ -8,7 +7,7 @@ def train_epoch_brightnessawareness(model, dataloader, optimizer, criterion, dev
     model.train()
     running_loss = 0.0
 
-    for batch_idx, (X, y, valid_mask) in enumerate(tqdm(dataloader, desc="Training")):
+    for batch_idx, (X, y, valid_mask) in enumerate(dataloader):
         X, y, valid_mask = X.to(device), y.to(device), valid_mask.to(device)
 
         X = X.contiguous().float()
@@ -34,7 +33,7 @@ def validate_epoch_brightnessawareness(model, dataloader, criterion, device):
     running_loss = 0.0
 
     with torch.no_grad():
-        for batch_idx, (X, y, valid_mask) in enumerate(tqdm(dataloader, desc="Validating")):
+        for batch_idx, (X, y, valid_mask) in enumerate(dataloader):
             X, y, valid_mask = X.to(device), y.to(device), valid_mask.to(device)
 
             X = X.contiguous().float()
@@ -52,7 +51,7 @@ def evaluate_model_on_test_brightnessawareness(model, dataloader, criterion, dev
     running_loss = 0.0
 
     with torch.no_grad():
-        for batch_idx, (X, y, valid_mask) in enumerate(tqdm(dataloader, desc="Testing")):
+        for batch_idx, (X, y, valid_mask) in enumerate(dataloader):
             X, y, valid_mask = X.to(device), y.to(device), valid_mask.to(device)
 
             X = X.contiguous().float()
