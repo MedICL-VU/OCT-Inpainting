@@ -59,7 +59,6 @@ def evaluate_model_on_test(model, dataloader, criterion, device):
 
             output = model(X)
             loss = criterion(output, y)
-
             total_loss += loss.item() * X.size(0)
 
     return total_loss / len(dataloader.dataset)

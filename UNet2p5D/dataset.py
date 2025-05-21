@@ -5,26 +5,24 @@ import numpy as np
 import random
 
 class IntensityAugment:
-    def __init__(self, scale_range=(0.9, 1.1), noise_std=0.01, bias_range=(-0.05, 0.05)):
+    def __init__(self, scale_range=(0.9, 1.1), bias_range=(-0.05, 0.05)):
         self.scale_range = scale_range
-        self.noise_std = noise_std
         self.bias_range = bias_range
 
-    def __call__(self, stack, target):
-        # Apply to both stack and target equally
+    def __call__(self, volume):
+        """
+        Args:
+            volume (np.ndarray): 3D volume (D, H, W), dtype=uint16
+        Returns:
+            np.ndarray: Augmented volume, dtype=uint16
+        """
         scale = random.uniform(*self.scale_range)
         bias = random.uniform(*self.bias_range)
-        noise = np.random.normal(0, self.noise_std * 65535, size=stack.shape)
 
-        # Apply scale, noise, and bias
-        stack = stack.astype(np.float32) * scale + noise + bias * 65535
-        target = target.astype(np.float32) * scale + bias * 65535
+        augmented = volume.astype(np.float32) * scale + bias * 65535
+        augmented = np.clip(augmented, 0, 65535).astype(np.uint16)
 
-        # Clip back to uint16 range
-        stack = np.clip(stack, 0, 65535).astype(np.uint16)
-        target = np.clip(target, 0, 65535).astype(np.uint16)
-
-        return stack, target
+        return augmented
     
 
 class OCTAInpaintingDataset(Dataset):
@@ -47,14 +45,29 @@ class OCTAInpaintingDataset(Dataset):
             clean = tiff.imread(clean_path)
             mask = tiff.imread(mask_path)
 
+            if self.transform:
+                corrupted = self.transform(corrupted)
+                clean = self.transform(clean)
+
+            assert corrupted.shape == clean.shape
+            assert corrupted.shape[0] == mask.shape[0], "Mismatch in number of slices"
+
             if mask.ndim == 3:
-                mask = (mask[:, 0, 0] > 0).astype(np.uint8)
+                if np.all((mask == 0) | (mask == 1)):
+                    mask = mask[:, 0, 0]
+                else:
+                    raise ValueError("Unexpected mask format: expected binary 0/1 values per slice.")
+            elif mask.ndim == 1:
+                pass
             else:
-                mask = mask.astype(np.uint8)
+                raise ValueError("Unsupported mask dimensionality")
 
             padded = np.pad(corrupted, ((self.pad, self.pad), (0, 0), (0, 0)), mode='edge')
 
             for idx in np.where(mask == 1)[0]:  # Only missing slices are used
+                if idx < self.pad or idx >= corrupted.shape[0] - self.pad:
+                    continue  # Skip edge slices with invalid context
+                
                 stack = padded[idx:idx + stack_size]  # shape: (stack_size, H, W)
                 target = clean[idx]                  # shape: (H, W)
                 self.data.append((stack, target))  # Only stack and target
@@ -64,9 +77,6 @@ class OCTAInpaintingDataset(Dataset):
 
     def __getitem__(self, idx):
         stack, target = self.data[idx]
-
-        if self.transform:
-            stack, target = self.transform(stack, target)
 
         # Convert to torch tensors and normalize to [0, 1]
         stack = torch.from_numpy(stack).float() / 65535.0             # (stack_size, H, W)

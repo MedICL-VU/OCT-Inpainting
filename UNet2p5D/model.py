@@ -57,17 +57,34 @@ class OutConv(nn.Module):
         return self.out_conv(x)
 
 class UNet2p5D(nn.Module):
-    def __init__(self, in_channels=5, out_channels=1, features=[64, 128, 256, 512]):
+    """
+    U-Net 2.5D model with optional dropout and configurable features.
+
+    Args:
+        in_channels (int): Number of input channels.
+        out_channels (int): Number of output channels.
+        features (list): List of feature sizes for each level of the U-Net.
+        dropout_rate (float): Dropout rate for regularization. Default is 0.0 (no dropout).
+    """
+    def __init__(self, in_channels=5, out_channels=1, features=None, dropout_rate=0.0):
         super().__init__()
+        if features is None:
+            features = [64, 128, 256, 512]
+        self.dropout_rate = dropout_rate
+
+        if not (0.0 <= dropout_rate <= 1.0):
+            raise ValueError("dropout_rate must be between 0.0 and 1.0")
+
         self.inc = DoubleConv(in_channels, features[0])
         self.down1 = Down(features[0], features[1])
         self.down2 = Down(features[1], features[2])
         self.down3 = Down(features[2], features[3])
 
+        self.dropout = nn.Dropout2d(p=dropout_rate) if dropout_rate > 0 else nn.Identity()
+
         self.up1 = Up(features[3], features[2])
         self.up2 = Up(features[2], features[1])
         self.up3 = Up(features[1], features[0])
-
         self.outc = OutConv(features[0], out_channels)
 
     def forward(self, x):
@@ -76,8 +93,12 @@ class UNet2p5D(nn.Module):
         x3 = self.down2(x2)
         x4 = self.down3(x3)
 
+        x4 = self.dropout(x4)  # bottleneck dropout
+
         x = self.up1(x4, x3)
+        x = self.dropout(x)    # decoder dropout (optional, same module)
         x = self.up2(x, x2)
+        x = self.dropout(x)
         x = self.up3(x, x1)
         x = self.outc(x)
         return x

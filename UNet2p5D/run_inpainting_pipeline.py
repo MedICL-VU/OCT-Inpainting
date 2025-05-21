@@ -1,6 +1,6 @@
 import os
 import torch
-from piq import ssim
+import piq
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from torch.optim import AdamW, lr_scheduler
@@ -8,53 +8,93 @@ import tifffile as tiff
 import numpy as np
 import argparse
 from sklearn.model_selection import KFold
+from skimage.metrics import structural_similarity as skimage_ssim
 
 from dataset import OCTAInpaintingDataset, IntensityAugment
 from model import UNet2p5D
 from train_val import train_epoch, validate_epoch, evaluate_model_on_test, EarlyStopping, SSIM_L1_GlobalLoss
-from save_inpainted import inpaint_volume_with_model, smooth_rescale_reconstructed_volume
+from save_inpainted import inpaint_volume_with_model
 # from compare_inpainting_tifs import run_comparison, normalize, load_volume
 from utils import log
 
 
 def evaluate_volume_metrics(gt, pred, mask):
-    """Evaluate L1, SSIM, PSNR, and intensity error over corrupted (masked) slices only."""
-    assert gt.shape == pred.shape, "Shapes must match"
+    from skimage.metrics import structural_similarity as skimage_ssim
 
-    gt = torch.from_numpy(gt).float() / 65535.0  # (D, H, W)
-    pred = torch.from_numpy(pred).float() / 65535.0
-    mask = torch.from_numpy(mask).float()  # (D,) where 1 = corrupted
+    assert gt.shape == pred.shape, "Volume shapes must match"
+    gt = (torch.from_numpy(gt).float() / 65535.0).numpy()
+    pred = (torch.from_numpy(pred).float() / 65535.0).numpy()
+    mask = mask.astype(bool)
 
     D, H, W = gt.shape
     l1_vals = []
-    ssim_vals = []
     psnr_vals = []
+    ssim_vals = {7: [], 11: [], 17: []}
+    ncc_vals = {7: [], 11: [], 17: []}
+
+    def local_ncc(a, b, window):
+        a, b = torch.from_numpy(a), torch.from_numpy(b)
+        pad = window // 2
+        a2 = a**2
+        b2 = b**2
+        ab = a * b
+        kernel = torch.ones((1, 1, window, window))
+        a_sum = F.conv2d(a.view(1,1,H,W), kernel, padding=pad)
+        b_sum = F.conv2d(b.view(1,1,H,W), kernel, padding=pad)
+        ab_sum = F.conv2d(ab.view(1,1,H,W), kernel, padding=pad)
+        a2_sum = F.conv2d(a2.view(1,1,H,W), kernel, padding=pad)
+        b2_sum = F.conv2d(b2.view(1,1,H,W), kernel, padding=pad)
+
+        win_size = window ** 2
+        a_mean = a_sum / win_size
+        b_mean = b_sum / win_size
+        num = ab_sum - a_mean * b_sum - b_mean * a_sum + a_mean * b_mean * win_size
+        denom = (a2_sum - a_mean * a_sum - a_mean * a_sum + a_mean * a_mean * win_size).clamp(min=1e-6).sqrt() * \
+                (b2_sum - b_mean * b_sum - b_mean * b_sum + b_mean * b_mean * win_size).clamp(min=1e-6).sqrt()
+        return (num / denom).clamp(-1, 1).mean().item()
+
     num_masked = 0
 
     for i in range(D):
-        if mask[i] == 1:
-            gt_slice = gt[i]
-            pred_slice = pred[i]
+        if not mask[i]:
+            continue
+        g = gt[i]
+        p = pred[i]
 
-            l1_vals.append(F.l1_loss(pred_slice, gt_slice, reduction='mean').item())
-            ssim_vals.append(piq.ssim(pred_slice.unsqueeze(0).unsqueeze(0), gt_slice.unsqueeze(0).unsqueeze(0), data_range=1.0).item())
-            psnr_vals.append(piq.psnr(pred_slice.unsqueeze(0).unsqueeze(0), gt_slice.unsqueeze(0).unsqueeze(0), data_range=1.0).item())
-            num_masked += 1
+        l1_vals.append(np.mean(np.abs(p - g)))
+        psnr = piq.psnr(torch.tensor(p).unsqueeze(0).unsqueeze(0),
+                        torch.tensor(g).unsqueeze(0).unsqueeze(0),
+                        data_range=1.0).item()
+        psnr_vals.append(psnr)
+
+        for w in [7, 11, 17]:
+            try:
+                ssim = skimage_ssim(p, g, data_range=1.0, win_size=w)
+                ssim_vals[w].append(ssim)
+            except Exception as e:
+                print(f"SSIM failed on slice {i} with window {w}: {e}")
+                ssim_vals[w].append(float('nan'))
+
+            ncc_vals[w].append(local_ncc(p, g, window=w))
+
+        num_masked += 1
 
     if num_masked == 0:
         return {
             "L1": None,
-            "SSIM": None,
             "PSNR": None,
-            "MeanIntensityError": round(torch.abs(pred.mean() - gt.mean()).item(), 4),
-            "Note": "No masked slices to evaluate"
+            "MeanIntensityError": round(float(np.abs(pred.mean() - gt.mean())), 4),
+            "SSIM": {w: None for w in [7, 11, 17]},
+            "NCC": {w: None for w in [7, 11, 17]},
+            "Note": "No corrupted slices to evaluate"
         }
 
     return {
         "L1": round(sum(l1_vals) / num_masked, 4),
-        "SSIM": round(sum(ssim_vals) / num_masked, 4),
         "PSNR": round(sum(psnr_vals) / num_masked, 4),
-        "MeanIntensityError": round(torch.abs(pred.mean() - gt.mean()).item(), 4)
+        "MeanIntensityError": round(float(np.abs(pred.mean() - gt.mean())), 4),
+        "SSIM": {w: round(np.nanmean(ssim_vals[w]), 4) for w in ssim_vals},
+        "NCC": {w: round(sum(ncc_vals[w]) / num_masked, 4) for w in ncc_vals}
     }
 
 
@@ -96,8 +136,9 @@ def parse_args():
     parser.add_argument('--epochs', type=int, default=50, help='Number of training epochs')
     parser.add_argument('--batch_size', type=int, default=8, help='Batch size for training')
     parser.add_argument('--stack_size', type=int, default=9, help='Number of slices to stack for 2.5D input')
-    # parser.add_argument('--lr', type=float, default=1e-4, help='Learning rate for AdamW optimizer')
     parser.add_argument('--lr', type=float, default=5e-5, help='Learning rate for AdamW optimizer')
+    parser.add_argument('--features', type=int, nargs='+', default=[64, 128, 256, 512], help='Feature channels for UNet layers')
+    parser.add_argument('--dropout', type=float, default=0.0, help='Dropout rate (0 to disable)')
     parser.add_argument('--augment', action='store_true', help='Apply data augmentation during training')
     parser.add_argument('--cuda', action='store_true', help='Use CUDA if available')
     parser.add_argument('--kfold', action='store_true', help='Run full k-fold cross-validation')
@@ -148,7 +189,7 @@ def main():
         log(f"Using {len(train_vols)} volumes for training, {len(val_vols)} for validation, {len(test_vols)} for testing")
 
         # Build datasets
-        augment = IntensityAugment(scale_range=(0.95, 1.05), noise_std=0.005, bias_range=(-0.02, 0.02)) if args.augment else None
+        augment = IntensityAugment(scale_range=(0.95, 1.05), bias_range=(-0.02, 0.02)) if args.augment else None
         train_dataset = OCTAInpaintingDataset(train_vols, stack_size=args.stack_size, transform=augment)
         val_dataset   = OCTAInpaintingDataset(val_vols, stack_size=args.stack_size)
         test_dataset  = OCTAInpaintingDataset(test_vols, stack_size=args.stack_size)
@@ -159,7 +200,12 @@ def main():
 
         # === 2. Initialize Model ===
         log("Initializing model...")
-        model = UNet2p5D(in_channels=args.stack_size, out_channels=1).to(device)
+        model = UNet2p5D(
+            in_channels=args.stack_size,
+            out_channels=1,
+            features=args.features,
+            dropout_rate=args.dropout
+        ).to(device)
         criterion = SSIM_L1_GlobalLoss(alpha=0.8, beta=0.1)
         optimizer = AdamW(model.parameters(), lr=args.lr, weight_decay=1e-5)
         scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', patience=4, factor=0.5, verbose=True)
@@ -210,22 +256,26 @@ def main():
             inpainted_volume = inpainted[0]
         else:
             inpainted_volume = inpainted
-        corrected_inpainted_volume = smooth_rescale_reconstructed_volume(inpainted_volume, corrupted_volume, mask, blend_factor=0.5)  # or 0.6 or 0.7 based on visual tuning
+        # corrected_inpainted_volume = smooth_rescale_reconstructed_volume(inpainted_volume, corrupted_volume, mask, blend_factor=0.5)  # or 0.6 or 0.7 based on visual tuning
 
-        tiff.imwrite(predicted_output_path, corrected_inpainted_volume.astype(np.uint16))
+        tiff.imwrite(predicted_output_path, inpainted_volume.astype(np.uint16))
         log(f"Inpainted volume saved to: {predicted_output_path}")
 
         # === 5. Volume-Wise Evaluation ===
         log("Evaluating inpainted volume metrics...")
 
         gt_volume = tiff.imread(test_gt_path)
-        metrics = evaluate_volume_metrics(gt_volume, corrected_inpainted_volume, mask)
+        metrics = evaluate_volume_metrics(gt_volume, inpainted_volume, mask)
 
         log(f"Volume Metrics for {base_name}:")
-        log(f" - L1 Loss: {metrics['L1']}")
-        log(f" - SSIM: {metrics['SSIM']}")
-        log(f" - Mean Intensity Diff: {metrics['MeanIntensityError']}")
+        log(f" - L1 Loss: {metrics['L1']:.4f}")
         log(f" - PSNR: {metrics['PSNR']}")
+        log(f" - Mean Intensity Diff: {metrics['MeanIntensityError']}")
+
+        for w in [7, 11, 17]:
+            log(f" - SSIM (win={w}): {metrics['SSIM'][w]}")
+        for w in [7, 11, 17]:
+            log(f" - NCC (win={w}):  {metrics['NCC'][w]}")
 
 
 if __name__ == "__main__":
