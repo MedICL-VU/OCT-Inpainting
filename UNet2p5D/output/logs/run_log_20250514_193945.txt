@@ -1,0 +1,15 @@
+Starting Inpainting Pipeline
+Device: cuda
+Epochs: 1 | Batch size: 1 | Stack size: 5
+Loading datasets...
+
+========== Fold 1 ==========
+Training volumes:
+ - 1.4_OCTA_Vol1_Processed_Cropped_corrupted.tif
+ - 3.4_OCTA_Vol2_Processed_Cropped_corrupted.tif
+ - 5.3_OCTA_Vol1_Processed_Cropped_corrupted.tif
+Validation volume:
+ - 1.1_OCTA_Vol1_Processed_Cropped_corrupted.tif
+Test volume:
+ - 1.2_OCTA_Vol2_Processed_Cropped_corrupted.tif
+Using 3 volumes for training, 1 for validation, 1 for testing

@@ -54,30 +54,13 @@ def evaluate_volume_metrics(gt, pred, mask):
     }
 
 
-def load_volume_triplets(data_dir):
-    """
-    Returns list of (corrupted, gt, mask) triplets from directory.
-    Assumes filenames follow pattern: {name}_corrupted.tif, {name}_gt.tif, {name}_mask.tif
-    """
-    triplets = []
-    for f in os.listdir(data_dir):
-        if f.endswith("_corrupted.tif"):
-            name = f.replace("_corrupted.tif", "")
-            corrupted = os.path.join(data_dir, f)
-            gt = os.path.join(data_dir, f"{name}_gt.tif")
-            mask = os.path.join(data_dir, f"{name}_mask.tif")
-            if os.path.exists(gt) and os.path.exists(mask):
-                triplets.append((corrupted, gt, mask))
-    return sorted(triplets)
-
-
-def get_kfold_splits(triplets, k=5, seed=42):
+def get_kfold_splits(volume_paths, k=5, seed=42):
     kf = KFold(n_splits=k, shuffle=True, random_state=seed)
     folds = []
 
-    for fold_idx, (trainval_idx, test_idx) in enumerate(kf.split(triplets)):
-        test = [triplets[i] for i in test_idx]
-        trainval = [triplets[i] for i in trainval_idx]
+    for fold_idx, (trainval_idx, test_idx) in enumerate(kf.split(volume_paths)):
+        test = [volume_paths[i] for i in test_idx]
+        trainval = [volume_paths[i] for i in trainval_idx]
 
         val_split = int(0.2 * len(trainval)) or 1
         val = trainval[:val_split]
@@ -115,9 +98,10 @@ def main():
     # === 1. Load Dataset ===
     log("Loading datasets...")
     # Load and split volumes
-    volume_triplets = load_volume_triplets("/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing/")
+    from glob import glob
+    gt_volumes = sorted(glob("/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing/*_gt.tif"))
 
-    folds = get_kfold_splits(volume_triplets, k=5)
+    folds = get_kfold_splits(gt_volumes, k=5)
     if args.kfold:
         fold_range = range(len(folds))
     else:
@@ -135,7 +119,7 @@ def main():
         for v in test_vols: log(f" - {os.path.basename(v[0])}")
 
         # === Identify test volume metadata ===
-        test_corrupted_path, test_gt_path, test_mask_path = test_vols[0]
+        test_gt_path = test_vols[0]
 
         # === Configurations ===
         best_model_path = f"output/best_model_fold{fold_idx + 1}.pth"
@@ -151,7 +135,13 @@ def main():
 
 
         # Build datasets
-        train_dataset = OCTAInpaintingDataset(train_vols, stack_size=args.stack_size)
+        # train_dataset = OCTAInpaintingDataset(train_vols, stack_size=args.stack_size)
+        train_dataset = OCTAInpaintingDataset(
+            volume_paths=train_vols,
+            stack_size=args.stack_size,
+            corruption_patterns=["gt_gt_gt", "gt_gt_corr", "corr_gt_gt", "corr_gt_corr"]
+        )
+
         val_dataset   = OCTAInpaintingDataset(val_vols, stack_size=args.stack_size)
         test_dataset  = OCTAInpaintingDataset(test_vols, stack_size=args.stack_size)
 

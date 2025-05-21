@@ -1,0 +1,14 @@
+Starting Inpainting Pipeline
+Device: cuda
+Epochs: 1 | Batch size: 1 | Stack size: 5
+Loading datasets...
+
+========== Fold 1 ==========
+Training volumes:
+ - 
+ - 
+ - 
+Validation volume:
+ - 
+Test volume:
+ - 

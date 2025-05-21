@@ -1,0 +1,31 @@
+Starting Inpainting Pipeline
+Device: cuda
+Epochs: 1 | Batch size: 1 | Stack size: 5
+Loading datasets...
+
+========== Fold 1 ==========
+Training volumes:
+ - 1.4_OCTA_Vol1_Processed_Cropped_corrupted.tif
+ - 3.4_OCTA_Vol2_Processed_Cropped_corrupted.tif
+ - 5.3_OCTA_Vol1_Processed_Cropped_corrupted.tif
+Validation volume:
+ - 1.1_OCTA_Vol1_Processed_Cropped_corrupted.tif
+Test volume:
+ - 1.2_OCTA_Vol2_Processed_Cropped_corrupted.tif
+Using 3 volumes for training, 1 for validation, 1 for testing
+Initializing model...
+Starting training...
+[Epoch 1] Train Loss: 0.1598 | Val Loss: 0.1179
+Validation loss improved to 0.117859
+Training completed.
+Evaluating on held-out test volume...
+Final test loss: 0.1105
+Inpainting volume...
+Inpainted volume saved to: /media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing/1.2_OCTA_Vol2_Processed_Cropped_inpainted_2p5DUNet_fold1_v2.tif
+Evaluating inpainted volume metrics...
+Volume Metrics for 1.2_OCTA_Vol2_Processed_Cropped:
+ - L1 Loss: 0.0297
+ - SSIM: 0.6303
+ - Mean Intensity Diff: 0.0031
+
+===== K-FOLD AVERAGE TEST LOSS: 0.1105 =====
