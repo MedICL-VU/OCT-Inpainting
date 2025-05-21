@@ -1,8 +1,0 @@
-Linear Interpolation:
-  Mean PSNR: 86.92 dB
-  Mean SSIM: 0.9580
-----------------------------------------
-2.5D CNN Prediction:
-  Mean PSNR: 87.21 dB
-  Mean SSIM: 0.9687
-----------------------------------------
