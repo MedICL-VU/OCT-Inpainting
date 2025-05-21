@@ -7,6 +7,8 @@ from utils import log
 def train_epoch(model, dataloader, optimizer, criterion, device):
     model.train()
     running_loss = 0.0
+    log_terms = {"l1": 0.0, "ssim": 0.0, "global_mean": 0.0, "neighbor_relative": 0.0}
+    count = 0
 
     # for batch_idx, (X, y) in enumerate(tqdm(dataloader, desc="Training")):
     #     X, y = X.to(device), y.to(device)
@@ -22,7 +24,9 @@ def train_epoch(model, dataloader, optimizer, criterion, device):
             raise ValueError(f"Output shape {output.shape} != target shape {y.shape}")
 
         # loss = criterion(output, y)
-        loss = criterion(output, y, X, valid_mask)  # X is stack input
+        # loss = criterion(output, y, X, valid_mask)  # X is stack input
+        # loss, terms = criterion(output, y, stack=X, valid_mask=(X.sum(dim=(2,3)) > 0).float())
+        loss, terms = criterion(output, y, X, valid_mask)
 
         optimizer.zero_grad()
         loss.backward()
@@ -30,7 +34,13 @@ def train_epoch(model, dataloader, optimizer, criterion, device):
 
         running_loss += loss.item() * X.size(0)
 
-    return running_loss / len(dataloader.dataset)
+        for k in log_terms:
+            log_terms[k] += terms.get(k, 0.0) * X.size(0)
+        count += X.size(0)
+    avg_terms = {k: round(v / count, 6) for k, v in log_terms.items()}
+
+    # return running_loss / len(dataloader.dataset)
+    return running_loss / count, avg_terms
 
 
 def validate_epoch(model, dataloader, criterion, device):
@@ -48,7 +58,7 @@ def validate_epoch(model, dataloader, criterion, device):
 
             output = model(X)
             # loss = criterion(output, y)
-            loss = criterion(output, y, X, valid_mask)  # X is stack input
+            loss, terms = criterion(output, y, X, valid_mask)  # X is stack input
             running_loss += loss.item() * X.size(0)
 
     return running_loss / len(dataloader.dataset)
@@ -69,7 +79,7 @@ def evaluate_model_on_test(model, dataloader, criterion, device):
 
             output = model(X)
             # loss = criterion(output, y)
-            loss = criterion(output, y, X, valid_mask)  # X is stack input
+            loss, terms = criterion(output, y, X, valid_mask)  # X is stack input
             running_loss += loss.item() * X.size(0)
 
     return running_loss / len(dataloader.dataset)
@@ -120,30 +130,50 @@ class SSIM_L1_BrightnessAwareLoss(nn.Module):
         self.gamma = gamma
         self.l1 = nn.L1Loss()
 
-    def forward(self, pred, target, stack, valid_mask):
+    def forward(self, pred, target, stack=None, valid_mask=None):
         # pred, target: (B, 1, H, W)
         # stack: (B, S, H, W), valid_mask: (B, S)
 
         l1_loss = self.l1(pred, target)
         ssim_loss = 1 - ssim(pred, target, data_range=1.0)
+
+        # Global mean brightness alignment
         mean_loss = torch.abs(pred.mean() - target.mean())
 
-        # === Brightness difference from valid neighbors ===
-        B, S, H, W = stack.shape
-        stack_means = stack.view(B, S, -1).mean(dim=2)           # (B, S)
-        pred_means = pred.view(B, -1).mean(dim=1, keepdim=True)  # (B, 1)
+        # Brightness-aware neighbor term (relative)
+        if stack is not None and valid_mask is not None:
+            B, S, H, W = stack.shape
+            stack_means = stack.view(B, S, -1).mean(dim=2)                # (B, S)
+            pred_means = pred.view(B, -1).mean(dim=1, keepdim=True)       # (B, 1)
 
-        # Only consider valid slices
-        valid_neighbors = stack_means * valid_mask               # (B, S)
-        num_valid = valid_mask.sum(dim=1, keepdim=True).clamp(min=1.0)
+            valid_neighbors = stack_means * valid_mask                    # (B, S)
+            num_valid = valid_mask.sum(dim=1, keepdim=True).clamp(min=1.0)
+            neighbor_mean = valid_neighbors.sum(dim=1, keepdim=True) / num_valid
 
-        neighbor_mean = valid_neighbors.sum(dim=1, keepdim=True) / num_valid
-        brightness_consistency = torch.abs(pred_means - neighbor_mean).mean()
+            brightness_consistency = torch.abs(pred_means - neighbor_mean).mean()
 
-        return (self.alpha * l1_loss +
-                (1 - self.alpha) * ssim_loss +
-                self.beta * mean_loss +
-                self.gamma * brightness_consistency)
+            # # Use relative difference
+            # brightness_consistency = (
+            #     torch.abs(pred_means - neighbor_mean) /
+            #     neighbor_mean.clamp(min=1e-4)
+            # ).mean()
+        else:
+            brightness_consistency = torch.tensor(0.0, device=pred.device)
+
+        total_loss = (
+            self.alpha * l1_loss +
+            (1 - self.alpha) * ssim_loss +
+            self.beta * mean_loss +
+            self.gamma * brightness_consistency
+        )
+
+        # Return loss + dictionary for diagnostics
+        return total_loss, {
+            "l1": l1_loss.item(),
+            "ssim": ssim_loss.item(),
+            "global_mean": mean_loss.item(),
+            "neighbor_relative": brightness_consistency.item()
+        }
     
 
 class EarlyStopping:

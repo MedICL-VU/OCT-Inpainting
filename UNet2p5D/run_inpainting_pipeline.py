@@ -218,7 +218,10 @@ def main():
             best_val_loss = float('inf')
 
             for epoch in range(1, args.epochs + 1):
-                train_loss = train_epoch(model, train_loader, optimizer, criterion, device)
+                # train_loss = train_epoch(model, train_loader, optimizer, criterion, device)
+                train_loss, diagnostics = train_epoch(model, train_loader, optimizer, criterion, device)
+                print(f"Train Loss: {train_loss:.4f} | Terms: {diagnostics}")
+
                 val_loss = validate_epoch(model, val_loader, criterion, device)
 
                 log(f"[Epoch {epoch}] Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f}")
