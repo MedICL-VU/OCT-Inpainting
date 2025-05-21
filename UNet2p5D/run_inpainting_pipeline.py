@@ -143,6 +143,7 @@ def parse_args():
     parser.add_argument('--cuda', action='store_true', help='Use CUDA if available')
     parser.add_argument('--kfold', action='store_true', help='Run full k-fold cross-validation')
     parser.add_argument('--fold_idx', type=int, default=0, help='If not kfold mode, which fold to run (default: 0)')
+    parser.add_argument('--skip_train', action='store_true', help='Skip training and only run inference on the test set')
     return parser.parse_args()
 
 
@@ -211,29 +212,31 @@ def main():
         scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', patience=4, factor=0.5, verbose=True)
         early_stopping = EarlyStopping(patience=5, min_delta=1e-4, verbose=True)
 
-        # === 3. Train Model ===
-        log("Starting training...")
-        best_val_loss = float('inf')
+        # If skip training, load the best model directly
+        if not args.skip_train:
+            # === 3. Train Model ===
+            log("Starting training...")
+            best_val_loss = float('inf')
 
-        for epoch in range(1, args.epochs + 1):
-            train_loss = train_epoch(model, train_loader, optimizer, criterion, device)
-            val_loss = validate_epoch(model, val_loader, criterion, device)
+            for epoch in range(1, args.epochs + 1):
+                train_loss = train_epoch(model, train_loader, optimizer, criterion, device)
+                val_loss = validate_epoch(model, val_loader, criterion, device)
 
-            log(f"[Epoch {epoch}] Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f}")
-            scheduler.step(val_loss)
+                log(f"[Epoch {epoch}] Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f}")
+                scheduler.step(val_loss)
 
-            # Save best model
-            if val_loss < best_val_loss:
-                best_val_loss = val_loss
-                torch.save(model.state_dict(), best_model_path)
+                # Save best model
+                if val_loss < best_val_loss:
+                    best_val_loss = val_loss
+                    torch.save(model.state_dict(), best_model_path)
 
-            # Early stopping check
-            early_stopping.step(val_loss)
-            if early_stopping.should_stop:
-                log(f"Early stopping triggered at epoch {epoch}")
-                break
+                # Early stopping check
+                early_stopping.step(val_loss)
+                if early_stopping.should_stop:
+                    log(f"Early stopping triggered at epoch {epoch}")
+                    break
 
-        log("Training completed.")
+            log("Training completed.")
 
         # === 4: Evaluate on Held-Out Test Volume ===
         log("Evaluating on held-out test volume...")
