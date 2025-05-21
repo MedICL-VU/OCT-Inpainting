@@ -12,15 +12,13 @@ from skimage.metrics import structural_similarity as skimage_ssim
 
 from dataset import OCTAInpaintingDataset, IntensityAugment
 from model import UNet2p5D
-from train_val import train_epoch, validate_epoch, evaluate_model_on_test, EarlyStopping, SSIM_L1_GlobalLoss
+from train_val import train_epoch, validate_epoch, evaluate_model_on_test, EarlyStopping, SSIM_L1_BrightnessAwareLoss
 from save_inpainted import inpaint_volume_with_model
 # from compare_inpainting_tifs import run_comparison, normalize, load_volume
 from utils import log
 
 
 def evaluate_volume_metrics(gt, pred, mask):
-    from skimage.metrics import structural_similarity as skimage_ssim
-
     assert gt.shape == pred.shape, "Volume shapes must match"
     gt = (torch.from_numpy(gt).float() / 65535.0).numpy()
     pred = (torch.from_numpy(pred).float() / 65535.0).numpy()
@@ -184,7 +182,7 @@ def main():
         base_name = os.path.basename(test_corrupted_path).replace("_corrupted.tif", "")
         predicted_output_path = os.path.join(
             "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing",
-            f"{base_name}_inpainted_2p5DUNet_fold{fold_idx+1}.tif"
+            f"{base_name}_inpainted_2p5DUNet_fold{fold_idx+1}_bAwareloss.tif"
         )
 
         log(f"Using {len(train_vols)} volumes for training, {len(val_vols)} for validation, {len(test_vols)} for testing")
@@ -207,7 +205,8 @@ def main():
             features=args.features,
             dropout_rate=args.dropout
         ).to(device)
-        criterion = SSIM_L1_GlobalLoss(alpha=0.8, beta=0.1)
+        # criterion = SSIM_L1_GlobalLoss(alpha=0.8, beta=0.1)
+        criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.8, beta=0.1, gamma=0.1)
         optimizer = AdamW(model.parameters(), lr=args.lr, weight_decay=1e-5)
         scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', patience=4, factor=0.5, verbose=True)
         early_stopping = EarlyStopping(patience=5, min_delta=1e-4, verbose=True)

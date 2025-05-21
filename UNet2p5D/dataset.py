@@ -78,8 +78,15 @@ class OCTAInpaintingDataset(Dataset):
     def __getitem__(self, idx):
         stack, target = self.data[idx]
 
+        if self.transform:
+            stack, target = self.transform(stack, target)
+
         # Convert to torch tensors and normalize to [0, 1]
         stack = torch.from_numpy(stack).float() / 65535.0             # (stack_size, H, W)
         target = torch.from_numpy(target).float().unsqueeze(0) / 65535.0  # (1, H, W)
 
-        return stack, target
+        # Build valid mask from non-zero slices in stack
+        valid_mask_stack = (stack.sum(dim=(1, 2)) > 1e-3).float()  # (stack_size,)
+
+        return stack, target, valid_mask_stack
+    
