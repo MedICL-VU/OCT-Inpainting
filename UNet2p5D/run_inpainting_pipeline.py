@@ -204,7 +204,8 @@ def main():
             stack_size=args.stack_size,
             transform=None,
             volume_transform=None,
-            dynamic=False,
+            # dynamic=False,
+            dynamic=True,
             debug=args.debug_mode
         )
         test_dataset = OCTAInpaintingDataset(
@@ -227,7 +228,8 @@ def main():
             features=args.features,
             dropout_rate=args.dropout
         ).to(device)
-        criterion = SSIM_L1_GlobalLoss(alpha=0.8, beta=0.1)
+        # criterion = SSIM_L1_GlobalLoss(alpha=0.8, beta=0.1)
+        criterion = SSIM_L1_GlobalLoss(alpha=1.0, beta=0.0)
         optimizer = AdamW(model.parameters(), lr=args.lr, weight_decay=1e-5)
         scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', patience=4, factor=0.5, verbose=True)
         early_stopping = EarlyStopping(patience=5, min_delta=1e-4, verbose=True)

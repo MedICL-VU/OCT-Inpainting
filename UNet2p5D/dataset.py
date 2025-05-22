@@ -174,8 +174,10 @@ class OCTAInpaintingDataset(Dataset):
             neighbors.remove(center_pos)
 
             # Maximum drops = (len(neighbors) - 2) to ensure at least 2 neighbors remain.
-            max_drops = len(neighbors) - 2
-            drop_n = random.randint(0, max_drops)
+            # max_drops = len(neighbors) - 2
+            max_drops = len(neighbors) - 4
+            # drop_n = random.randint(0, max_drops)
+            drop_n = random.randint(1,3)
             drop_indices = random.sample(neighbors, drop_n)
             # Drop the selected neighbor slices
             for di in drop_indices:
@@ -192,7 +194,21 @@ class OCTAInpaintingDataset(Dataset):
 
         # Convert to torch tensors and normalize to [0,1]
         # stack: (stack_size, H, W), target: (H, W) -> unsqueeze to (1, H, W)
-        stack = torch.from_numpy(stack).float() / 65535.0
-        target = torch.from_numpy(target).float().unsqueeze(0) / 65535.0
+        # stack = torch.from_numpy(stack).float() / 65535.0
+        # target = torch.from_numpy(target).float().unsqueeze(0) / 65535.0
+
+        stack = torch.from_numpy(stack).float()
+        target = torch.from_numpy(target).float()
+
+        # Normalize each slice to [0, 1] individually
+        stack_min = stack.view(self.stack_size, -1).min(dim=1)[0].view(-1, 1, 1)
+        stack_max = stack.view(self.stack_size, -1).max(dim=1)[0].view(-1, 1, 1)
+        stack = (stack - stack_min) / (stack_max - stack_min + 1e-5)
+
+        target_min = target.min()
+        target_max = target.max()
+        target = (target - target_min) / (target_max - target_min + 1e-5)
+
+        target = target.unsqueeze(0)  # shape: (1, H, W)
 
         return stack, target
