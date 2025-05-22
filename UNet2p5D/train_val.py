@@ -22,9 +22,13 @@ def train_epoch(model, dataloader, optimizer, criterion, device):
             for b in range(min(2, X.shape[0])):
                 valid = (X[b].sum(dim=(1, 2)) > 0).nonzero().squeeze().tolist()
                 log(f" - Sample {b}: non-zero slices: {valid}")
+            log(f"Pred min/max: {output.min().item():.4f} / {output.max().item():.4f}")
 
         if output.shape != y.shape:
             raise ValueError(f"Output shape {output.shape} != target shape {y.shape}")
+
+        if torch.isnan(output).any() or torch.isinf(output).any():
+            log(f"[ERROR] Model output contains NaNs or Infs at batch {batch_idx}")
 
         loss = criterion(output, y)
 
@@ -49,6 +53,9 @@ def validate_epoch(model, dataloader, criterion, device):
             y = y.contiguous().float()
 
             output = model(X)
+            if torch.isnan(output).any() or torch.isinf(output).any():
+                log(f"[ERROR] Model output contains NaNs or Infs at batch {batch_idx}")
+
             loss = criterion(output, y)
             total_loss += loss.item() * X.size(0)
 
