@@ -10,11 +10,10 @@ import argparse
 from sklearn.model_selection import KFold
 from skimage.metrics import structural_similarity as skimage_ssim
 
-from dataset import OCTAInpaintingDataset, IntensityAugment
+from dataset import OCTAInpaintingDataset, IntensityAugment, VolumeLevelIntensityAugment
 from model import UNet2p5D
 from train_val import train_epoch, validate_epoch, evaluate_model_on_test, EarlyStopping, SSIM_L1_GlobalLoss
 from save_inpainted import inpaint_volume_with_model
-# from compare_inpainting_tifs import run_comparison, normalize, load_volume
 from utils import log
 
 
@@ -72,7 +71,7 @@ def evaluate_volume_metrics(gt, pred, mask):
                 ssim = skimage_ssim(p, g, data_range=1.0, win_size=w)
                 ssim_vals[w].append(ssim)
             except Exception as e:
-                print(f"SSIM failed on slice {i} with window {w}: {e}")
+                log(f"SSIM failed on slice {i} with window {w}: {e}")
                 ssim_vals[w].append(float('nan'))
 
             ncc_vals[w].append(local_ncc(p, g, window=w))
@@ -140,10 +139,12 @@ def parse_args():
     parser.add_argument('--features', type=int, nargs='+', default=[64, 128, 256, 512], help='Feature channels for UNet layers')
     parser.add_argument('--dropout', type=float, default=0.0, help='Dropout rate (0 to disable)')
     parser.add_argument('--augment', action='store_true', help='Apply data augmentation during training')
+    parser.add_argument('--stride', type=int, default=1, help='Stride for dynamic slicing (default: 1)')
     parser.add_argument('--cuda', action='store_true', help='Use CUDA if available')
     parser.add_argument('--kfold', action='store_true', help='Run full k-fold cross-validation')
     parser.add_argument('--fold_idx', type=int, default=0, help='If not kfold mode, which fold to run (default: 0)')
     parser.add_argument('--skip_train', action='store_true', help='Skip training and only run inference on the test set')
+    parser.add_argument('--debug_mode', action='store_true', help='Enable verbose debugging logs')
     return parser.parse_args()
 
 
@@ -180,24 +181,43 @@ def main():
         test_corrupted_path, test_gt_path, test_mask_path = test_vols[0]
         best_model_path = f"output/best_model_fold{fold_idx + 1}.pth"
 
-        # Generate output filename based on test volume name
-        base_name = os.path.basename(test_corrupted_path).replace("_corrupted.tif", "")
-        predicted_output_path = os.path.join(
-            "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing",
-            f"{base_name}_inpainted_2p5DUNet_fold{fold_idx+1}.tif"
-        )
-
         log(f"Using {len(train_vols)} volumes for training, {len(val_vols)} for validation, {len(test_vols)} for testing")
 
         # Build datasets
-        augment = IntensityAugment(scale_range=(0.95, 1.05), bias_range=(-0.02, 0.02)) if args.augment else None
-        train_dataset = OCTAInpaintingDataset(train_vols, stack_size=args.stack_size, transform=augment)
-        val_dataset   = OCTAInpaintingDataset(val_vols, stack_size=args.stack_size)
-        test_dataset  = OCTAInpaintingDataset(test_vols, stack_size=args.stack_size)
+        augment = IntensityAugment(scale_range=(0.95, 1.05), noise_std=0.005, bias_range=(-0.02, 0.02)) if args.augment else None
+        volume_augment = VolumeLevelIntensityAugment(scale_range=(0.95, 1.05), bias_range=(-0.02, 0.02)) if args.augment else None
+
+        # Create dynamic training dataset
+        train_dataset = OCTAInpaintingDataset(
+            train_vols,
+            stack_size=args.stack_size,
+            transform=augment,
+            volume_transform=volume_augment,
+            dynamic=True,
+            stride=args.stride,
+            debug=args.debug_mode
+        )
+
+        # Validation and test datasets remain static (pre-generated corruptions)
+        val_dataset = OCTAInpaintingDataset(
+            val_vols,
+            stack_size=args.stack_size,
+            transform=None,
+            volume_transform=None,
+            dynamic=False,
+            debug=args.debug_mode
+        )
+        test_dataset = OCTAInpaintingDataset(
+            test_vols,
+            stack_size=args.stack_size,
+            transform=None,
+            volume_transform=None,
+            dynamic=False
+        )
 
         train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=0)
-        val_loader   = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False, num_workers=0)
-        test_loader  = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=0)
+        val_loader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False, num_workers=0)
+        test_loader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=0)
 
         # === 2. Initialize Model ===
         log("Initializing model...")
@@ -259,7 +279,13 @@ def main():
             inpainted_volume = inpainted[0]
         else:
             inpainted_volume = inpainted
-        # corrected_inpainted_volume = smooth_rescale_reconstructed_volume(inpainted_volume, corrupted_volume, mask, blend_factor=0.5)  # or 0.6 or 0.7 based on visual tuning
+
+        # Generate output filename based on test volume name
+        base_name = os.path.basename(test_corrupted_path).replace("_corrupted.tif", "")
+        predicted_output_path = os.path.join(
+            "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing",
+            f"{base_name}_inpainted_2p5DUNet_fold{fold_idx+1}.tif"
+        )
 
         tiff.imwrite(predicted_output_path, inpainted_volume.astype(np.uint16))
         log(f"Inpainted volume saved to: {predicted_output_path}")
@@ -283,22 +309,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-    # # === 5. Compare Linear Interpolation, 2.5D CNN, Ground Truth ===
-    # log("Comparing results...")
-
-    # # Load all volumes for comparison
-    # gt = normalize(load_volume(test_gt_path))
-    # linear = normalize(load_volume(test_corrupted_path.replace("_corrupted.tif", "_LinearInterp.tif")))
-    # predicted = normalize(load_volume(predicted_output_path))
-
-    # assert gt.shape == linear.shape == predicted.shape, "Volumes must match shape!"
-    
-    # === Run Comparison ===
-    # run_comparison(
-    #     gt_path="/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing/1.1_OCT_uint16_Preprocessed_Volume1_VertCropped_seqSVD.tif",
-    #     linear_path="/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing/1.1_OCT_uint16_Preprocessed_Volume1_VertCropped_seqSVD_Corrupted_LinearInterp_28percent_2to8sizeblock.tif",
-    #     predicted_path="/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing/1.1_OCT_uint16_Preprocessed_Volume1_VertCropped_seqSVD_Corrupted_2p5DUNet_28percent_2to8sizeblock.tif"
-    # )
-    

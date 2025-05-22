@@ -4,6 +4,7 @@ from tqdm import tqdm
 from pytorch_msssim import ssim
 from utils import log
 
+
 def train_epoch(model, dataloader, optimizer, criterion, device):
     model.train()
     running_loss = 0.0
@@ -15,6 +16,12 @@ def train_epoch(model, dataloader, optimizer, criterion, device):
         y = y.contiguous().float()
 
         output = model(X)
+
+        if hasattr(criterion, 'debug') and criterion.debug:
+            log(f"[TRAIN] Batch shape: {X.shape} | Target shape: {y.shape}")
+            for b in range(min(2, X.shape[0])):
+                valid = (X[b].sum(dim=(1, 2)) > 0).nonzero().squeeze().tolist()
+                log(f" - Sample {b}: non-zero slices: {valid}")
 
         if output.shape != y.shape:
             raise ValueError(f"Output shape {output.shape} != target shape {y.shape}")
@@ -28,6 +35,7 @@ def train_epoch(model, dataloader, optimizer, criterion, device):
         running_loss += loss.item() * X.size(0)
 
     return running_loss / len(dataloader.dataset)
+
 
 def validate_epoch(model, dataloader, criterion, device):
     model.eval()
@@ -46,6 +54,7 @@ def validate_epoch(model, dataloader, criterion, device):
 
     return total_loss / len(dataloader.dataset)
 
+
 def evaluate_model_on_test(model, dataloader, criterion, device):
     model.eval()
     total_loss = 0.0
@@ -63,17 +72,6 @@ def evaluate_model_on_test(model, dataloader, criterion, device):
 
     return total_loss / len(dataloader.dataset)
 
-
-# class SSIM_L1_Loss(nn.Module):
-#     def __init__(self, alpha=0.84):  # alpha = L1 weight, 1-alpha = SSIM weight
-#         super().__init__()
-#         self.alpha = alpha
-#         self.l1 = nn.L1Loss()
-
-#     def forward(self, pred, target):
-#         l1_loss = self.l1(pred, target)
-#         ssim_loss = 1 - ssim(pred, target, data_range=1.0)
-#         return self.alpha * l1_loss + (1 - self.alpha) * ssim_loss
 
 class SSIM_L1_GlobalLoss(nn.Module):
     def __init__(self, alpha=0.8, beta=0.1):
