@@ -197,7 +197,7 @@ class OCTAInpaintingDataset(Dataset):
             # max_drops = len(neighbors) - 2
             max_drops = len(neighbors) - 4
             # drop_n = random.randint(0, max_drops)
-            drop_n = random.randint(1,3)
+            drop_n = random.randint(2,5)
             drop_indices = random.sample(neighbors, drop_n)
             # Drop the selected neighbor slices
             for di in drop_indices:

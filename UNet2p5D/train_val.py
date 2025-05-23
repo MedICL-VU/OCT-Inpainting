@@ -46,7 +46,8 @@ def validate_epoch(model, dataloader, criterion, device):
     total_loss = 0.0
 
     with torch.no_grad():
-        for X, y in tqdm(dataloader, desc="Validating"):
+        # for X, y in tqdm(dataloader, desc="Validating"):
+        for batch_idx, (X, y) in enumerate(tqdm(dataloader, desc="Training")):
             X, y = X.to(device), y.to(device)
 
             X = X.contiguous().float()
@@ -67,7 +68,8 @@ def evaluate_model_on_test(model, dataloader, criterion, device):
     total_loss = 0.0
 
     with torch.no_grad():
-        for X, y in tqdm(dataloader, desc="Testing"):
+        # for X, y in tqdm(dataloader, desc="Testing"):
+        for batch_idx, (X, y) in enumerate(tqdm(dataloader, desc="Training")):
             X, y = X.to(device), y.to(device)
 
             X = X.contiguous().float()

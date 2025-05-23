@@ -204,8 +204,8 @@ def main():
             stack_size=args.stack_size,
             transform=None,
             volume_transform=None,
-            # dynamic=False,
-            dynamic=True,
+            dynamic=False,
+            # dynamic=True,
             debug=args.debug_mode
         )
         test_dataset = OCTAInpaintingDataset(
