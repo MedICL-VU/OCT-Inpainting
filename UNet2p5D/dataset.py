@@ -214,4 +214,9 @@ class OCTAInpaintingDataset(Dataset):
 
         target = target.unsqueeze(0)  # shape: (1, H, W)
 
-        return stack, target
+        # return stack, target
+
+        # Build valid mask from non-zero slices in stack
+        valid_mask_stack = (stack.sum(dim=(1, 2)) > 1e-3).float()  # (stack_size,)
+
+        return stack, target, valid_mask_stack

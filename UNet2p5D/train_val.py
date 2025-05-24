@@ -8,9 +8,16 @@ from utils import log
 def train_epoch(model, dataloader, optimizer, criterion, device):
     model.train()
     running_loss = 0.0
+    count = 0
+    if isinstance(criterion, SSIM_L1_BrightnessAwareLoss):
+        log_terms = {"l1": 0.0, "ssim": 0.0, "global_mean": 0.0, "neighbor_relative": 0.0}
+    else:
+        log_terms = {"l1": 0.0, "ssim": 0.0, "global_mean": 0.0}
 
-    for batch_idx, (X, y) in enumerate(tqdm(dataloader, desc="Training")):
-        X, y = X.to(device), y.to(device)
+    # for batch_idx, (X, y) in enumerate(tqdm(dataloader, desc="Training")):
+    #     X, y = X.to(device), y.to(device)
+    for batch_idx, (X, y, valid_mask) in enumerate(tqdm(dataloader, desc="Training")):
+        X, y, valid_mask = X.to(device), y.to(device), valid_mask.to(device)
 
         X = X.contiguous().float()
         y = y.contiguous().float()
@@ -30,7 +37,10 @@ def train_epoch(model, dataloader, optimizer, criterion, device):
         if torch.isnan(output).any() or torch.isinf(output).any():
             log(f"[ERROR] Model output contains NaNs or Infs at batch {batch_idx}")
 
-        loss = criterion(output, y)
+        if isinstance(criterion, SSIM_L1_BrightnessAwareLoss):
+            loss, terms = criterion(output, y, X, valid_mask)  # X is stack input
+        else:
+            loss, terms = criterion(output, y)
 
         optimizer.zero_grad()
         loss.backward()
@@ -38,17 +48,26 @@ def train_epoch(model, dataloader, optimizer, criterion, device):
 
         running_loss += loss.item() * X.size(0)
 
-    return running_loss / len(dataloader.dataset)
+    # return running_loss / len(dataloader.dataset)
+
+        for k in log_terms:
+            log_terms[k] += terms.get(k, 0.0) * X.size(0)
+        count += X.size(0)
+    avg_terms = {k: round(v / count, 6) for k, v in log_terms.items()}
+
+    # return running_loss / len(dataloader.dataset)
+    return running_loss / count, avg_terms
 
 
 def validate_epoch(model, dataloader, criterion, device):
     model.eval()
-    total_loss = 0.0
+    running_loss = 0.0
 
     with torch.no_grad():
-        # for X, y in tqdm(dataloader, desc="Validating"):
-        for batch_idx, (X, y) in enumerate(tqdm(dataloader, desc="Training")):
-            X, y = X.to(device), y.to(device)
+        # for batch_idx, (X, y) in enumerate(tqdm(dataloader, desc="Validating")):
+        #     X, y = X.to(device), y.to(device)
+        for batch_idx, (X, y, valid_mask) in enumerate(tqdm(dataloader, desc="Validating")):
+            X, y, valid_mask = X.to(device), y.to(device), valid_mask.to(device)
 
             X = X.contiguous().float()
             y = y.contiguous().float()
@@ -57,29 +76,39 @@ def validate_epoch(model, dataloader, criterion, device):
             if torch.isnan(output).any() or torch.isinf(output).any():
                 log(f"[ERROR] Model output contains NaNs or Infs at batch {batch_idx}")
 
-            loss = criterion(output, y)
-            total_loss += loss.item() * X.size(0)
+            if isinstance(criterion, SSIM_L1_BrightnessAwareLoss):
+                loss, terms = criterion(output, y, X, valid_mask)  # X is stack input
+            else:
+                loss, terms = criterion(output, y)
 
-    return total_loss / len(dataloader.dataset)
+            running_loss += loss.item() * X.size(0)
+
+    return running_loss / len(dataloader.dataset)
 
 
 def evaluate_model_on_test(model, dataloader, criterion, device):
     model.eval()
-    total_loss = 0.0
+    running_loss = 0.0
 
     with torch.no_grad():
-        # for X, y in tqdm(dataloader, desc="Testing"):
-        for batch_idx, (X, y) in enumerate(tqdm(dataloader, desc="Training")):
-            X, y = X.to(device), y.to(device)
+        # for batch_idx, (X, y) in enumerate(tqdm(dataloader, desc="Testing")):
+        #     X, y = X.to(device), y.to(device)
+        for batch_idx, (X, y, valid_mask) in enumerate(tqdm(dataloader, desc="Testing")):
+            X, y, valid_mask = X.to(device), y.to(device), valid_mask.to(device)
 
             X = X.contiguous().float()
             y = y.contiguous().float()
 
             output = model(X)
-            loss = criterion(output, y)
-            total_loss += loss.item() * X.size(0)
 
-    return total_loss / len(dataloader.dataset)
+            if isinstance(criterion, SSIM_L1_BrightnessAwareLoss):
+                loss, terms = criterion(output, y, X, valid_mask)  # X is stack input
+            else:
+                loss, terms = criterion(output, y)
+
+            running_loss += loss.item() * X.size(0)
+
+    return running_loss / len(dataloader.dataset)
 
 
 class SSIM_L1_GlobalLoss(nn.Module):
@@ -99,7 +128,77 @@ class SSIM_L1_GlobalLoss(nn.Module):
 
         mean_loss = torch.abs(torch.mean(pred) - torch.mean(target))
 
-        return self.alpha * l1_loss + (1 - self.alpha) * ssim_loss + self.beta * mean_loss
+        total_loss = (
+            self.alpha * l1_loss +
+            (1 - self.alpha) * ssim_loss +
+            self.beta * mean_loss
+        )
+
+        # Return loss + dictionary for diagnostics
+        return total_loss, {
+            "l1": l1_loss.item(),
+            "ssim": ssim_loss.item(),
+            "global_mean": mean_loss.item()
+        }
+        
+
+class SSIM_L1_BrightnessAwareLoss(nn.Module):
+    def __init__(self, alpha=0.8, beta=0.1, gamma=0.1):
+        """
+        alpha = L1 vs SSIM balance
+        beta  = predicted vs target global brightness match
+        gamma = predicted vs neighbor slice brightness match
+        """
+        super().__init__()
+        self.alpha = alpha
+        self.beta = beta
+        self.gamma = gamma
+        self.l1 = nn.L1Loss()
+
+    def forward(self, pred, target, stack=None, valid_mask=None):
+        # pred, target: (B, 1, H, W)
+        # stack: (B, S, H, W), valid_mask: (B, S)
+
+        l1_loss = self.l1(pred, target)
+        ssim_loss = 1 - ssim(pred, target, data_range=1.0)
+
+        # Global mean brightness alignment
+        mean_loss = torch.abs(pred.mean() - target.mean())
+
+        # Brightness-aware neighbor term (relative)
+        if stack is not None and valid_mask is not None:
+            B, S, H, W = stack.shape
+            stack_means = stack.view(B, S, -1).mean(dim=2)                # (B, S)
+            pred_means = pred.view(B, -1).mean(dim=1, keepdim=True)       # (B, 1)
+
+            valid_neighbors = stack_means * valid_mask                    # (B, S)
+            num_valid = valid_mask.sum(dim=1, keepdim=True).clamp(min=1.0)
+            neighbor_mean = valid_neighbors.sum(dim=1, keepdim=True) / num_valid
+
+            brightness_consistency = torch.abs(pred_means - neighbor_mean).mean()
+
+            # # Use relative difference
+            # brightness_consistency = (
+            #     torch.abs(pred_means - neighbor_mean) /
+            #     neighbor_mean.clamp(min=1e-4)
+            # ).mean()
+        else:
+            brightness_consistency = torch.tensor(0.0, device=pred.device)
+
+        total_loss = (
+            self.alpha * l1_loss +
+            (1 - self.alpha) * ssim_loss +
+            self.beta * mean_loss +
+            self.gamma * brightness_consistency
+        )
+
+        # Return loss + dictionary for diagnostics
+        return total_loss, {
+            "l1": l1_loss.item(),
+            "ssim": ssim_loss.item(),
+            "global_mean": mean_loss.item(),
+            "neighbor_relative": brightness_consistency.item()
+        }
 
 
 class EarlyStopping:

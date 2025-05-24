@@ -12,7 +12,7 @@ from skimage.metrics import structural_similarity as skimage_ssim
 
 from dataset import OCTAInpaintingDataset, IntensityAugment, VolumeLevelIntensityAugment
 from model import UNet2p5D
-from train_val import train_epoch, validate_epoch, evaluate_model_on_test, EarlyStopping, SSIM_L1_GlobalLoss
+from train_val import train_epoch, validate_epoch, evaluate_model_on_test, EarlyStopping, SSIM_L1_GlobalLoss, SSIM_L1_BrightnessAwareLoss
 from save_inpainted import inpaint_volume_with_model
 from utils import log
 
@@ -230,6 +230,8 @@ def main():
         ).to(device)
         # criterion = SSIM_L1_GlobalLoss(alpha=0.8, beta=0.1)
         criterion = SSIM_L1_GlobalLoss(alpha=1.0, beta=0.0)
+        # criterion = SSIM_L1_GlobalLoss(alpha=0.8, beta=0.1)
+        # criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.8, beta=0.1, gamma=0.1)
         optimizer = AdamW(model.parameters(), lr=args.lr, weight_decay=1e-5)
         scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', patience=4, factor=0.5, verbose=True)
         early_stopping = EarlyStopping(patience=5, min_delta=1e-4, verbose=True)
@@ -241,7 +243,10 @@ def main():
             best_val_loss = float('inf')
 
             for epoch in range(1, args.epochs + 1):
-                train_loss = train_epoch(model, train_loader, optimizer, criterion, device)
+                # train_loss = train_epoch(model, train_loader, optimizer, criterion, device)
+                train_loss, diagnostics = train_epoch(model, train_loader, optimizer, criterion, device)
+                print(f"Train Loss: {train_loss:.4f} | Terms: {diagnostics}")
+                
                 val_loss = validate_epoch(model, val_loader, criterion, device)
 
                 log(f"[Epoch {epoch}] Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f}")
