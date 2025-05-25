@@ -195,7 +195,8 @@ def main():
             transform=None,
             # volume_transform=volume_augment,
             volume_transform=None,
-            dynamic=False,
+            # dynamic=False,
+            dynamic=True,
             stride=args.stride,
             debug=args.debug_mode
         )
