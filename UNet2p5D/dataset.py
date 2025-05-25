@@ -146,7 +146,8 @@ class OCTAInpaintingDataset(Dataset):
             # --- Static mode: return precomputed (stack, target) pair ---
             stack, target = self.data[idx]
             stack = torch.from_numpy(stack).float() / 65535.0
-            target = torch.from_numpy(target).float() / 65535.0
+            # target = torch.from_numpy(target).float() / 65535.0
+            target = torch.from_numpy(target).float().unsqueeze(0) / 65535.0
         else:
             # --- Dynamic mode: generate stack and apply random dropouts ---
             vol_idx, center_idx = self.indices[idx]
@@ -212,7 +213,8 @@ class OCTAInpaintingDataset(Dataset):
                 valid_indices = [i for i in range(self.stack_size) if i not in drop_indices + [center_pos]]
                 log(f"Remaining valid slices in stack: {valid_indices}")
 
-        target = target.unsqueeze(0)  # shape: (1, H, W)
+        # target = target.unsqueeze(0)  # shape: (1, H, W)
+            target = target.unsqueeze(0)  # shape: (1, H, W)
 
         # return stack, target
 
