@@ -13,7 +13,7 @@ from skimage.metrics import structural_similarity as skimage_ssim
 from dataset import OCTAInpaintingDataset, IntensityAugment, VolumeLevelIntensityAugment
 from model import UNet2p5D
 from train_val import train_epoch, validate_epoch, evaluate_model_on_test, EarlyStopping, SSIM_L1_GlobalLoss, SSIM_L1_BrightnessAwareLoss
-from save_inpainted import inpaint_volume_with_model
+from save_inpainted import inpaint_volume_with_model, inpaint_volume_with_model_recursive
 from utils import log
 
 
@@ -135,7 +135,8 @@ def parse_args():
     parser.add_argument('--features', type=int, nargs='+', default=[64, 128, 256, 512], help='Feature channels for UNet layers')
     parser.add_argument('--dropout', type=float, default=0.0, help='Dropout rate (0 to disable)')
     parser.add_argument('--augment', action='store_true', help='Apply data augmentation during training')
-    parser.add_argument('--stride', type=int, default=1, help='Stride for dynamic slicing (default: 1)')
+    parser.add_argument('--dynamic', action='store_true', help='Use dynamic slicing for training')
+    parser.add_argument('--stride', type=int, default=4, help='Stride for dynamic slicing (default: 1)')
     parser.add_argument('--cuda', action='store_true', help='Use CUDA if available')
     parser.add_argument('--kfold', action='store_true', help='Run full k-fold cross-validation')
     parser.add_argument('--fold_idx', type=int, default=0, help='If not kfold mode, which fold to run (default: 0)')
@@ -191,8 +192,7 @@ def main():
             transform=None,
             # volume_transform=volume_augment,
             volume_transform=None,
-            # dynamic=False,
-            dynamic=True,
+            dynamic=args.dynamic,
             stride=args.stride,
             debug=args.debug_mode
         )
@@ -227,8 +227,8 @@ def main():
             features=args.features,
             dropout_rate=args.dropout
         ).to(device)
-        # criterion = SSIM_L1_GlobalLoss(alpha=0.8, beta=0.1)
-        criterion = SSIM_L1_GlobalLoss(alpha=1.0, beta=0.0)
+        criterion = SSIM_L1_GlobalLoss(alpha=0.8, beta=0.1)
+        # criterion = SSIM_L1_GlobalLoss(alpha=1.0, beta=0.0)
         # criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.8, beta=0.1, gamma=0.1)
         optimizer = AdamW(model.parameters(), lr=args.lr, weight_decay=1e-5)
         scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', patience=4, factor=0.5, verbose=True)
@@ -279,7 +279,9 @@ def main():
         else:
             mask = mask_volume.astype(np.uint8)
 
-        inpainted = inpaint_volume_with_model(model, corrupted_volume, mask, device, stack_size=args.stack_size)
+        # inpainted = inpaint_volume_with_model(model, corrupted_volume, mask, device, stack_size=args.stack_size)
+        inpainted = inpaint_volume_with_model_recursive(model, corrupted_volume, mask, device, stack_size=args.stack_size)
+
         if isinstance(inpainted, tuple):
             inpainted_volume = inpainted[0]
         else:
@@ -289,7 +291,7 @@ def main():
         base_name = os.path.basename(test_corrupted_path).replace("_corrupted.tif", "")
         predicted_output_path = os.path.join(
             "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing",
-            f"{base_name}_inpainted_2p5DUNet_fold{fold_idx+1}_moddrop.tif"
+            f"{base_name}_inpainted_2p5DUNet_fold{fold_idx+1}_moddropmaster.tif"
         )
 
         tiff.imwrite(predicted_output_path, inpainted_volume.astype(np.uint16))

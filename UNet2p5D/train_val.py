@@ -6,13 +6,14 @@ from utils import log
 
 
 def train_epoch(model, dataloader, optimizer, criterion, device):
-    model.train()
     running_loss = 0.0
     count = 0
     if isinstance(criterion, SSIM_L1_BrightnessAwareLoss):
         log_terms = {"l1": 0.0, "ssim": 0.0, "global_mean": 0.0, "neighbor_relative": 0.0}
     else:
         log_terms = {"l1": 0.0, "ssim": 0.0, "global_mean": 0.0}
+
+    model.train()
 
     for batch_idx, (X, y, valid_mask) in enumerate(tqdm(dataloader, desc="Training")):
         X, y, valid_mask = X.to(device), y.to(device), valid_mask.to(device)

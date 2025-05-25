@@ -82,10 +82,10 @@ class OCTAInpaintingDataset(Dataset):
                 clean = tiff.imread(clean_path)
                 mask = tiff.imread(mask_path)
 
-                # Apply any volume-level augmentation to both corrupted and clean
+                # Apply any volume-level augmentation
                 if self.volume_transform:
                     corrupted = self.volume_transform(corrupted)
-                    clean = self.volume_transform(clean)
+                    # clean = self.volume_transform(clean)
 
                 assert corrupted.shape == clean.shape, "Corrupted and clean volumes must match shape"
                 assert corrupted.shape[0] == mask.shape[0], "Number of slices in volume and mask must match"
@@ -136,10 +136,10 @@ class OCTAInpaintingDataset(Dataset):
                     self.indices.append((vol_idx, idx))
 
     def __len__(self):
-        if self.dynamic:
-            return len(self.indices)
-        else:
+        if not self.dynamic:
             return len(self.data)
+        else:
+            return len(self.indices)
 
     def __getitem__(self, idx):
         if not self.dynamic:
