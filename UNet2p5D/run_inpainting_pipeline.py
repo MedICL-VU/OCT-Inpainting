@@ -18,8 +18,6 @@ from utils import log
 
 
 def evaluate_volume_metrics(gt, pred, mask):
-    from skimage.metrics import structural_similarity as skimage_ssim
-
     assert gt.shape == pred.shape, "Volume shapes must match"
     gt = (torch.from_numpy(gt).float() / 65535.0).numpy()
     pred = (torch.from_numpy(pred).float() / 65535.0).numpy()
@@ -116,17 +114,15 @@ def load_volume_triplets(data_dir):
 
 def get_kfold_splits(triplets, k=5, seed=42):
     kf = KFold(n_splits=k, shuffle=True, random_state=seed)
-    folds = []
-
-    for fold_idx, (trainval_idx, test_idx) in enumerate(kf.split(triplets)):
-        test = [triplets[i] for i in test_idx]
-        trainval = [triplets[i] for i in trainval_idx]
-
-        val_split = int(0.2 * len(trainval)) or 1
-        val = trainval[:val_split]
-        train = trainval[val_split:]
-
-        folds.append((train, val, test))
+    folds = [
+        (
+            [triplets[i] for i in trainval_idx[val_split:]],
+            [triplets[i] for i in trainval_idx[:val_split]],
+            [triplets[i] for i in test_idx]
+        )
+        for trainval_idx, test_idx in kf.split(triplets)
+        for val_split in [max(1, int(0.2 * len(trainval_idx)))]
+    ]
     return folds
 
 
@@ -233,7 +229,6 @@ def main():
         ).to(device)
         # criterion = SSIM_L1_GlobalLoss(alpha=0.8, beta=0.1)
         criterion = SSIM_L1_GlobalLoss(alpha=1.0, beta=0.0)
-        # criterion = SSIM_L1_GlobalLoss(alpha=0.8, beta=0.1)
         # criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.8, beta=0.1, gamma=0.1)
         optimizer = AdamW(model.parameters(), lr=args.lr, weight_decay=1e-5)
         scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', patience=4, factor=0.5, verbose=True)
@@ -294,7 +289,7 @@ def main():
         base_name = os.path.basename(test_corrupted_path).replace("_corrupted.tif", "")
         predicted_output_path = os.path.join(
             "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing",
-            f"{base_name}_inpainted_2p5DUNet_fold{fold_idx+1}.tif"
+            f"{base_name}_inpainted_2p5DUNet_fold{fold_idx+1}_moddrop.tif"
         )
 
         tiff.imwrite(predicted_output_path, inpainted_volume.astype(np.uint16))

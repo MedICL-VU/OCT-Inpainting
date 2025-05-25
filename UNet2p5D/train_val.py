@@ -14,8 +14,6 @@ def train_epoch(model, dataloader, optimizer, criterion, device):
     else:
         log_terms = {"l1": 0.0, "ssim": 0.0, "global_mean": 0.0}
 
-    # for batch_idx, (X, y) in enumerate(tqdm(dataloader, desc="Training")):
-    #     X, y = X.to(device), y.to(device)
     for batch_idx, (X, y, valid_mask) in enumerate(tqdm(dataloader, desc="Training")):
         X, y, valid_mask = X.to(device), y.to(device), valid_mask.to(device)
 
@@ -48,14 +46,12 @@ def train_epoch(model, dataloader, optimizer, criterion, device):
 
         running_loss += loss.item() * X.size(0)
 
-    # return running_loss / len(dataloader.dataset)
-
         for k in log_terms:
             log_terms[k] += terms.get(k, 0.0) * X.size(0)
         count += X.size(0)
+
     avg_terms = {k: round(v / count, 6) for k, v in log_terms.items()}
 
-    # return running_loss / len(dataloader.dataset)
     return running_loss / count, avg_terms
 
 
@@ -64,8 +60,6 @@ def validate_epoch(model, dataloader, criterion, device):
     running_loss = 0.0
 
     with torch.no_grad():
-        # for batch_idx, (X, y) in enumerate(tqdm(dataloader, desc="Validating")):
-        #     X, y = X.to(device), y.to(device)
         for batch_idx, (X, y, valid_mask) in enumerate(tqdm(dataloader, desc="Validating")):
             X, y, valid_mask = X.to(device), y.to(device), valid_mask.to(device)
 
@@ -91,8 +85,6 @@ def evaluate_model_on_test(model, dataloader, criterion, device):
     running_loss = 0.0
 
     with torch.no_grad():
-        # for batch_idx, (X, y) in enumerate(tqdm(dataloader, desc="Testing")):
-        #     X, y = X.to(device), y.to(device)
         for batch_idx, (X, y, valid_mask) in enumerate(tqdm(dataloader, desc="Testing")):
             X, y, valid_mask = X.to(device), y.to(device), valid_mask.to(device)
 
