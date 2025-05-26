@@ -12,7 +12,7 @@ from skimage.metrics import structural_similarity as skimage_ssim
 
 from dataset import OCTAInpaintingDataset, IntensityAugment, VolumeLevelIntensityAugment
 from model import UNet2p5D
-from train_val import train_epoch, validate_epoch, evaluate_model_on_test, EarlyStopping, SSIM_L1_GlobalLoss, SSIM_L1_BrightnessAwareLoss
+from train_val import train_epoch, validate_epoch, evaluate_model_on_test, EarlyStopping, SSIM_L1_BrightnessAwareLoss
 from save_inpainted import inpaint_volume_with_model, inpaint_volume_with_model_recursive
 from utils import log
 
@@ -25,7 +25,6 @@ def evaluate_volume_metrics(gt, pred, mask):
 
     D, H, W = gt.shape
     l1_vals = []
-    psnr_vals = []
     ssim_vals = {7: [], 11: [], 17: []}
     ncc_vals = {7: [], 11: [], 17: []}
 
@@ -59,10 +58,6 @@ def evaluate_volume_metrics(gt, pred, mask):
         p = pred[i]
 
         l1_vals.append(np.mean(np.abs(p - g)))
-        psnr = piq.psnr(torch.tensor(p).unsqueeze(0).unsqueeze(0),
-                        torch.tensor(g).unsqueeze(0).unsqueeze(0),
-                        data_range=1.0).item()
-        psnr_vals.append(psnr)
 
         for w in [7, 11, 17]:
             try:
@@ -79,7 +74,6 @@ def evaluate_volume_metrics(gt, pred, mask):
     if num_masked == 0:
         return {
             "L1": None,
-            "PSNR": None,
             "MeanIntensityError": round(float(np.abs(pred.mean() - gt.mean())), 4),
             "SSIM": {w: None for w in [7, 11, 17]},
             "NCC": {w: None for w in [7, 11, 17]},
@@ -88,7 +82,6 @@ def evaluate_volume_metrics(gt, pred, mask):
 
     return {
         "L1": round(sum(l1_vals) / num_masked, 4),
-        "PSNR": round(sum(psnr_vals) / num_masked, 4),
         "MeanIntensityError": round(float(np.abs(pred.mean() - gt.mean())), 4),
         "SSIM": {w: round(np.nanmean(ssim_vals[w]), 4) for w in ssim_vals},
         "NCC": {w: round(sum(ncc_vals[w]) / num_masked, 4) for w in ncc_vals}
@@ -128,7 +121,7 @@ def get_kfold_splits(triplets, k=5, seed=42):
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Run 2.5D Inpainting Pipeline")
-    parser.add_argument('--epochs', type=int, default=50, help='Number of training epochs')
+    parser.add_argument('--epochs', type=int, default=100, help='Number of training epochs')
     parser.add_argument('--batch_size', type=int, default=8, help='Batch size for training')
     parser.add_argument('--stack_size', type=int, default=9, help='Number of slices to stack for 2.5D input')
     parser.add_argument('--lr', type=float, default=5e-5, help='Learning rate for AdamW optimizer')
@@ -203,8 +196,8 @@ def main():
             stack_size=args.stack_size,
             transform=None,
             volume_transform=None,
-            dynamic=False,
-            # dynamic=True,
+            # dynamic=False,
+            dynamic=True,
             debug=args.debug_mode
         )
         test_dataset = OCTAInpaintingDataset(
@@ -227,12 +220,19 @@ def main():
             features=args.features,
             dropout_rate=args.dropout
         ).to(device)
-        criterion = SSIM_L1_GlobalLoss(alpha=0.8, beta=0.1)
-        # criterion = SSIM_L1_GlobalLoss(alpha=1.0, beta=0.0)
         # criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.8, beta=0.1, gamma=0.1)
+        # criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.6, beta=0.1, gamma=0.3)
+        # criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.6, beta=0.3, gamma=0.3)
+        # criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.9, beta=0.3, gamma=0.3)
+        # criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.2, beta=0.3, gamma=0.3)
+        # criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.0, beta=0.6, gamma=0.6)
+        criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.0, beta=1.0, gamma=1.0)
+        # criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.6, beta=0.6, gamma=0.3)
+
         optimizer = AdamW(model.parameters(), lr=args.lr, weight_decay=1e-5)
         scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', patience=4, factor=0.5, verbose=True)
-        early_stopping = EarlyStopping(patience=5, min_delta=1e-4, verbose=True)
+        # early_stopping = EarlyStopping(patience=5, min_delta=1e-4, verbose=True)
+        early_stopping = EarlyStopping(patience=8, min_delta=5e-5, verbose=True)
 
         # If skip training, load the best model directly
         if not args.skip_train:
@@ -279,8 +279,8 @@ def main():
         else:
             mask = mask_volume.astype(np.uint8)
 
-        # inpainted = inpaint_volume_with_model(model, corrupted_volume, mask, device, stack_size=args.stack_size)
-        inpainted = inpaint_volume_with_model_recursive(model, corrupted_volume, mask, device, stack_size=args.stack_size)
+        inpainted = inpaint_volume_with_model(model, corrupted_volume, mask, device, stack_size=args.stack_size)
+        # inpainted = inpaint_volume_with_model_recursive(model, corrupted_volume, mask, device, stack_size=args.stack_size)
 
         if isinstance(inpainted, tuple):
             inpainted_volume = inpainted[0]
@@ -291,7 +291,7 @@ def main():
         base_name = os.path.basename(test_corrupted_path).replace("_corrupted.tif", "")
         predicted_output_path = os.path.join(
             "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing",
-            f"{base_name}_inpainted_2p5DUNet_fold{fold_idx+1}_moddropmaster.tif"
+            f"{base_name}_inpainted_2p5DUNet_fold{fold_idx+1}_avoidnoise_stride1ss9_drop2-5.tif"
         )
 
         tiff.imwrite(predicted_output_path, inpainted_volume.astype(np.uint16))
@@ -305,7 +305,6 @@ def main():
 
         log(f"Volume Metrics for {base_name}:")
         log(f" - L1 Loss: {metrics['L1']:.4f}")
-        log(f" - PSNR: {metrics['PSNR']}")
         log(f" - Mean Intensity Diff: {metrics['MeanIntensityError']}")
 
         for w in [7, 11, 17]:

@@ -3,6 +3,7 @@ from torch.utils.data import Dataset
 import tifffile as tiff
 import numpy as np
 import random
+import os
 from utils import log
 
 
@@ -47,6 +48,19 @@ class VolumeLevelIntensityAugment:
 
         return augmented
     
+
+# Known artifact regions to avoid (inclusive)
+artifact_exclusion = {
+    "1.1_OCTA_Vol1_Processed_Cropped_gt": set(range(967, 980)),
+    "1.2_OCTA_Vol2_Processed_Cropped_gt": set(range(345, 359)) | set(range(474, 486)) | set(range(918, 927)),
+    "1.4_OCTA_Vol1_Processed_Cropped_gt": set(range(520, 534)) | set(range(550, 562)) | set(range(623, 637)) |
+                                          set(range(658, 669)) | set(range(716, 729)) | set(range(982, 996)),
+    "3.4_OCTA_Vol2_Processed_Cropped_gt": set(range(244, 260)) | set(range(268, 284)) | set(range(609, 620)) |
+                                          set(range(636, 648)) | set(range(854, 869)) | set(range(883, 896)),
+    "5.3_OCTA_Vol1_Processed_Cropped_gt": set(range(104, 114)) | set(range(442, 443)) | set(range(466, 486)) |
+                                          set(range(500, 511)) | set(range(895, 906)),
+}
+
 
 class OCTAInpaintingDataset(Dataset):
     def __init__(self, volume_triples: list, stack_size=5, transform=None, 
@@ -132,8 +146,17 @@ class OCTAInpaintingDataset(Dataset):
 
                 # For every valid center slice (skipping edges for full context), 
                 # step by 'stride' to create overlapping stacks
+                # for idx in range(self.pad, orig_len - self.pad, self.stride):
+                #     self.indices.append((vol_idx, idx))
+
+                volume_name = os.path.basename(clean_path).replace(".tif", "")
+                excluded = artifact_exclusion.get(volume_name, set())
+
                 for idx in range(self.pad, orig_len - self.pad, self.stride):
+                    if idx in excluded:
+                        continue
                     self.indices.append((vol_idx, idx))
+
 
     def __len__(self):
         if not self.dynamic:
@@ -194,9 +217,11 @@ class OCTAInpaintingDataset(Dataset):
 
             # Maximum drops = (len(neighbors) - 2) to ensure at least 2 neighbors remain.
             # max_drops = len(neighbors) - 2
-            max_drops = len(neighbors) - 4
             # drop_n = random.randint(0, max_drops)
-            drop_n = random.randint(2,5)
+            # drop_n = random.randint(2,5)
+            drop_n = random.randint(0,3)
+            # drop_n = random.randint(3,6)
+            # drop_n = random.randint(0,5)
             drop_indices = random.sample(neighbors, drop_n)
             # Drop the selected neighbor slices
             for di in drop_indices:

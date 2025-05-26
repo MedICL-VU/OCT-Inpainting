@@ -8,10 +8,7 @@ from utils import log
 def train_epoch(model, dataloader, optimizer, criterion, device):
     running_loss = 0.0
     count = 0
-    if isinstance(criterion, SSIM_L1_BrightnessAwareLoss):
-        log_terms = {"l1": 0.0, "ssim": 0.0, "global_mean": 0.0, "neighbor_relative": 0.0}
-    else:
-        log_terms = {"l1": 0.0, "ssim": 0.0, "global_mean": 0.0}
+    log_terms = {"l1": 0.0, "ssim": 0.0, "global_mean": 0.0, "neighbor_relative": 0.0}
 
     model.train()
 
@@ -36,10 +33,7 @@ def train_epoch(model, dataloader, optimizer, criterion, device):
         if torch.isnan(output).any() or torch.isinf(output).any():
             log(f"[ERROR] Model output contains NaNs or Infs at batch {batch_idx}")
 
-        if isinstance(criterion, SSIM_L1_BrightnessAwareLoss):
-            loss, terms = criterion(output, y, X, valid_mask)  # X is stack input
-        else:
-            loss, terms = criterion(output, y)
+        loss, terms = criterion(output, y, X, valid_mask)  # X is stack input
 
         optimizer.zero_grad()
         loss.backward()
@@ -71,10 +65,7 @@ def validate_epoch(model, dataloader, criterion, device):
             if torch.isnan(output).any() or torch.isinf(output).any():
                 log(f"[ERROR] Model output contains NaNs or Infs at batch {batch_idx}")
 
-            if isinstance(criterion, SSIM_L1_BrightnessAwareLoss):
-                loss, terms = criterion(output, y, X, valid_mask)  # X is stack input
-            else:
-                loss, terms = criterion(output, y)
+            loss, terms = criterion(output, y, X, valid_mask)  # X is stack input
 
             running_loss += loss.item() * X.size(0)
 
@@ -94,45 +85,11 @@ def evaluate_model_on_test(model, dataloader, criterion, device):
 
             output = model(X)
 
-            if isinstance(criterion, SSIM_L1_BrightnessAwareLoss):
-                loss, terms = criterion(output, y, X, valid_mask)  # X is stack input
-            else:
-                loss, terms = criterion(output, y)
+            loss, terms = criterion(output, y, X, valid_mask)  # X is stack input
 
             running_loss += loss.item() * X.size(0)
 
     return running_loss / len(dataloader.dataset)
-
-
-class SSIM_L1_GlobalLoss(nn.Module):
-    def __init__(self, alpha=0.8, beta=0.1):
-        """
-        alpha = weight for L1 vs SSIM
-        beta = weight for global mean intensity matching
-        """
-        super().__init__()
-        self.alpha = alpha
-        self.beta = beta
-        self.l1 = nn.L1Loss()
-
-    def forward(self, pred, target):
-        l1_loss = self.l1(pred, target)
-        ssim_loss = 1 - ssim(pred, target, data_range=1.0)
-
-        mean_loss = torch.abs(torch.mean(pred) - torch.mean(target))
-
-        total_loss = (
-            self.alpha * l1_loss +
-            (1 - self.alpha) * ssim_loss +
-            self.beta * mean_loss
-        )
-
-        # Return loss + dictionary for diagnostics
-        return total_loss, {
-            "l1": l1_loss.item(),
-            "ssim": ssim_loss.item(),
-            "global_mean": mean_loss.item()
-        }
         
 
 class SSIM_L1_BrightnessAwareLoss(nn.Module):
