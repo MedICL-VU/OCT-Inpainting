@@ -12,7 +12,8 @@ def train_epoch(model, dataloader, optimizer, criterion, device):
 
     model.train()
 
-    for batch_idx, (X, y, valid_mask) in enumerate(tqdm(dataloader, desc="Training")):
+    # for batch_idx, (X, y, valid_mask) in enumerate(tqdm(dataloader, desc="Training")):
+    for batch_idx, (X, y, valid_mask) in enumerate(dataloader):
         X, y, valid_mask = X.to(device), y.to(device), valid_mask.to(device)
 
         X = X.contiguous().float()
@@ -55,7 +56,7 @@ def validate_epoch(model, dataloader, criterion, device):
     running_loss = 0.0
 
     with torch.no_grad():
-        for batch_idx, (X, y, valid_mask) in enumerate(tqdm(dataloader, desc="Validating")):
+        for batch_idx, (X, y, valid_mask) in enumerate(dataloader):
             X, y, valid_mask = X.to(device), y.to(device), valid_mask.to(device)
 
             X = X.contiguous().float()
@@ -125,13 +126,13 @@ class SSIM_L1_BrightnessAwareLoss(nn.Module):
             num_valid = valid_mask.sum(dim=1, keepdim=True).clamp(min=1.0)
             neighbor_mean = valid_neighbors.sum(dim=1, keepdim=True) / num_valid
 
-            brightness_consistency = torch.abs(pred_means - neighbor_mean).mean()
+            # brightness_consistency = torch.abs(pred_means - neighbor_mean).mean()
 
-            # # Use relative difference
-            # brightness_consistency = (
-            #     torch.abs(pred_means - neighbor_mean) /
-            #     neighbor_mean.clamp(min=1e-4)
-            # ).mean()
+            # Use relative difference
+            brightness_consistency = (
+                torch.abs(pred_means - neighbor_mean) /
+                neighbor_mean.clamp(min=1e-4)
+            ).mean()
         else:
             brightness_consistency = torch.tensor(0.0, device=pred.device)
 

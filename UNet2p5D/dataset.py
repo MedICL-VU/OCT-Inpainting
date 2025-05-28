@@ -220,6 +220,7 @@ class OCTAInpaintingDataset(Dataset):
             # drop_n = random.randint(0, max_drops)
             # drop_n = random.randint(2,5)
             drop_n = random.randint(0,3)
+            # drop_n = 0
             # drop_n = random.randint(3,6)
             # drop_n = random.randint(0,5)
             drop_indices = random.sample(neighbors, drop_n)

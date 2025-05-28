@@ -1,6 +1,5 @@
 import os
 import torch
-import piq
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from torch.optim import AdamW, lr_scheduler
@@ -13,7 +12,7 @@ from skimage.metrics import structural_similarity as skimage_ssim
 from dataset import OCTAInpaintingDataset, IntensityAugment, VolumeLevelIntensityAugment
 from model import UNet2p5D
 from train_val import train_epoch, validate_epoch, evaluate_model_on_test, EarlyStopping, SSIM_L1_BrightnessAwareLoss
-from save_inpainted import inpaint_volume_with_model, inpaint_volume_with_model_recursive
+from save_inpainted import inpaint_volume_with_model, inpaint_volume_with_model_clipped, inpaint_volume_with_model_recursive, inpaint_volume_with_model_CLIPPEDORIGINAL
 from utils import log
 
 
@@ -190,7 +189,6 @@ def main():
             debug=args.debug_mode
         )
 
-        # Validation and test datasets remain static (pre-generated corruptions)
         val_dataset = OCTAInpaintingDataset(
             val_vols,
             stack_size=args.stack_size,
@@ -220,13 +218,14 @@ def main():
             features=args.features,
             dropout_rate=args.dropout
         ).to(device)
+        criterion = SSIM_L1_BrightnessAwareLoss(alpha=1.0, beta=0.0, gamma=0.0)
         # criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.8, beta=0.1, gamma=0.1)
         # criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.6, beta=0.1, gamma=0.3)
         # criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.6, beta=0.3, gamma=0.3)
         # criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.9, beta=0.3, gamma=0.3)
         # criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.2, beta=0.3, gamma=0.3)
         # criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.0, beta=0.6, gamma=0.6)
-        criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.0, beta=1.0, gamma=1.0)
+        # criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.0, beta=1.0, gamma=1.0)
         # criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.6, beta=0.6, gamma=0.3)
 
         optimizer = AdamW(model.parameters(), lr=args.lr, weight_decay=1e-5)
@@ -280,7 +279,9 @@ def main():
             mask = mask_volume.astype(np.uint8)
 
         inpainted = inpaint_volume_with_model(model, corrupted_volume, mask, device, stack_size=args.stack_size)
+        # inpainted = inpaint_volume_with_model_clipped(model, corrupted_volume, mask, device, stack_size=args.stack_size)
         # inpainted = inpaint_volume_with_model_recursive(model, corrupted_volume, mask, device, stack_size=args.stack_size)
+        # inpainted = inpaint_volume_with_model_CLIPPEDORIGINAL(model, corrupted_volume, mask, device, stack_size=args.stack_size)
 
         if isinstance(inpainted, tuple):
             inpainted_volume = inpainted[0]
@@ -291,7 +292,7 @@ def main():
         base_name = os.path.basename(test_corrupted_path).replace("_corrupted.tif", "")
         predicted_output_path = os.path.join(
             "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing",
-            f"{base_name}_inpainted_2p5DUNet_fold{fold_idx+1}_avoidnoise_stride1ss9_drop2-5.tif"
+            f"{base_name}_inpainted_2p5DUNet_fold{fold_idx+1}_0528_valTrue_stride1_drop0-3_1-0-0loss_relativeBright.tif"
         )
 
         tiff.imwrite(predicted_output_path, inpainted_volume.astype(np.uint16))
