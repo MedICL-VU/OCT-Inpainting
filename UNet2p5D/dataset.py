@@ -2,6 +2,7 @@ import torch
 from torch.utils.data import Dataset
 import tifffile as tiff
 import numpy as np
+import matplotlib.pyplot as plt
 import random
 import os
 from utils import log
@@ -92,9 +93,21 @@ class OCTAInpaintingDataset(Dataset):
             self.data = []  # will hold (stack, target) pairs
 
             for corrupted_path, clean_path, mask_path in volume_triples:
-                corrupted = tiff.imread(corrupted_path)
-                clean = tiff.imread(clean_path)
+                # corrupted = tiff.imread(corrupted_path)
+                # clean = tiff.imread(clean_path)
+                # mask = tiff.imread(mask_path)
+
+                corrupted = tiff.imread(corrupted_path).astype(np.float32)
+                corrupted = corrupted / (corrupted.max() + 1e-5)
+                clean = tiff.imread(clean_path).astype(np.float32)
+                clean = clean / (clean.max() + 1e-5)
                 mask = tiff.imread(mask_path)
+
+                if self.debug:
+                    log(f"[INIT] Loaded volume: {os.path.basename(clean_path)}")
+                    log(f"       Corrupted dtype: {corrupted.dtype}, min: {corrupted.min():.3f}, max: {corrupted.max():.3f}")
+                    log(f"       Clean dtype: {clean.dtype}, min: {clean.min():.3f}, max: {clean.max():.3f}")
+                    log(f"       Mask shape: {mask.shape}, dtype: {mask.dtype}, unique: {np.unique(mask)}")
 
                 # Apply any volume-level augmentation
                 if self.volume_transform:
@@ -133,7 +146,10 @@ class OCTAInpaintingDataset(Dataset):
             self.indices = []         # list of (volume_index, center_slice_idx) pairs
 
             for vol_idx, (_, clean_path, _) in enumerate(volume_triples):
-                clean = tiff.imread(clean_path)
+                # clean = tiff.imread(clean_path)
+                clean = tiff.imread(clean_path).astype(np.float32)
+                clean = clean / (clean.max() + 1e-5)
+
                 # Apply volume-level augmentation to the clean volume
                 if self.volume_transform:
                     clean = self.volume_transform(clean)
@@ -144,14 +160,11 @@ class OCTAInpaintingDataset(Dataset):
                 padded = np.pad(clean, ((self.pad, self.pad), (0, 0), (0, 0)), mode='edge')
                 self.padded_volumes.append(padded)
 
-                # For every valid center slice (skipping edges for full context), 
-                # step by 'stride' to create overlapping stacks
-                # for idx in range(self.pad, orig_len - self.pad, self.stride):
-                #     self.indices.append((vol_idx, idx))
-
                 volume_name = os.path.basename(clean_path).replace(".tif", "")
                 excluded = artifact_exclusion.get(volume_name, set())
 
+                # For every valid center slice (skipping edges for full context), 
+                # step by 'stride' to create overlapping stacks
                 for idx in range(self.pad, orig_len - self.pad, self.stride):
                     if idx in excluded:
                         continue
@@ -168,15 +181,15 @@ class OCTAInpaintingDataset(Dataset):
         if not self.dynamic:
             # --- Static mode: return precomputed (stack, target) pair ---
             stack, target = self.data[idx]
-            stack = torch.from_numpy(stack).float() / 65535.0
-            target = torch.from_numpy(target).float().unsqueeze(0) / 65535.0
+            stack = torch.from_numpy(stack).float()
+            target = torch.from_numpy(target).float().unsqueeze(0)
         else:
             # --- Dynamic mode: generate stack and apply random dropouts ---
             vol_idx, center_idx = self.indices[idx]
             padded_vol = self.padded_volumes[vol_idx]
             
             # Extract the full stack around center_idx
-            stack = padded_vol[center_idx: center_idx + self.stack_size]  # shape: (stack_size, H, W)
+            stack = padded_vol[center_idx: center_idx + self.stack_size].copy()  # shape: (stack_size, H, W)
             # The true target slice is the center slice (no dropout)
             # Note: padded_vol[center_idx + self.pad] corresponds to the original clean slice
             target = padded_vol[center_idx + self.pad].copy()  # shape: (H, W)
@@ -187,26 +200,12 @@ class OCTAInpaintingDataset(Dataset):
                 log(f"Stack indices (padded): {list(range(center_idx, center_idx + self.stack_size))}")
                 log(f"Stack shape: {stack.shape}")
 
-            # Convert to torch tensors and normalize to [0,1]
-            # stack: (stack_size, H, W), target: (H, W) -> unsqueeze to (1, H, W)
-            # stack = torch.from_numpy(stack).float() / 65535.0
-            # target = torch.from_numpy(target).float().unsqueeze(0) / 65535.0
-            stack = torch.from_numpy(stack).float()
-            target = torch.from_numpy(target).float()
-
-            # Normalize each slice in the stack to [0, 1]
-            stack_min = stack.view(self.stack_size, -1).min(dim=1)[0].view(-1, 1, 1)
-            stack_max = stack.view(self.stack_size, -1).max(dim=1)[0].view(-1, 1, 1)
-            stack = (stack - stack_min) / (stack_max - stack_min + 1e-5)
-
-            # Normalize target slice
-            target_min = target.min()
-            target_max = target.max()
-            target = (target - target_min) / (target_max - target_min + 1e-5)
-
-            # Apply intensity transform (e.g. scaling, bias, noise) before dropout
+            # Apply intensity transform
             if self.transform:
                 stack, target = self.transform(stack, target)
+
+            stack = stack.astype(np.float32)
+            target = target.astype(np.float32)
 
             # Determine which neighbor slices to drop (set to zero).
             # Always drop the center (target) slice to simulate missing slice.
@@ -215,32 +214,79 @@ class OCTAInpaintingDataset(Dataset):
             center_pos = self.pad  # index of center slice in the stack
             neighbors.remove(center_pos)
 
-            # Maximum drops = (len(neighbors) - 2) to ensure at least 2 neighbors remain.
-            # max_drops = len(neighbors) - 2
+            # Maximum drops ensuring that at least 5 neighbors remain.
+            # max_drops = len(neighbors) - 5
             # drop_n = random.randint(0, max_drops)
-            # drop_n = random.randint(2,5)
             drop_n = random.randint(0,3)
             # drop_n = 0
-            # drop_n = random.randint(3,6)
-            # drop_n = random.randint(0,5)
             drop_indices = random.sample(neighbors, drop_n)
             # Drop the selected neighbor slices
             for di in drop_indices:
-                stack[di] = 0  # set entire slice to zero (uint16 zero)
+                stack[di] = 0.0  # set entire slice to zero (uint16 zero)
 
             # Finally, drop the center slice
-            stack[center_pos] = 0
+            stack[center_pos] = 0.0
 
+            # Log corruption if debug enabled
             if self.debug and idx < 3:
-                # Log dropout results
+                log(f"[IDX {idx}] Volume {vol_idx} | Center Slice (unpadded idx): {center_idx}")
+                log(f"Stack indices (padded): {list(range(center_idx, center_idx + self.stack_size))}")
+                log(f"Stack shape: {stack.shape}")
                 log(f"Dropped slices: {sorted(drop_indices + [center_pos])}")
                 valid_indices = [i for i in range(self.stack_size) if i not in drop_indices + [center_pos]]
                 log(f"Remaining valid slices in stack: {valid_indices}")
 
-            target = target.unsqueeze(0)  # shape: (1, H, W)
+            # target = target.unsqueeze(0)  # shape: (1, H, W)
+            target = np.expand_dims(target, axis=0)  # (1, H, W)
+
+            # Convert to tensors
+            stack = torch.from_numpy(stack).float()  # (stack_size, H, W)
+            target = torch.from_numpy(target).float()  # (1, H, W)
+
+        if self.debug and idx == 5:
+            log(f"[GETITEM {idx}] Stack dtype: {stack.dtype}, shape: {stack.shape}")
+            log(f"  Stack min: {stack.min():.4f}, max: {stack.max():.4f}, mean: {stack.mean():.4f}")
+            log(f"  Target min: {target.min():.4f}, max: {target.max():.4f}, mean: {target.mean():.4f}")
+
+            mid = stack.shape[0] // 2
+
+            # Log statistics for three slices
+            def log_slice_stats(title, tensor):
+                print(f"[{title}] dtype: {tensor.dtype}, shape: {tensor.shape}")
+                print(f"  Min: {tensor.min().item():.4f}, Max: {tensor.max().item():.4f}, Mean: {tensor.mean().item():.4f}")
+
+            print(f"\n=== DEBUG INFO: Sample idx {idx} ===")
+            log_slice_stats("Stack Center-1", stack[mid - 1])
+            log_slice_stats("Stack Center", stack[mid])
+            log_slice_stats("Stack Center+1", stack[mid + 1])
+            log_slice_stats("Target Slice", target[0])
+
+            fig, axs = plt.subplots(2, 3, figsize=(15, 8))
+
+            axs[0, 0].imshow(stack[mid - 1].cpu().numpy(), cmap='gray')
+            axs[0, 0].set_title("Input: Center-1")
+
+            axs[0, 1].imshow(stack[mid].cpu().numpy(), cmap='gray')
+            axs[0, 1].set_title("Input: Center")
+
+            axs[0, 2].imshow(stack[mid + 1].cpu().numpy(), cmap='gray')
+            axs[0, 2].set_title("Input: Center+1")
+
+            axs[1, 0].imshow(target[0].cpu().numpy(), cmap='gray')
+            axs[1, 0].set_title("Target (repeated)")
+
+            axs[1, 1].imshow(target[0].cpu().numpy(), cmap='gray')
+            axs[1, 1].set_title("Target (center)")
+
+            axs[1, 2].imshow(target[0].cpu().numpy(), cmap='gray')
+            axs[1, 2].set_title("Target (repeated)")
+
+            plt.suptitle(f"Visualization for Sample idx {idx} (Stack + Target)")
+            plt.tight_layout()
+            plt.show()
 
 
-        # Build valid mask from non-zero slices in stack
+        # Validity mask: 1 if slice has non-zero content, else 0
         valid_mask_stack = (stack.sum(dim=(1, 2)) > 1e-3).float()  # (stack_size,)
 
         return stack, target, valid_mask_stack

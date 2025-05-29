@@ -12,7 +12,7 @@ from skimage.metrics import structural_similarity as skimage_ssim
 from dataset import OCTAInpaintingDataset, IntensityAugment, VolumeLevelIntensityAugment
 from model import UNet2p5D
 from train_val import train_epoch, validate_epoch, evaluate_model_on_test, EarlyStopping, SSIM_L1_BrightnessAwareLoss
-from save_inpainted import inpaint_volume_with_model, inpaint_volume_with_model_clipped, inpaint_volume_with_model_recursive, inpaint_volume_with_model_CLIPPEDORIGINAL
+from save_inpainted import inpaint_volume_with_model, inpaint_volume_with_model_clipped, inpaint_volume_with_model_recursive
 from utils import log
 
 
@@ -120,7 +120,7 @@ def get_kfold_splits(triplets, k=5, seed=42):
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Run 2.5D Inpainting Pipeline")
-    parser.add_argument('--epochs', type=int, default=100, help='Number of training epochs')
+    parser.add_argument('--epochs', type=int, default=200, help='Number of training epochs')
     parser.add_argument('--batch_size', type=int, default=8, help='Batch size for training')
     parser.add_argument('--stack_size', type=int, default=9, help='Number of slices to stack for 2.5D input')
     parser.add_argument('--lr', type=float, default=5e-5, help='Learning rate for AdamW optimizer')
@@ -180,10 +180,8 @@ def main():
         train_dataset = OCTAInpaintingDataset(
             train_vols,
             stack_size=args.stack_size,
-            # transform=augment,
-            transform=None,
-            # volume_transform=volume_augment,
-            volume_transform=None,
+            transform=augment,
+            volume_transform=volume_augment,
             dynamic=args.dynamic,
             stride=args.stride,
             debug=args.debug_mode
@@ -194,8 +192,8 @@ def main():
             stack_size=args.stack_size,
             transform=None,
             volume_transform=None,
-            # dynamic=False,
-            dynamic=True,
+            dynamic=False,
+            # dynamic=True,
             debug=args.debug_mode
         )
         test_dataset = OCTAInpaintingDataset(
@@ -218,10 +216,10 @@ def main():
             features=args.features,
             dropout_rate=args.dropout
         ).to(device)
-        criterion = SSIM_L1_BrightnessAwareLoss(alpha=1.0, beta=0.0, gamma=0.0)
+        # criterion = SSIM_L1_BrightnessAwareLoss(alpha=1.0, beta=0.0, gamma=0.0)
         # criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.8, beta=0.1, gamma=0.1)
         # criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.6, beta=0.1, gamma=0.3)
-        # criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.6, beta=0.3, gamma=0.3)
+        criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.6, beta=0.3, gamma=0.3)
         # criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.9, beta=0.3, gamma=0.3)
         # criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.2, beta=0.3, gamma=0.3)
         # criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.0, beta=0.6, gamma=0.6)
@@ -230,8 +228,8 @@ def main():
 
         optimizer = AdamW(model.parameters(), lr=args.lr, weight_decay=1e-5)
         scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', patience=4, factor=0.5, verbose=True)
-        # early_stopping = EarlyStopping(patience=5, min_delta=1e-4, verbose=True)
-        early_stopping = EarlyStopping(patience=8, min_delta=5e-5, verbose=True)
+        # early_stopping = EarlyStopping(patience=10, min_delta=1e-4, verbose=True)
+        early_stopping = EarlyStopping(patience=10, min_delta=5e-5, verbose=True)
 
         # If skip training, load the best model directly
         if not args.skip_train:
@@ -240,7 +238,6 @@ def main():
             best_val_loss = float('inf')
 
             for epoch in range(1, args.epochs + 1):
-                # train_loss = train_epoch(model, train_loader, optimizer, criterion, device)
                 train_loss, diagnostics = train_epoch(model, train_loader, optimizer, criterion, device)
                 print(f"Train Loss: {train_loss:.4f} | Terms: {diagnostics}")
                 
@@ -265,23 +262,24 @@ def main():
         # === 4: Evaluate on Held-Out Test Volume ===
         log("Evaluating on held-out test volume...")
         model.load_state_dict(torch.load(best_model_path))
-        model.eval()
         test_loss = evaluate_model_on_test(model, test_loader, criterion, device)
         log(f"Final test loss: {test_loss:.4f}")
         
         # === 5. Inpaint Test Volume with Trained Model ===
         log("Inpainting volume...")
         corrupted_volume = tiff.imread(test_corrupted_path)
-        mask_volume = tiff.imread(test_mask_path)
-        if mask_volume.ndim == 3:
-            mask = (mask_volume[:, 0, 0] > 0).astype(np.uint8)
-        else:
-            mask = mask_volume.astype(np.uint8)
+        mask = tiff.imread(test_mask_path)
+        # Convert mask to 1D binary array if needed
+        if mask.ndim == 3:
+            if np.all((mask == 0) | (mask == 1)):
+                mask = mask[:, 0, 0]
+            else:
+                raise ValueError("Unexpected mask format: expected binary 0/1 per slice")
+        elif mask.ndim != 1:
+            raise ValueError("Unsupported mask dimensionality")
 
         inpainted = inpaint_volume_with_model(model, corrupted_volume, mask, device, stack_size=args.stack_size)
-        # inpainted = inpaint_volume_with_model_clipped(model, corrupted_volume, mask, device, stack_size=args.stack_size)
         # inpainted = inpaint_volume_with_model_recursive(model, corrupted_volume, mask, device, stack_size=args.stack_size)
-        # inpainted = inpaint_volume_with_model_CLIPPEDORIGINAL(model, corrupted_volume, mask, device, stack_size=args.stack_size)
 
         if isinstance(inpainted, tuple):
             inpainted_volume = inpainted[0]
