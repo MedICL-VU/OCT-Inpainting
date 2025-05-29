@@ -18,13 +18,13 @@ class IntensityAugment:
         # Apply the same random scale and bias to both stack and target; add noise only to stack.
         scale = random.uniform(*self.scale_range)
         bias = random.uniform(*self.bias_range)
-        noise = np.random.normal(0, self.noise_std * 65535, size=stack.shape)
+        noise = np.random.normal(0, self.noise_std, size=stack.shape)
 
-        stack = stack.astype(np.float32) * scale + noise + bias * 65535
-        target = target.astype(np.float32) * scale + bias * 65535
+        stack = stack * scale + noise + bias
+        target = target * scale + bias
 
-        stack = np.clip(stack, 0, 65535).astype(np.uint16)
-        target = np.clip(target, 0, 65535).astype(np.uint16)
+        stack = np.clip(stack, 0.0, 1.0)
+        target = np.clip(target, 0.0, 1.0)
 
         return stack, target
     
@@ -44,10 +44,10 @@ class VolumeLevelIntensityAugment:
         scale = random.uniform(*self.scale_range)
         bias = random.uniform(*self.bias_range)
 
-        augmented = volume.astype(np.float32) * scale + bias * 65535
-        augmented = np.clip(augmented, 0, 65535).astype(np.uint16)
+        volume = volume * scale + bias
+        volume = np.clip(volume, 0.0, 1.0)
 
-        return augmented
+        return volume
     
 
 # Known artifact regions to avoid (inclusive)
@@ -152,8 +152,28 @@ class OCTAInpaintingDataset(Dataset):
 
                 # Apply volume-level augmentation to the clean volume
                 if self.volume_transform:
+                    before_volume = clean.copy()
+                    clean = self.volume_transform(clean)
+
                     clean = self.volume_transform(clean)
                 orig_len = clean.shape[0]
+
+
+                if self.debug and vol_idx == 0:  # Only show for first volume to avoid overload
+                    slice_idx = clean.shape[0] // 2  # Use center slice for consistency
+                    fig, axs = plt.subplots(1, 2, figsize=(10, 5))
+                    axs[0].imshow(before_volume[slice_idx], cmap='gray')
+                    axs[0].set_title("Pre-VolumeTransform Slice")
+                    axs[1].imshow(clean[slice_idx], cmap='gray')
+                    axs[1].set_title("Post-VolumeTransform Slice")
+                    plt.suptitle(f"Volume Transform Effect: Volume idx {vol_idx}")
+                    plt.tight_layout()
+                    plt.show()
+
+                    print(f"[VOLUME_TRANSFORM DEBUG] Volume idx {vol_idx}, Slice {slice_idx}")
+                    print(f"  Pre min: {before_volume.min():.4f}, max: {before_volume.max():.4f}, mean: {before_volume.mean():.4f}")
+                    print(f"  Post min: {clean.min():.4f}, max: {clean.max():.4f}, mean: {clean.mean():.4f}")
+
 
                 # Store the clean volume (for clarity) and also a padded copy for slicing
                 self.clean_volumes.append(clean)
@@ -202,7 +222,55 @@ class OCTAInpaintingDataset(Dataset):
 
             # Apply intensity transform
             if self.transform:
+                if self.debug and idx == 5:
+                    pre_stack = stack.copy()
+                    pre_target = target.copy()
+
                 stack, target = self.transform(stack, target)
+
+
+                if self.debug and idx == 5:
+                    print(f"\n=== AUGMENTATION DEBUG: Sample idx {idx} ===")
+                    print("Pre-Augmentation:")
+                    print(f"  Stack min: {pre_stack.min():.4f}, max: {pre_stack.max():.4f}, mean: {pre_stack.mean():.4f}")
+                    print(f"  Target min: {pre_target.min():.4f}, max: {pre_target.max():.4f}, mean: {pre_target.mean():.4f}")
+                    print("Post-Augmentation:")
+                    print(f"  Stack min: {stack.min():.4f}, max: {stack.max():.4f}, mean: {stack.mean():.4f}")
+                    print(f"  Target min: {target.min():.4f}, max: {target.max():.4f}, mean: {target.mean():.4f}")
+
+                    mid = self.stack_size // 2
+
+                    fig, axs = plt.subplots(2, 4, figsize=(18, 9))
+
+                    axs[0, 0].imshow(pre_stack[mid - 1], cmap='gray')
+                    axs[0, 0].set_title("Pre-Aug: Center-1")
+
+                    axs[0, 1].imshow(pre_stack[mid], cmap='gray')
+                    axs[0, 1].set_title("Pre-Aug: Center")
+
+                    axs[0, 2].imshow(pre_stack[mid + 1], cmap='gray')
+                    axs[0, 2].set_title("Pre-Aug: Center+1")
+
+                    axs[0, 3].imshow(pre_target, cmap='gray')
+                    axs[0, 3].set_title("Pre-Aug: Target")
+
+                    axs[1, 0].imshow(stack[mid - 1], cmap='gray')
+                    axs[1, 0].set_title("Post-Aug: Center-1")
+
+                    axs[1, 1].imshow(stack[mid], cmap='gray')
+                    axs[1, 1].set_title("Post-Aug: Center")
+
+                    axs[1, 2].imshow(stack[mid + 1], cmap='gray')
+                    axs[1, 2].set_title("Post-Aug: Center+1")
+
+                    axs[1, 3].imshow(target, cmap='gray')
+                    axs[1, 3].set_title("Post-Aug: Target")
+
+                    plt.suptitle(f"Augmentation Effect for Sample idx {idx}")
+                    plt.tight_layout()
+                    plt.show()
+
+
 
             stack = stack.astype(np.float32)
             target = target.astype(np.float32)

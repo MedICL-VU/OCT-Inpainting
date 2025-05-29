@@ -127,6 +127,7 @@ def parse_args():
     parser.add_argument('--features', type=int, nargs='+', default=[64, 128, 256, 512], help='Feature channels for UNet layers')
     parser.add_argument('--dropout', type=float, default=0.0, help='Dropout rate (0 to disable)')
     parser.add_argument('--augment', action='store_true', help='Apply data augmentation during training')
+    parser.add_argument('--volume_augment', action='store_true', help='Apply volume-level intensity augmentation')
     parser.add_argument('--dynamic', action='store_true', help='Use dynamic slicing for training')
     parser.add_argument('--stride', type=int, default=4, help='Stride for dynamic slicing (default: 1)')
     parser.add_argument('--cuda', action='store_true', help='Use CUDA if available')
@@ -174,7 +175,7 @@ def main():
 
         # Build datasets
         augment = IntensityAugment(scale_range=(0.95, 1.05), noise_std=0.005, bias_range=(-0.02, 0.02)) if args.augment else None
-        volume_augment = VolumeLevelIntensityAugment(scale_range=(0.95, 1.05), bias_range=(-0.02, 0.02)) if args.augment else None
+        volume_augment = VolumeLevelIntensityAugment(scale_range=(0.95, 1.05), bias_range=(-0.02, 0.02)) if args.volume_augment else None
 
         # Create dynamic training dataset
         train_dataset = OCTAInpaintingDataset(
