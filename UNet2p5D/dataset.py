@@ -52,14 +52,23 @@ class VolumeLevelIntensityAugment:
 
 # Known artifact regions to avoid (inclusive)
 artifact_exclusion = {
-    "1.1_OCTA_Vol1_Processed_Cropped_gt": set(range(967, 980)),
-    "1.2_OCTA_Vol2_Processed_Cropped_gt": set(range(345, 359)) | set(range(474, 486)) | set(range(918, 927)),
-    "1.4_OCTA_Vol1_Processed_Cropped_gt": set(range(520, 534)) | set(range(550, 562)) | set(range(623, 637)) |
-                                          set(range(658, 669)) | set(range(716, 729)) | set(range(982, 996)),
-    "3.4_OCTA_Vol2_Processed_Cropped_gt": set(range(244, 260)) | set(range(268, 284)) | set(range(609, 620)) |
-                                          set(range(636, 648)) | set(range(854, 869)) | set(range(883, 896)),
-    "5.3_OCTA_Vol1_Processed_Cropped_gt": set(range(104, 114)) | set(range(442, 443)) | set(range(466, 486)) |
-                                          set(range(500, 511)) | set(range(895, 906)),
+    "1.1_OCTA_Vol1_Processed_Cropped_gt":
+        set(range(965, 982)) | set(range(0, 2)) | set(range(998, 1000)),
+    "1.2_OCTA_Vol2_Processed_Cropped_gt":
+        set(range(343, 361)) | set(range(472, 488)) | set(range(916, 929)) | set(range(0, 2)) | set(range(998, 1000)),
+    "1.4_OCTA_Vol1_Processed_Cropped_gt": 
+        set(range(518, 536)) | set(range(548, 564)) | set(range(621, 639)) |
+        set(range(656, 671)) | set(range(714, 731)) | set(range(980, 998)) | set(range(0, 2)) | set(range(998, 1000)),
+    "3.4_OCTA_Vol2_Processed_Cropped_gt": 
+        set(range(242, 262)) | set(range(266, 286)) | set(range(607, 622)) |
+        set(range(634, 650)) | set(range(852, 871)) | set(range(881, 898)) | set(range(0, 2)) | set(range(998, 1000)),
+    "5.3_OCTA_Vol1_Processed_Cropped_gt": 
+        set(range(102, 116)) | set(range(440, 445)) | set(range(464, 488)) |
+        set(range(498, 513)) | set(range(893, 908)) | set(range(0, 2)) | set(range(998, 1000)),
+    "2.1_OCTA_Vol2_Processed_Cropped_gt":
+        set(range(565, 585)) | set(range(603, 621)) | set(range(0, 2)) | set(range(998, 1000)),
+    "2.2_OCTA_Vol2_Processed_Cropped_gt":
+        set(range(99, 119)) | set(range(158, 176)) | set(range(492, 510)) | set(range(0, 2)) | set(range(998, 1000))
 }
 
 
@@ -285,7 +294,7 @@ class OCTAInpaintingDataset(Dataset):
             # Maximum drops ensuring that at least 5 neighbors remain.
             # max_drops = len(neighbors) - 5
             # drop_n = random.randint(0, max_drops)
-            drop_n = random.randint(0,3)
+            drop_n = random.randint(0,4)
             # drop_n = 0
             drop_indices = random.sample(neighbors, drop_n)
             # Drop the selected neighbor slices

@@ -7,12 +7,13 @@ import tifffile as tiff
 import numpy as np
 import argparse
 from sklearn.model_selection import KFold
+import random
 from skimage.metrics import structural_similarity as skimage_ssim
 
 from dataset import OCTAInpaintingDataset, IntensityAugment, VolumeLevelIntensityAugment
 from model import UNet2p5D
 from train_val import train_epoch, validate_epoch, evaluate_model_on_test, EarlyStopping, SSIM_L1_BrightnessAwareLoss
-from save_inpainted import inpaint_volume_with_model, inpaint_volume_with_model_clipped, inpaint_volume_with_model_recursive
+from save_inpainted import inpaint_volume_with_model, inpaint_volume_with_model_recursive
 from utils import log
 
 
@@ -106,16 +107,24 @@ def load_volume_triplets(data_dir):
 
 def get_kfold_splits(triplets, k=5, seed=42):
     kf = KFold(n_splits=k, shuffle=True, random_state=seed)
-    folds = [
-        (
-            [triplets[i] for i in trainval_idx[val_split:]],
-            [triplets[i] for i in trainval_idx[:val_split]],
-            [triplets[i] for i in test_idx]
-        )
-        for trainval_idx, test_idx in kf.split(triplets)
-        for val_split in [max(1, int(0.2 * len(trainval_idx)))]
-    ]
+    folds = []
+
+    for fold_idx, (trainval_idx, test_idx) in enumerate(kf.split(triplets)):
+        trainval_triplets = [triplets[i] for i in trainval_idx]
+
+        # Reproducible shuffle for each fold
+        rng = random.Random(seed + fold_idx)
+        rng.shuffle(trainval_triplets)
+
+        val_split = max(1, int(0.2 * len(trainval_triplets)))
+        val_triplets = trainval_triplets[:val_split]
+        train_triplets = trainval_triplets[val_split:]
+        test_triplets = [triplets[i] for i in test_idx]
+
+        folds.append((train_triplets, val_triplets, test_triplets))
+
     return folds
+
 
 
 def parse_args():
@@ -132,7 +141,7 @@ def parse_args():
     parser.add_argument('--stride', type=int, default=4, help='Stride for dynamic slicing (default: 1)')
     parser.add_argument('--cuda', action='store_true', help='Use CUDA if available')
     parser.add_argument('--kfold', action='store_true', help='Run full k-fold cross-validation')
-    parser.add_argument('--fold_idx', type=int, default=0, help='If not kfold mode, which fold to run (default: 0)')
+    parser.add_argument('--fold_idx', type=int, default=1, help='If not kfold mode, which fold to run (default: 0)')
     parser.add_argument('--skip_train', action='store_true', help='Skip training and only run inference on the test set')
     parser.add_argument('--debug_mode', action='store_true', help='Enable verbose debugging logs')
     return parser.parse_args()
@@ -149,9 +158,11 @@ def main():
     # === 1. Load Dataset ===
     log("Loading datasets...")
     # Load and split volumes
-    volume_triplets = load_volume_triplets("/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing/")
+    # volume_triplets = load_volume_triplets("/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing/")
+    volume_triplets = load_volume_triplets("/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v2/")
 
-    folds = get_kfold_splits(volume_triplets, k=5)
+    # folds = get_kfold_splits(volume_triplets, k=5)
+    folds = get_kfold_splits(volume_triplets, k=7)
     if args.kfold:
         fold_range = range(len(folds))
     else:
@@ -218,14 +229,9 @@ def main():
             dropout_rate=args.dropout
         ).to(device)
         # criterion = SSIM_L1_BrightnessAwareLoss(alpha=1.0, beta=0.0, gamma=0.0)
-        # criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.8, beta=0.1, gamma=0.1)
-        # criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.6, beta=0.1, gamma=0.3)
-        criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.6, beta=0.3, gamma=0.3)
+        criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.8, beta=0.1, gamma=0.1)
         # criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.9, beta=0.3, gamma=0.3)
-        # criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.2, beta=0.3, gamma=0.3)
-        # criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.0, beta=0.6, gamma=0.6)
-        # criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.0, beta=1.0, gamma=1.0)
-        # criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.6, beta=0.6, gamma=0.3)
+        # criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.6, beta=0.3, gamma=0.3)
 
         optimizer = AdamW(model.parameters(), lr=args.lr, weight_decay=1e-5)
         scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', patience=4, factor=0.5, verbose=True)
@@ -279,8 +285,8 @@ def main():
         elif mask.ndim != 1:
             raise ValueError("Unsupported mask dimensionality")
 
-        inpainted = inpaint_volume_with_model(model, corrupted_volume, mask, device, stack_size=args.stack_size)
-        # inpainted = inpaint_volume_with_model_recursive(model, corrupted_volume, mask, device, stack_size=args.stack_size)
+        # inpainted = inpaint_volume_with_model(model, corrupted_volume, mask, device, stack_size=args.stack_size)
+        inpainted = inpaint_volume_with_model_recursive(model, corrupted_volume, mask, device, stack_size=args.stack_size)
 
         if isinstance(inpainted, tuple):
             inpainted_volume = inpainted[0]
@@ -290,8 +296,9 @@ def main():
         # Generate output filename based on test volume name
         base_name = os.path.basename(test_corrupted_path).replace("_corrupted.tif", "")
         predicted_output_path = os.path.join(
-            "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing",
-            f"{base_name}_inpainted_2p5DUNet_fold{fold_idx+1}_0528_valTrue_stride1_drop0-3_1-0-0loss_relativeBright.tif"
+            # "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing",
+            "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v2",
+            f"{base_name}_inpainted_2p5DUNet_fold{fold_idx+1}_0528_valFalse_stride1_drop0-4_1-0-0loss_relativeBright_NEWDATA.tif"
         )
 
         tiff.imwrite(predicted_output_path, inpainted_volume.astype(np.uint16))
