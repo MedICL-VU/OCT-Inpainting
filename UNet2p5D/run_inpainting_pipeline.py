@@ -138,12 +138,13 @@ def parse_args():
     parser.add_argument('--augment', action='store_true', help='Apply data augmentation during training')
     parser.add_argument('--volume_augment', action='store_true', help='Apply volume-level intensity augmentation')
     parser.add_argument('--dynamic', action='store_true', help='Use dynamic slicing for training')
+    parser.add_argument('--dynamic_filter', action='store_true', default=True, help='Use dynamic filter scaling')
     parser.add_argument('--stride', type=int, default=4, help='Stride for dynamic slicing (default: 1)')
     parser.add_argument('--cuda', action='store_true', help='Use CUDA if available')
     parser.add_argument('--kfold', action='store_true', help='Run full k-fold cross-validation')
     parser.add_argument('--fold_idx', type=int, default=1, help='If not kfold mode, which fold to run (default: 0)')
     parser.add_argument('--skip_train', action='store_true', help='Skip training and only run inference on the test set')
-    parser.add_argument('--debug_mode', action='store_true', help='Enable verbose debugging logs')
+    parser.add_argument('--debug', action='store_true', help='Enable verbose debugging logs')
     return parser.parse_args()
 
 
@@ -196,7 +197,7 @@ def main():
             volume_transform=volume_augment,
             dynamic=args.dynamic,
             stride=args.stride,
-            debug=args.debug_mode
+            debug=args.debug
         )
 
         val_dataset = OCTAInpaintingDataset(
@@ -206,7 +207,7 @@ def main():
             volume_transform=None,
             dynamic=False,
             # dynamic=True,
-            debug=args.debug_mode
+            debug=args.debug
         )
         test_dataset = OCTAInpaintingDataset(
             test_vols,
@@ -226,7 +227,8 @@ def main():
             in_channels=args.stack_size,
             out_channels=1,
             features=args.features,
-            dropout_rate=args.dropout
+            dropout_rate=args.dropout,
+            dynamic_filter=args.dynamic_filter
         ).to(device)
         # criterion = SSIM_L1_BrightnessAwareLoss(alpha=1.0, beta=0.0, gamma=0.0)
         criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.8, beta=0.1, gamma=0.1)
@@ -245,10 +247,10 @@ def main():
             best_val_loss = float('inf')
 
             for epoch in range(1, args.epochs + 1):
-                train_loss, diagnostics = train_epoch(model, train_loader, optimizer, criterion, device)
+                train_loss, diagnostics = train_epoch(model, train_loader, optimizer, criterion, device, debug=args.debug, dynamic_filter=args.dynamic_filter)
                 print(f"Train Loss: {train_loss:.4f} | Terms: {diagnostics}")
                 
-                val_loss = validate_epoch(model, val_loader, criterion, device)
+                val_loss = validate_epoch(model, val_loader, criterion, device, dynamic_filter=args.dynamic_filter)
 
                 log(f"[Epoch {epoch}] Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f}")
                 scheduler.step(val_loss)
@@ -269,7 +271,7 @@ def main():
         # === 4: Evaluate on Held-Out Test Volume ===
         log("Evaluating on held-out test volume...")
         model.load_state_dict(torch.load(best_model_path))
-        test_loss = evaluate_model_on_test(model, test_loader, criterion, device)
+        test_loss = evaluate_model_on_test(model, test_loader, criterion, device, dynamic_filter=args.dynamic_filter)
         log(f"Final test loss: {test_loss:.4f}")
         
         # === 5. Inpaint Test Volume with Trained Model ===
@@ -298,7 +300,8 @@ def main():
         predicted_output_path = os.path.join(
             # "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing",
             "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v2",
-            f"{base_name}_inpainted_2p5DUNet_fold{fold_idx+1}_0531_dynamic_filter_scaling.tif"
+            # f"{base_name}_inpainted_2p5DUNet_fold{fold_idx+1}_0531_dynamic_filter_scaling.tif"
+            f"{base_name}_TEMP.tif"
         )
 
         tiff.imwrite(predicted_output_path, inpainted_volume.astype(np.uint16))

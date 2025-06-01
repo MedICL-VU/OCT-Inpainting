@@ -5,7 +5,7 @@ from pytorch_msssim import ssim
 from utils import log
 
 
-def train_epoch(model, dataloader, optimizer, criterion, device):
+def train_epoch(model, dataloader, optimizer, criterion, device, debug=False, dynamic_filter=True):
     running_loss = 0.0
     count = 0
     log_terms = {"l1": 0.0, "ssim": 0.0, "global_mean": 0.0, "neighbor_relative": 0.0}
@@ -19,9 +19,9 @@ def train_epoch(model, dataloader, optimizer, criterion, device):
         X = X.contiguous().float()
         y = y.contiguous().float()
 
-        output = model(X, valid_mask)
+        output = model(X, valid_mask, dynamic_filter=dynamic_filter)
 
-        if hasattr(criterion, 'debug') and criterion.debug:
+        if debug:
             log(f"[TRAIN] Batch shape: {X.shape} | Target shape: {y.shape}")
             for b in range(min(2, X.shape[0])):
                 valid = (X[b].sum(dim=(1, 2)) > 0).nonzero().squeeze().tolist()
@@ -51,7 +51,7 @@ def train_epoch(model, dataloader, optimizer, criterion, device):
     return running_loss / count, avg_terms
 
 
-def validate_epoch(model, dataloader, criterion, device):
+def validate_epoch(model, dataloader, criterion, device, dynamic_filter=True):
     model.eval()
     running_loss = 0.0
 
@@ -62,7 +62,8 @@ def validate_epoch(model, dataloader, criterion, device):
             X = X.contiguous().float()
             y = y.contiguous().float()
 
-            output = model(X, valid_mask)
+            output = model(X, valid_mask, dynamic_filter=dynamic_filter)
+
             if torch.isnan(output).any() or torch.isinf(output).any():
                 log(f"[ERROR] Model output contains NaNs or Infs at batch {batch_idx}")
 
@@ -73,7 +74,7 @@ def validate_epoch(model, dataloader, criterion, device):
     return running_loss / len(dataloader.dataset)
 
 
-def evaluate_model_on_test(model, dataloader, criterion, device):
+def evaluate_model_on_test(model, dataloader, criterion, device, dynamic_filter=True):
     model.eval()
     running_loss = 0.0
 
@@ -84,7 +85,7 @@ def evaluate_model_on_test(model, dataloader, criterion, device):
             X = X.contiguous().float()
             y = y.contiguous().float()
 
-            output = model(X, valid_mask)
+            output = model(X, valid_mask, dynamic_filter=dynamic_filter)
 
             loss, terms = criterion(output, y, X, valid_mask)  # X is stack input
 
