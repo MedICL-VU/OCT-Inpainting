@@ -55,6 +55,27 @@ class OutConv(nn.Module):
 
     def forward(self, x):
         return self.out_conv(x)
+    
+class ModulatedInputConv(nn.Module):
+    """
+    Applies a Conv2D after channel-wise scaling of the input, conditioned on a validity mask.
+    """
+    def __init__(self, in_ch, out_ch):
+        super().__init__()
+        self.conv = nn.Conv2d(in_ch, out_ch, kernel_size=3, padding=1)
+        self.scale_fc = nn.Linear(in_ch, in_ch)  # one scale per input channel
+
+    def forward(self, x, validity_mask):
+        """
+        Args:
+            x: (B, C, H, W) input volume
+            validity_mask: (B, C) binary or real values indicating slice validity
+        """
+        B, C, H, W = x.shape
+        scales = self.scale_fc(validity_mask)  # (B, C)
+        scales = scales.view(B, C, 1, 1)
+        x = x * scales
+        return F.relu(self.conv(x))
 
 class UNet2p5D(nn.Module):
     """
@@ -66,7 +87,7 @@ class UNet2p5D(nn.Module):
         features (list): List of feature sizes for each level of the U-Net.
         dropout_rate (float): Dropout rate for regularization. Default is 0.0 (no dropout).
     """
-    def __init__(self, in_channels=5, out_channels=1, features=None, dropout_rate=0.0):
+    def __init__(self, in_channels=5, out_channels=1, features=None, dropout_rate=0.0, dynamic_filter=True):
         super().__init__()
         if features is None:
             features = [64, 128, 256, 512]
@@ -75,7 +96,11 @@ class UNet2p5D(nn.Module):
         if not (0.0 <= dropout_rate <= 1.0):
             raise ValueError("dropout_rate must be between 0.0 and 1.0")
 
-        self.inc = DoubleConv(in_channels, features[0])
+        if dynamic_filter:
+            self.modulated_input = ModulatedInputConv(in_channels, features[0])
+        else:
+            self.inc = DoubleConv(in_channels, features[0])
+
         self.down1 = Down(features[0], features[1])
         self.down2 = Down(features[1], features[2])
         self.down3 = Down(features[2], features[3])
@@ -87,14 +112,21 @@ class UNet2p5D(nn.Module):
         self.up3 = Up(features[1], features[0])
         self.outc = OutConv(features[0], out_channels)
 
-    def forward(self, x):
-        x1 = self.inc(x)
+    def forward(self, x, validity_mask, dynamic_filter=True):
+        """
+        Args:
+            x: (B, S, H, W) input stack of B-scans
+            validity_mask: (B, S) mask indicating valid slices
+        """
+        if dynamic_filter:
+            x1 = self.modulated_input(x, validity_mask)  # adaptive input conditioning
+        else:
+            x1 = self.inc(x)
         x2 = self.down1(x1)
         x3 = self.down2(x2)
         x4 = self.down3(x3)
 
         x4 = self.dropout(x4)  # bottleneck dropout
-
         x = self.up1(x4, x3)
         x = self.dropout(x)    # decoder dropout (optional, same module)
         x = self.up2(x, x2)
@@ -102,3 +134,4 @@ class UNet2p5D(nn.Module):
         x = self.up3(x, x1)
         x = self.outc(x)
         return x
+    

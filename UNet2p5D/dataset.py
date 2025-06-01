@@ -168,7 +168,7 @@ class OCTAInpaintingDataset(Dataset):
                 orig_len = clean.shape[0]
 
 
-                if self.debug and vol_idx == 0:  # Only show for first volume to avoid overload
+                if self.debug and self.volume_transform and vol_idx == 0:  # Only show for first volume to avoid overload
                     slice_idx = clean.shape[0] // 2  # Use center slice for consistency
                     fig, axs = plt.subplots(1, 2, figsize=(10, 5))
                     axs[0].imshow(before_volume[slice_idx], cmap='gray')
