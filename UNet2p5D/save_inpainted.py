@@ -25,7 +25,13 @@ def inpaint_volume_with_model(model, corrupted_volume, mask, device, stack_size=
         for idx in np.where(mask == 1)[0]:
             stack = padded[idx: idx + stack_size]  # (stack_size, H, W)
             stack_tensor = torch.from_numpy(stack).unsqueeze(0).float().to(device) / corrupted_volume.max()
-            output = model(stack_tensor)  # (1, 1, H, W)
+
+            valid_mask = (stack_tensor.squeeze(0).sum(dim=(1, 2)) > 1e-3).float()  # shape: (stack_size,)
+            valid_mask = valid_mask.unsqueeze(0).to(device)  # shape: (1, stack_size)
+            output = model(stack_tensor, valid_mask)
+            
+            # output = model(stack_tensor)
+            
             pred = output.squeeze().cpu().numpy() * corrupted_volume.max()
             inpainted[idx] = np.clip(pred, 0, corrupted_volume.max()).astype(np.uint16)
 
@@ -76,7 +82,12 @@ def inpaint_volume_with_model_recursive(model, corrupted_volume, mask, device, s
                 for idx in [block[left], block[right]] if left != right else [block[left]]:
                     stack = padded[idx: idx + stack_size]  # (stack_size, H, W)
                     stack_tensor = torch.from_numpy(stack).unsqueeze(0).float().to(device) / corrupted_volume.max()
-                    output = model(stack_tensor)
+
+                    valid_mask = (stack_tensor.squeeze(0).sum(dim=(1, 2)) > 1e-3).float()  # shape: (stack_size,)
+                    valid_mask = valid_mask.unsqueeze(0).to(device)  # shape: (1, stack_size)
+                    output = model(stack_tensor, valid_mask)
+                    
+                    # output = model(stack_tensor)
                     pred = output.squeeze().cpu().numpy() * corrupted_volume.max()
                     inpainted[idx] = np.clip(pred, 0, corrupted_volume.max()).astype(np.uint16)
                     padded[idx + pad] = pred  # Update padding for recursive effect

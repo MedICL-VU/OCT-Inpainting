@@ -19,7 +19,7 @@ def train_epoch(model, dataloader, optimizer, criterion, device):
         X = X.contiguous().float()
         y = y.contiguous().float()
 
-        output = model(X)
+        output = model(X, valid_mask)
 
         if hasattr(criterion, 'debug') and criterion.debug:
             log(f"[TRAIN] Batch shape: {X.shape} | Target shape: {y.shape}")
@@ -62,7 +62,7 @@ def validate_epoch(model, dataloader, criterion, device):
             X = X.contiguous().float()
             y = y.contiguous().float()
 
-            output = model(X)
+            output = model(X, valid_mask)
             if torch.isnan(output).any() or torch.isinf(output).any():
                 log(f"[ERROR] Model output contains NaNs or Infs at batch {batch_idx}")
 
@@ -84,7 +84,7 @@ def evaluate_model_on_test(model, dataloader, criterion, device):
             X = X.contiguous().float()
             y = y.contiguous().float()
 
-            output = model(X)
+            output = model(X, valid_mask)
 
             loss, terms = criterion(output, y, X, valid_mask)  # X is stack input
 

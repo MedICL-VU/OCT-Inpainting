@@ -298,7 +298,7 @@ def main():
         predicted_output_path = os.path.join(
             # "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing",
             "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v2",
-            f"{base_name}_inpainted_2p5DUNet_fold{fold_idx+1}_0528_valFalse_stride1_drop0-4_1-0-0loss_relativeBright_NEWDATA.tif"
+            f"{base_name}_inpainted_2p5DUNet_fold{fold_idx+1}_0531_dynamic_filter_scaling.tif"
         )
 
         tiff.imwrite(predicted_output_path, inpainted_volume.astype(np.uint16))
