@@ -74,7 +74,7 @@ artifact_exclusion = {
 
 class OCTAInpaintingDataset(Dataset):
     def __init__(self, volume_triples: list, stack_size=5, transform=None, 
-                 volume_transform=None, dynamic=False, stride=1, debug=False):
+                 volume_transform=None, dynamic=False, stride=1, neighbor_drop_range=(0,0), debug=False):
         """
         Args:
             volume_triples (list): List of tuples [(corrupted_path, clean_path, mask_path)].
@@ -95,6 +95,7 @@ class OCTAInpaintingDataset(Dataset):
         self.volume_transform = volume_transform
         self.dynamic = dynamic
         self.stride = stride
+        self.neighbor_drop_range = neighbor_drop_range
         self.debug = debug
 
         if not dynamic:
@@ -280,7 +281,6 @@ class OCTAInpaintingDataset(Dataset):
                     plt.show()
 
 
-
             stack = stack.astype(np.float32)
             target = target.astype(np.float32)
 
@@ -293,10 +293,11 @@ class OCTAInpaintingDataset(Dataset):
 
             # Maximum drops ensuring that at least 5 neighbors remain.
             # max_drops = len(neighbors) - 5
+            drop_low, drop_high = self.neighbor_drop_range
             # drop_n = random.randint(0, max_drops)
-            drop_n = random.randint(0,4)
+            # drop_n = random.randint(0,4)
             # drop_n = 0
-            drop_indices = random.sample(neighbors, drop_n)
+            drop_indices = random.sample(neighbors, drop_high)
             # Drop the selected neighbor slices
             for di in drop_indices:
                 stack[di] = 0.0  # set entire slice to zero (uint16 zero)

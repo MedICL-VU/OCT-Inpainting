@@ -72,9 +72,6 @@ class ModulatedInputConv(nn.Module):
             validity_mask: (B, C) binary or real values indicating slice validity
         """
         B, C, H, W = x.shape
-
-        print(f"DEBUG ModulatedInputConv: x.shape = {x.shape}, validity_mask.shape = {validity_mask.shape}")
-
         scales = self.scale_fc(validity_mask)  # (B, C)
         scales = scales.view(B, C, 1, 1)
         x = x * scales

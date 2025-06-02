@@ -75,7 +75,7 @@ def evaluate_volume_metrics(gt, pred, mask):
     if num_masked == 0:
         return {
             "L1": None,
-            "MeanIntensityError": round(float(np.abs(pred.mean() - gt.mean())), 4),
+            "MeanIntensityError": round(float(np.abs(pred[mask].mean() - gt[mask].mean())), 4),
             "SSIM": {w: None for w in [7, 11, 17]},
             "NCC": {w: None for w in [7, 11, 17]},
             "Note": "No corrupted slices to evaluate"
@@ -83,7 +83,7 @@ def evaluate_volume_metrics(gt, pred, mask):
 
     return {
         "L1": round(sum(l1_vals) / num_masked, 4),
-        "MeanIntensityError": round(float(np.abs(pred.mean() - gt.mean())), 4),
+        "MeanIntensityError": round(float(np.abs(pred[mask].mean() - gt[mask].mean())), 4),
         "SSIM": {w: round(np.nanmean(ssim_vals[w]), 4) for w in ssim_vals},
         "NCC": {w: round(sum(ncc_vals[w]) / num_masked, 4) for w in ncc_vals}
     }
@@ -127,7 +127,6 @@ def get_kfold_splits(triplets, k=5, seed=42):
     return folds
 
 
-
 def parse_args():
     parser = argparse.ArgumentParser(description="Run 2.5D Inpainting Pipeline")
     parser.add_argument('--epochs', type=int, default=200, help='Number of training epochs')
@@ -163,12 +162,15 @@ def main():
     for col in bool_cols:
         config_df[col] = config_df[col].astype(str).str.upper().map({"TRUE": True, "FALSE": False})
 
-    METRIC_RESULTS_PATH = "experiment_metrics_summary.csv"
+    METRIC_RESULTS_PATH = "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_Ablationv2/experiment_metrics_summary.csv"
     all_metrics = []
 
     for exp_idx, config in config_df.iterrows():
         log(f"\n=== Running Experiment {exp_idx+1}/{len(config_df)} ===")
         log(config.to_string())
+
+        import ast
+        neighbor_drop_range = ast.literal_eval(config['neighbor_drop_range'])  # This converts "(0, 3)" to (0, 3)
 
         # === 1. Load Dataset ===
         log("Loading datasets...")
@@ -221,16 +223,17 @@ def main():
 
             train_dataset = OCTAInpaintingDataset(
                 train_vols,
-                stack_size=config['stack_size'],
+                stack_size=int(config['stack_size']),
                 transform=augment,
                 volume_transform=None,
                 dynamic=True,
-                stride=int(config['stride'])
+                stride=int(config['stride']),
+                neighbor_drop_range=neighbor_drop_range
             )
 
             val_dataset = OCTAInpaintingDataset(
                 val_vols,
-                stack_size=config['stack_size'],
+                stack_size=int(config['stack_size']),
                 transform=None,
                 volume_transform=None,
                 dynamic=False,
@@ -239,7 +242,7 @@ def main():
             )
             test_dataset = OCTAInpaintingDataset(
                 test_vols,
-                stack_size=config['stack_size'],
+                stack_size=int(config['stack_size']),
                 transform=None,
                 volume_transform=None,
                 dynamic=False
@@ -252,7 +255,7 @@ def main():
             # === 2. Initialize Model ===
             log("Initializing model...")
             model = UNet2p5D(
-                in_channels=config['stack_size'],
+                in_channels=int(config['stack_size']),
                 out_channels=1,
                 features=args.features,
                 dropout_rate=0.1 if config['dropout'] else 0.0,
@@ -260,9 +263,9 @@ def main():
             ).to(device)
 
             criterion = SSIM_L1_BrightnessAwareLoss(
-                alpha=config['alpha'],
-                beta=config['beta'],
-                gamma=config['gamma'],
+                alpha=float(config['alpha']),
+                beta=float(config['beta']),
+                gamma=float(config['gamma']),
             )
 
             optimizer = AdamW(model.parameters(), lr=float(config['lr']))
@@ -273,7 +276,7 @@ def main():
             early_stopping = EarlyStopping(patience=10, min_delta=5e-5)
             best_val_loss = float('inf')
 
-            for epoch in range(1):
+            for epoch in range(200):
                 train_loss, diagnostics = train_epoch(model, train_loader, optimizer, criterion, device, debug=args.debug, 
                                                       dynamic_filter=args.dynamic_filter, relativeDiff=config['relative_brightness'])
                 print(f"Train Loss: {train_loss:.4f} | Terms: {diagnostics}")
@@ -317,8 +320,8 @@ def main():
             elif mask.ndim != 1:
                 raise ValueError("Unsupported mask dimensionality")
 
-            inpainted = inpaint_volume_with_model(model, corrupted_volume, mask, device, stack_size=args.stack_size)
-            inpainted_recursive = inpaint_volume_with_model_recursive(model, corrupted_volume, mask, device, stack_size=args.stack_size)
+            inpainted = inpaint_volume_with_model(model, corrupted_volume, mask, device, stack_size=int(config['stack_size']))
+            inpainted_recursive = inpaint_volume_with_model_recursive(model, corrupted_volume, mask, device, stack_size=int(config['stack_size']))
 
             if isinstance(inpainted, tuple):
                 inpainted_volume = inpainted[0]
@@ -337,14 +340,14 @@ def main():
                 f"batch{config['batch_size']}_stack{config['stack_size']}_"
                 f"lr{config['lr']}_stride{config['stride']}_drop{config['neighbor_drop_range']}_"
                 f"relbright{config['relative_brightness']}_dropout{config['dropout']}_"
-                f"aug{config['augment']}.tif"
+                f"aug{config['augment']}_alpha{config['alpha']}_beta{config['beta']}_gamma{config['gamma']}.tif"
             )
             filename_recursive = (
                 f"{base_name}_inpainted_exp{exp_idx}_fold{fold_idx+1}_"
                 f"batch{config['batch_size']}_stack{config['stack_size']}_"
                 f"lr{config['lr']}_stride{config['stride']}_drop{config['neighbor_drop_range']}_"
                 f"relbright{config['relative_brightness']}_dropout{config['dropout']}_"
-                f"aug{config['augment']}_recurInpaint.tif"
+                f"aug{config['augment']}_alpha{config['alpha']}_beta{config['beta']}_gamma{config['gamma']}_recurInpaint.tif"
             )
 
             predicted_output_path = os.path.join(
