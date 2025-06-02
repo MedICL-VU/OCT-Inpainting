@@ -5,6 +5,7 @@ from torch.utils.data import DataLoader
 from torch.optim import AdamW, lr_scheduler
 import tifffile as tiff
 import numpy as np
+import pandas as pd
 import argparse
 from sklearn.model_selection import KFold
 import random
@@ -154,103 +155,130 @@ def main():
 
     log("Starting Inpainting Pipeline")
     log(f"Device: {device}")
-    log(f"Epochs: {args.epochs} | Batch size: {args.batch_size} | Stack size: {args.stack_size}")
 
-    # === 1. Load Dataset ===
-    log("Loading datasets...")
-    # Load and split volumes
-    # volume_triplets = load_volume_triplets("/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing/")
-    volume_triplets = load_volume_triplets("/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v2/")
+    log("Starting Experimentation Loop...")
+    config_df = pd.read_csv("Experiment_Configurations.csv")
 
-    # folds = get_kfold_splits(volume_triplets, k=5)
-    folds = get_kfold_splits(volume_triplets, k=7)
-    if args.kfold:
-        fold_range = range(len(folds))
-    else:
-        fold_range = [args.fold_idx]
+    bool_cols = ["relative_brightness", "dropout", "augment"]
+    for col in bool_cols:
+        config_df[col] = config_df[col].astype(str).str.upper().map({"TRUE": True, "FALSE": False})
 
+    METRIC_RESULTS_PATH = "experiment_metrics_summary.csv"
+    all_metrics = []
 
-    for fold_idx in fold_range:
-        train_vols, val_vols, test_vols = folds[fold_idx]
-        log(f"\n========== Fold {fold_idx + 1} ==========")
-        log("Training volumes:")
-        for v in train_vols: log(f" - {os.path.basename(v[0])}")
-        log("Validation volume:")
-        for v in val_vols: log(f" - {os.path.basename(v[0])}")
-        log("Test volume:")
-        for v in test_vols: log(f" - {os.path.basename(v[0])}")
+    for exp_idx, config in config_df.iterrows():
+        log(f"\n=== Running Experiment {exp_idx+1}/{len(config_df)} ===")
+        log(config.to_string())
 
-        test_corrupted_path, test_gt_path, test_mask_path = test_vols[0]
-        best_model_path = f"output/best_model_fold{fold_idx + 1}.pth"
+        # === 1. Load Dataset ===
+        log("Loading datasets...")
+        # Load and split volumes
+        # volume_triplets = load_volume_triplets("/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing/")
+        volume_triplets = load_volume_triplets("/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_Ablationv2/")
 
-        log(f"Using {len(train_vols)} volumes for training, {len(val_vols)} for validation, {len(test_vols)} for testing")
+        folds = get_kfold_splits(volume_triplets, k=7)
+        if args.kfold:
+            fold_range = range(len(folds))
+        else:
+            fold_range = [args.fold_idx]
 
-        # Build datasets
-        augment = IntensityAugment(scale_range=(0.95, 1.05), noise_std=0.005, bias_range=(-0.02, 0.02)) if args.augment else None
-        volume_augment = VolumeLevelIntensityAugment(scale_range=(0.95, 1.05), bias_range=(-0.02, 0.02)) if args.volume_augment else None
+        for fold_idx in fold_range:
+            train_vols, val_vols, test_vols = folds[fold_idx]
+            log(f"\n========== Fold {fold_idx + 1} ==========")
+            log("Training volumes:")
+            for v in train_vols: log(f" - {os.path.basename(v[0])}")
+            log("Validation volume:")
+            for v in val_vols: log(f" - {os.path.basename(v[0])}")
+            log("Test volume:")
+            for v in test_vols: log(f" - {os.path.basename(v[0])}")
+            
+            # === Build datasets and loaders ===
+            if config['augment'] == 'ScaleRange':
+                augment = IntensityAugment(
+                    scale_range=(0.95, 1.05),
+                    noise_std=0.0,
+                    bias_range=(-0.0, 0.0)
+                )
+            elif config['augment'] == 'NoiseSTD':
+                augment = IntensityAugment(
+                    scale_range=(1.0, 1.0),
+                    noise_std=0.01,
+                    bias_range=(-0.0, 0.0)
+                )
+            elif config['augment'] == 'BiasRange':
+                augment = IntensityAugment(
+                    scale_range=(1.0, 1.0),
+                    noise_std=0.0,
+                    bias_range=(-0.02, 0.02)
+                )
+            else:
+                augment = None
 
-        # Create dynamic training dataset
-        train_dataset = OCTAInpaintingDataset(
-            train_vols,
-            stack_size=args.stack_size,
-            transform=augment,
-            volume_transform=volume_augment,
-            dynamic=args.dynamic,
-            stride=args.stride,
-            debug=args.debug
-        )
+            # volume_augment = VolumeLevelIntensityAugment(
+            #     scale_range=(0.9, 1.1),
+            #     bias_range=(-0.05, 0.05)
+            # ) if config['augment'] == 'Large' else None
 
-        val_dataset = OCTAInpaintingDataset(
-            val_vols,
-            stack_size=args.stack_size,
-            transform=None,
-            volume_transform=None,
-            dynamic=False,
-            # dynamic=True,
-            debug=args.debug
-        )
-        test_dataset = OCTAInpaintingDataset(
-            test_vols,
-            stack_size=args.stack_size,
-            transform=None,
-            volume_transform=None,
-            dynamic=False
-        )
+            train_dataset = OCTAInpaintingDataset(
+                train_vols,
+                stack_size=config['stack_size'],
+                transform=augment,
+                volume_transform=None,
+                dynamic=True,
+                stride=int(config['stride'])
+            )
 
-        train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=0)
-        val_loader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False, num_workers=0)
-        test_loader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=0)
+            val_dataset = OCTAInpaintingDataset(
+                val_vols,
+                stack_size=config['stack_size'],
+                transform=None,
+                volume_transform=None,
+                dynamic=False,
+                # dynamic=True,
+                debug=args.debug
+            )
+            test_dataset = OCTAInpaintingDataset(
+                test_vols,
+                stack_size=config['stack_size'],
+                transform=None,
+                volume_transform=None,
+                dynamic=False
+            )
 
-        # === 2. Initialize Model ===
-        log("Initializing model...")
-        model = UNet2p5D(
-            in_channels=args.stack_size,
-            out_channels=1,
-            features=args.features,
-            dropout_rate=args.dropout,
-            dynamic_filter=args.dynamic_filter
-        ).to(device)
-        # criterion = SSIM_L1_BrightnessAwareLoss(alpha=1.0, beta=0.0, gamma=0.0)
-        criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.8, beta=0.1, gamma=0.1)
-        # criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.9, beta=0.3, gamma=0.3)
-        # criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.6, beta=0.3, gamma=0.3)
+            train_loader = DataLoader(train_dataset, batch_size=int(config['batch_size']), shuffle=True, num_workers=0)
+            val_loader = DataLoader(val_dataset, batch_size=int(config['batch_size']), shuffle=False, num_workers=0)
+            test_loader = DataLoader(test_dataset, batch_size=int(config['batch_size']), shuffle=False, num_workers=0)
 
-        optimizer = AdamW(model.parameters(), lr=args.lr, weight_decay=1e-5)
-        scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', patience=4, factor=0.5, verbose=True)
-        # early_stopping = EarlyStopping(patience=10, min_delta=1e-4, verbose=True)
-        early_stopping = EarlyStopping(patience=10, min_delta=5e-5, verbose=True)
+            # === 2. Initialize Model ===
+            log("Initializing model...")
+            model = UNet2p5D(
+                in_channels=config['stack_size'],
+                out_channels=1,
+                features=args.features,
+                dropout_rate=0.1 if config['dropout'] else 0.0,
+                dynamic_filter=True
+            ).to(device)
 
-        # If skip training, load the best model directly
-        if not args.skip_train:
-            # === 3. Train Model ===
-            log("Starting training...")
+            criterion = SSIM_L1_BrightnessAwareLoss(
+                alpha=config['alpha'],
+                beta=config['beta'],
+                gamma=config['gamma'],
+            )
+
+            optimizer = AdamW(model.parameters(), lr=float(config['lr']))
+            scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', patience=4, factor=0.5, verbose=True)
+            best_model_path = f"output/best_model_exp{exp_idx}_fold{fold_idx+1}.pth"
+
+            # === Train ===
+            early_stopping = EarlyStopping(patience=10, min_delta=5e-5)
             best_val_loss = float('inf')
 
-            for epoch in range(1, args.epochs + 1):
-                train_loss, diagnostics = train_epoch(model, train_loader, optimizer, criterion, device, debug=args.debug, dynamic_filter=args.dynamic_filter)
+            for epoch in range(1):
+                train_loss, diagnostics = train_epoch(model, train_loader, optimizer, criterion, device, debug=args.debug, 
+                                                      dynamic_filter=args.dynamic_filter, relativeDiff=config['relative_brightness'])
                 print(f"Train Loss: {train_loss:.4f} | Terms: {diagnostics}")
                 
-                val_loss = validate_epoch(model, val_loader, criterion, device, dynamic_filter=args.dynamic_filter)
+                val_loss = validate_epoch(model, val_loader, criterion, device, dynamic_filter=args.dynamic_filter, relativeDiff=config['relative_brightness'])
 
                 log(f"[Epoch {epoch}] Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f}")
                 scheduler.step(val_loss)
@@ -268,59 +296,142 @@ def main():
 
             log("Training completed.")
 
-        # === 4: Evaluate on Held-Out Test Volume ===
-        log("Evaluating on held-out test volume...")
-        model.load_state_dict(torch.load(best_model_path))
-        test_loss = evaluate_model_on_test(model, test_loader, criterion, device, dynamic_filter=args.dynamic_filter)
-        log(f"Final test loss: {test_loss:.4f}")
-        
-        # === 5. Inpaint Test Volume with Trained Model ===
-        log("Inpainting volume...")
-        corrupted_volume = tiff.imread(test_corrupted_path)
-        mask = tiff.imread(test_mask_path)
-        # Convert mask to 1D binary array if needed
-        if mask.ndim == 3:
-            if np.all((mask == 0) | (mask == 1)):
-                mask = mask[:, 0, 0]
+            # === 4: Evaluate on Held-Out Test Volume ===
+            log("Evaluating on held-out test volume...")
+            model.load_state_dict(torch.load(best_model_path))
+            test_corrupted_path, test_gt_path, test_mask_path = test_vols[0]
+
+            test_loss = evaluate_model_on_test(model, test_loader, criterion, device, dynamic_filter=args.dynamic_filter, relativeDiff=config['relative_brightness'])
+            log(f"Final test loss: {test_loss:.4f}")
+            
+            # === 5. Inpaint Test Volume with Trained Model ===
+            log("Inpainting volume...")
+            corrupted_volume = tiff.imread(test_corrupted_path)
+            mask = tiff.imread(test_mask_path)
+            # Convert mask to 1D binary array if needed
+            if mask.ndim == 3:
+                if np.all((mask == 0) | (mask == 1)):
+                    mask = mask[:, 0, 0]
+                else:
+                    raise ValueError("Unexpected mask format: expected binary 0/1 per slice")
+            elif mask.ndim != 1:
+                raise ValueError("Unsupported mask dimensionality")
+
+            inpainted = inpaint_volume_with_model(model, corrupted_volume, mask, device, stack_size=args.stack_size)
+            inpainted_recursive = inpaint_volume_with_model_recursive(model, corrupted_volume, mask, device, stack_size=args.stack_size)
+
+            if isinstance(inpainted, tuple):
+                inpainted_volume = inpainted[0]
             else:
-                raise ValueError("Unexpected mask format: expected binary 0/1 per slice")
-        elif mask.ndim != 1:
-            raise ValueError("Unsupported mask dimensionality")
+                inpainted_volume = inpainted
 
-        # inpainted = inpaint_volume_with_model(model, corrupted_volume, mask, device, stack_size=args.stack_size)
-        inpainted = inpaint_volume_with_model_recursive(model, corrupted_volume, mask, device, stack_size=args.stack_size)
+            if isinstance(inpainted_recursive, tuple):
+                inpainted_volume_recursive = inpainted_recursive[0]
+            else:
+                inpainted_volume_recursive = inpainted_recursive
 
-        if isinstance(inpainted, tuple):
-            inpainted_volume = inpainted[0]
-        else:
-            inpainted_volume = inpainted
+            # Generate output filename based on test volume name
+            base_name = os.path.basename(test_corrupted_path).replace("_corrupted.tif", "")
+            filename = (
+                f"{base_name}_inpainted_exp{exp_idx}_fold{fold_idx+1}_"
+                f"batch{config['batch_size']}_stack{config['stack_size']}_"
+                f"lr{config['lr']}_stride{config['stride']}_drop{config['neighbor_drop_range']}_"
+                f"relbright{config['relative_brightness']}_dropout{config['dropout']}_"
+                f"aug{config['augment']}.tif"
+            )
+            filename_recursive = (
+                f"{base_name}_inpainted_exp{exp_idx}_fold{fold_idx+1}_"
+                f"batch{config['batch_size']}_stack{config['stack_size']}_"
+                f"lr{config['lr']}_stride{config['stride']}_drop{config['neighbor_drop_range']}_"
+                f"relbright{config['relative_brightness']}_dropout{config['dropout']}_"
+                f"aug{config['augment']}_recurInpaint.tif"
+            )
 
-        # Generate output filename based on test volume name
-        base_name = os.path.basename(test_corrupted_path).replace("_corrupted.tif", "")
-        predicted_output_path = os.path.join(
-            # "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing",
-            "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v2",
-            # f"{base_name}_inpainted_2p5DUNet_fold{fold_idx+1}_0531_dynamic_filter_scaling.tif"
-            f"{base_name}_TEMP.tif"
-        )
+            predicted_output_path = os.path.join(
+                "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_Ablationv2",
+                filename
+            )
+            predicted_output_path_recursive = os.path.join(
+                "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_Ablationv2",
+                filename_recursive
+            )
 
-        tiff.imwrite(predicted_output_path, inpainted_volume.astype(np.uint16))
-        log(f"Inpainted volume saved to: {predicted_output_path}")
+            tiff.imwrite(predicted_output_path, inpainted_volume.astype(np.uint16))
+            log(f"Inpainted volume saved to: {predicted_output_path}")
 
-        # === 5. Volume-Wise Evaluation ===
-        log("Evaluating inpainted volume metrics...")
+            tiff.imwrite(predicted_output_path_recursive, inpainted_volume_recursive.astype(np.uint16))
+            log(f"Inpainted volume saved to: {predicted_output_path_recursive}")
 
-        gt_volume = tiff.imread(test_gt_path)
-        metrics = evaluate_volume_metrics(gt_volume, inpainted_volume, mask)
+            # === 5. Volume-Wise Evaluation ===
+            log("Evaluating inpainted volume metrics...")
 
-        log(f"Volume Metrics for {base_name}:")
-        log(f" - L1 Loss: {metrics['L1']:.4f}")
-        log(f" - Mean Intensity Diff: {metrics['MeanIntensityError']}")
+            gt_volume = tiff.imread(test_gt_path)
+            metrics = evaluate_volume_metrics(gt_volume, inpainted_volume, mask)
 
-        for w in [7, 11, 17]:
-            log(f" - SSIM (win={w}): {metrics['SSIM'][w]}")
-        for w in [7, 11, 17]:
-            log(f" - NCC (win={w}):  {metrics['NCC'][w]}")
+            log(f"Volume Metrics for {filename}:")
+            log(f" - L1 Loss: {metrics['L1']:.4f}")
+            log(f" - Mean Intensity Diff: {metrics['MeanIntensityError']}")
+
+            for w in [7, 11, 17]:
+                log(f" - SSIM (win={w}): {metrics['SSIM'][w]}")
+            for w in [7, 11, 17]:
+                log(f" - NCC (win={w}):  {metrics['NCC'][w]}")
+
+            metrics_record = {
+                "exp_idx": exp_idx,
+                "fold": fold_idx + 1,
+                "volume": filename,
+                "L1": metrics["L1"],
+                "MeanIntensityError": metrics["MeanIntensityError"]
+            }
+
+            # Add SSIM and NCC for each window
+            for w in [7, 11, 17]:
+                metrics_record[f"SSIM_{w}"] = metrics["SSIM"][w]
+                metrics_record[f"NCC_{w}"] = metrics["NCC"][w]
+
+            # Also add hyperparameters from config
+            for col in config.index:
+                metrics_record[col] = config[col]
+
+            all_metrics.append(metrics_record)
+
+
+
+            metrics_recursive = evaluate_volume_metrics(gt_volume, inpainted_volume_recursive, mask)
+
+            log(f"Volume Metrics for {filename}:")
+            log(f" - L1 Loss: {metrics_recursive['L1']:.4f}")
+            log(f" - Mean Intensity Diff: {metrics_recursive['MeanIntensityError']}")
+
+            for w in [7, 11, 17]:
+                log(f" - SSIM (win={w}): {metrics_recursive['SSIM'][w]}")
+            for w in [7, 11, 17]:
+                log(f" - NCC (win={w}):  {metrics_recursive['NCC'][w]}")
+
+            metrics_record_recursive = {
+                "exp_idx": exp_idx,
+                "fold": fold_idx + 1,
+                "volume": filename,
+                "L1": metrics_recursive["L1"],
+                "MeanIntensityError": metrics_recursive["MeanIntensityError"]
+            }
+
+            # Add SSIM and NCC for each window
+            for w in [7, 11, 17]:
+                metrics_record_recursive[f"SSIM_{w}"] = metrics_recursive["SSIM"][w]
+                metrics_record_recursive[f"NCC_{w}"] = metrics_recursive["NCC"][w]
+
+            # Also add hyperparameters from config
+            for col in config.index:
+                metrics_record_recursive[col] = config[col]
+
+            all_metrics.append(metrics_record_recursive)
+
+
+    df = pd.DataFrame(all_metrics)
+    df.to_csv(METRIC_RESULTS_PATH, index=False)
+    log(f"Saved all experiment metrics to {METRIC_RESULTS_PATH}")
 
 
 if __name__ == "__main__":

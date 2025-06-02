@@ -5,7 +5,7 @@ from pytorch_msssim import ssim
 from utils import log
 
 
-def train_epoch(model, dataloader, optimizer, criterion, device, debug=False, dynamic_filter=True):
+def train_epoch(model, dataloader, optimizer, criterion, device, debug=False, dynamic_filter=True, relativeDiff=True):
     running_loss = 0.0
     count = 0
     log_terms = {"l1": 0.0, "ssim": 0.0, "global_mean": 0.0, "neighbor_relative": 0.0}
@@ -21,7 +21,7 @@ def train_epoch(model, dataloader, optimizer, criterion, device, debug=False, dy
 
         output = model(X, valid_mask, dynamic_filter=dynamic_filter)
 
-        if debug:
+        if debug and batch_idx < 3:
             log(f"[TRAIN] Batch shape: {X.shape} | Target shape: {y.shape}")
             for b in range(min(2, X.shape[0])):
                 valid = (X[b].sum(dim=(1, 2)) > 0).nonzero().squeeze().tolist()
@@ -34,7 +34,7 @@ def train_epoch(model, dataloader, optimizer, criterion, device, debug=False, dy
         if torch.isnan(output).any() or torch.isinf(output).any():
             log(f"[ERROR] Model output contains NaNs or Infs at batch {batch_idx}")
 
-        loss, terms = criterion(output, y, X, valid_mask)  # X is stack input
+        loss, terms = criterion(output, y, X, valid_mask, relativeDiff)  # X is stack input
 
         optimizer.zero_grad()
         loss.backward()
@@ -51,7 +51,7 @@ def train_epoch(model, dataloader, optimizer, criterion, device, debug=False, dy
     return running_loss / count, avg_terms
 
 
-def validate_epoch(model, dataloader, criterion, device, dynamic_filter=True):
+def validate_epoch(model, dataloader, criterion, device, dynamic_filter=True, relativeDiff=True):
     model.eval()
     running_loss = 0.0
 
@@ -67,14 +67,14 @@ def validate_epoch(model, dataloader, criterion, device, dynamic_filter=True):
             if torch.isnan(output).any() or torch.isinf(output).any():
                 log(f"[ERROR] Model output contains NaNs or Infs at batch {batch_idx}")
 
-            loss, terms = criterion(output, y, X, valid_mask)  # X is stack input
+            loss, terms = criterion(output, y, X, valid_mask, relativeDiff)  # X is stack input
 
             running_loss += loss.item() * X.size(0)
 
     return running_loss / len(dataloader.dataset)
 
 
-def evaluate_model_on_test(model, dataloader, criterion, device, dynamic_filter=True):
+def evaluate_model_on_test(model, dataloader, criterion, device, dynamic_filter=True, relativeDiff=True):
     model.eval()
     running_loss = 0.0
 
@@ -87,7 +87,7 @@ def evaluate_model_on_test(model, dataloader, criterion, device, dynamic_filter=
 
             output = model(X, valid_mask, dynamic_filter=dynamic_filter)
 
-            loss, terms = criterion(output, y, X, valid_mask)  # X is stack input
+            loss, terms = criterion(output, y, X, valid_mask, relativeDiff)  # X is stack input
 
             running_loss += loss.item() * X.size(0)
 
@@ -107,7 +107,7 @@ class SSIM_L1_BrightnessAwareLoss(nn.Module):
         self.gamma = gamma
         self.l1 = nn.L1Loss()
 
-    def forward(self, pred, target, stack=None, valid_mask=None):
+    def forward(self, pred, target, stack=None, valid_mask=None, relative_brightness=True):
         # pred, target: (B, 1, H, W)
         # stack: (B, S, H, W), valid_mask: (B, S)
 
@@ -127,13 +127,14 @@ class SSIM_L1_BrightnessAwareLoss(nn.Module):
             num_valid = valid_mask.sum(dim=1, keepdim=True).clamp(min=1.0)
             neighbor_mean = valid_neighbors.sum(dim=1, keepdim=True) / num_valid
 
-            # brightness_consistency = torch.abs(pred_means - neighbor_mean).mean()
-
-            # Use relative difference
-            brightness_consistency = (
-                torch.abs(pred_means - neighbor_mean) /
-                neighbor_mean.clamp(min=1e-4)
-            ).mean()
+            if not relative_brightness:
+                brightness_consistency = torch.abs(pred_means - neighbor_mean).mean()
+            else:
+                # Use relative difference
+                brightness_consistency = (
+                    torch.abs(pred_means - neighbor_mean) /
+                    neighbor_mean.clamp(min=1e-4)
+                ).mean()
         else:
             brightness_consistency = torch.tensor(0.0, device=pred.device)
 
