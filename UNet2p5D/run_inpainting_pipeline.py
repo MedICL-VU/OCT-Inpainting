@@ -25,8 +25,9 @@ def evaluate_volume_metrics(gt, pred, mask):
 
     D, H, W = gt.shape
     l1_vals = []
-    ssim_vals = {7: [], 11: [], 17: []}
-    ncc_vals = {7: [], 11: [], 17: []}
+    ssim_vals = {11: [], 17: [], 23: []}
+    ncc_vals = {11: [], 17: [], 23: []}
+    ncc_3d_vals = {11: [], 17: [], 23: []}
 
     def local_ncc(a, b, window):
         a, b = torch.from_numpy(a), torch.from_numpy(b)
@@ -49,6 +50,37 @@ def evaluate_volume_metrics(gt, pred, mask):
                 (b2_sum - b_mean * b_sum - b_mean * b_sum + b_mean * b_mean * win_size).clamp(min=1e-6).sqrt()
         return (num / denom).clamp(-1, 1).mean().item()
 
+    def ncc_3d(a, b, window_size=7):
+        a, b = torch.from_numpy(a), torch.from_numpy(b)
+        assert a.shape == b.shape  # [D, H, W]
+        a = a.unsqueeze(0).unsqueeze(0)  # [1,1,D,H,W]
+        b = b.unsqueeze(0).unsqueeze(0)
+
+        pad = window_size // 2
+        kernel = torch.ones((1, 1, window_size, window_size, window_size), device=a.device)
+
+        a2 = a * a
+        b2 = b * b
+        ab = a * b
+
+        a_sum = F.conv3d(a, kernel, padding=pad)
+        b_sum = F.conv3d(b, kernel, padding=pad)
+        ab_sum = F.conv3d(ab, kernel, padding=pad)
+        a2_sum = F.conv3d(a2, kernel, padding=pad)
+        b2_sum = F.conv3d(b2, kernel, padding=pad)
+
+        win_size = window_size ** 3
+        a_mean = a_sum / win_size
+        b_mean = b_sum / win_size
+
+        num = ab_sum - a_mean * b_sum
+        var_a = a2_sum - a_mean * a_sum
+        var_b = b2_sum - b_mean * b_sum
+        denom = (var_a.clamp(min=1e-5).sqrt() * var_b.clamp(min=1e-5).sqrt())
+
+        ncc_map = num / denom
+        return ncc_map.mean().item()
+
     num_masked = 0
 
     for i in range(D):
@@ -59,7 +91,7 @@ def evaluate_volume_metrics(gt, pred, mask):
 
         l1_vals.append(np.mean(np.abs(p - g)))
 
-        for w in [7, 11, 17]:
+        for w in [11, 17, 23]:
             try:
                 ssim = skimage_ssim(p, g, data_range=1.0, win_size=w)
                 ssim_vals[w].append(ssim)
@@ -68,6 +100,7 @@ def evaluate_volume_metrics(gt, pred, mask):
                 ssim_vals[w].append(float('nan'))
 
             ncc_vals[w].append(local_ncc(p, g, window=w))
+            ncc_3d_vals[w].append(ncc_3d(p, g, window_size=w))
 
         num_masked += 1
 
@@ -75,8 +108,9 @@ def evaluate_volume_metrics(gt, pred, mask):
         return {
             "L1": None,
             "MeanIntensityError": round(float(np.abs(pred.mean() - gt.mean())), 4),
-            "SSIM": {w: None for w in [7, 11, 17]},
-            "NCC": {w: None for w in [7, 11, 17]},
+            "SSIM": {w: None for w in [11, 17, 23]},
+            "NCC": {w: None for w in [11, 17, 23]},
+            "NCC_3D": {w: None for w in [11, 17, 23]},
             "Note": "No corrupted slices to evaluate"
         }
 
@@ -84,7 +118,8 @@ def evaluate_volume_metrics(gt, pred, mask):
         "L1": round(sum(l1_vals) / num_masked, 4),
         "MeanIntensityError": round(float(np.abs(pred.mean() - gt.mean())), 4),
         "SSIM": {w: round(np.nanmean(ssim_vals[w]), 4) for w in ssim_vals},
-        "NCC": {w: round(sum(ncc_vals[w]) / num_masked, 4) for w in ncc_vals}
+        "NCC": {w: round(sum(ncc_vals[w]) / num_masked, 4) for w in ncc_vals},
+        "NCC_3D": {w: round(sum(ncc_3d_vals[w]) / num_masked, 4) for w in ncc_3d_vals},
     }
 
 
@@ -160,7 +195,8 @@ def main():
     log("Loading datasets...")
     # Load and split volumes
     # volume_triplets = load_volume_triplets("/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing/")
-    volume_triplets = load_volume_triplets("/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v2/")
+    # volume_triplets = load_volume_triplets("/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v2/")
+    volume_triplets = load_volume_triplets("/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v3GaussianBlur/")
 
     # folds = get_kfold_splits(volume_triplets, k=5)
     folds = get_kfold_splits(volume_triplets, k=7)
@@ -230,8 +266,8 @@ def main():
             dropout_rate=args.dropout,
             dynamic_filter=args.dynamic_filter
         ).to(device)
-        # criterion = SSIM_L1_BrightnessAwareLoss(alpha=1.0, beta=0.0, gamma=0.0)
-        criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.8, beta=0.1, gamma=0.1)
+        criterion = SSIM_L1_BrightnessAwareLoss(alpha=1.0, beta=0.0, gamma=0.0)
+        # criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.8, beta=0.1, gamma=0.1)
         # criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.9, beta=0.3, gamma=0.3)
         # criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.6, beta=0.3, gamma=0.3)
 
@@ -300,6 +336,7 @@ def main():
         predicted_output_path = os.path.join(
             # "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing",
             "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v2",
+            # "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v3GaussianBlur",
             # f"{base_name}_inpainted_2p5DUNet_fold{fold_idx+1}_0531_dynamic_filter_scaling.tif"
             f"{base_name}_TEMP.tif"
         )
@@ -311,16 +348,19 @@ def main():
         log("Evaluating inpainted volume metrics...")
 
         gt_volume = tiff.imread(test_gt_path)
+        gt_volume = tiff.imread('/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v2/1.2_OCTA_Vol2_Processed_Cropped_gt.tif')
         metrics = evaluate_volume_metrics(gt_volume, inpainted_volume, mask)
 
         log(f"Volume Metrics for {base_name}:")
         log(f" - L1 Loss: {metrics['L1']:.4f}")
         log(f" - Mean Intensity Diff: {metrics['MeanIntensityError']}")
 
-        for w in [7, 11, 17]:
+        for w in [11, 17, 23]:
             log(f" - SSIM (win={w}): {metrics['SSIM'][w]}")
-        for w in [7, 11, 17]:
+        for w in [11, 17, 23]:
             log(f" - NCC (win={w}):  {metrics['NCC'][w]}")
+        for w in [11, 17, 23]:
+            log(f" - NCC_3D (win={w}): {metrics['NCC_3D'][w]}")
 
 
 if __name__ == "__main__":
