@@ -5,7 +5,7 @@ from pytorch_msssim import ssim
 from utils import log
 
 
-def train_epoch(model, dataloader, optimizer, criterion, device, debug=False, dynamic_filter=True):
+def train_epoch(model, dataloader, optimizer, criterion, device, debug=False, disable_dynamic_filter=False):
     running_loss = 0.0
     count = 0
     log_terms = {"l1": 0.0, "ssim": 0.0, "global_mean": 0.0, "neighbor_relative": 0.0}
@@ -19,7 +19,7 @@ def train_epoch(model, dataloader, optimizer, criterion, device, debug=False, dy
         X = X.contiguous().float()
         y = y.contiguous().float()
 
-        output = model(X, valid_mask, dynamic_filter=dynamic_filter)
+        output = model(X, valid_mask, disable_dynamic_filter=disable_dynamic_filter)
 
         if debug and batch_idx < 3:
             log(f"[TRAIN] Batch shape: {X.shape} | Target shape: {y.shape}")
@@ -51,7 +51,7 @@ def train_epoch(model, dataloader, optimizer, criterion, device, debug=False, dy
     return running_loss / count, avg_terms
 
 
-def validate_epoch(model, dataloader, criterion, device, dynamic_filter=True):
+def validate_epoch(model, dataloader, criterion, device, disable_dynamic_filter=False):
     model.eval()
     running_loss = 0.0
 
@@ -62,7 +62,7 @@ def validate_epoch(model, dataloader, criterion, device, dynamic_filter=True):
             X = X.contiguous().float()
             y = y.contiguous().float()
 
-            output = model(X, valid_mask, dynamic_filter=dynamic_filter)
+            output = model(X, valid_mask, disable_dynamic_filter=disable_dynamic_filter)
 
             if torch.isnan(output).any() or torch.isinf(output).any():
                 log(f"[ERROR] Model output contains NaNs or Infs at batch {batch_idx}")
@@ -74,7 +74,7 @@ def validate_epoch(model, dataloader, criterion, device, dynamic_filter=True):
     return running_loss / len(dataloader.dataset)
 
 
-def evaluate_model_on_test(model, dataloader, criterion, device, dynamic_filter=True):
+def evaluate_model_on_test(model, dataloader, criterion, device, disable_dynamic_filter=False):
     model.eval()
     running_loss = 0.0
 
@@ -85,7 +85,7 @@ def evaluate_model_on_test(model, dataloader, criterion, device, dynamic_filter=
             X = X.contiguous().float()
             y = y.contiguous().float()
 
-            output = model(X, valid_mask, dynamic_filter=dynamic_filter)
+            output = model(X, valid_mask, disable_dynamic_filter=disable_dynamic_filter)
 
             loss, terms = criterion(output, y, X, valid_mask)  # X is stack input
 

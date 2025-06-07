@@ -164,28 +164,31 @@ def parse_args():
     parser.add_argument('--dropout', type=float, default=0.0, help='Dropout rate (0 to disable)')
     parser.add_argument('--augment', action='store_true', help='Apply data augmentation during training')
     parser.add_argument('--volume_augment', action='store_true', help='Apply volume-level intensity augmentation')
-    parser.add_argument('--dynamic', action='store_true', help='Use dynamic slicing for training')
-    parser.add_argument('--dynamic_filter', action='store_true', default=True, help='Use dynamic filter scaling')
-    parser.add_argument('--stride', type=int, default=4, help='Stride for dynamic slicing (default: 1)')
-    parser.add_argument('--cuda', action='store_true', help='Use CUDA if available')
+    parser.add_argument('--static_corruptions', action='store_true', help='Use static offline corruptions for training (default: online corruptions)')
+    parser.add_argument('--disable_dynamic_filter', action='store_true', help='Disable dynamic filter scaling (default: enabled)')
+    parser.add_argument('--stride', type=int, default=2, help='Stride for dynamic slicing (default: 1)')
     parser.add_argument('--kfold', action='store_true', help='Run full k-fold cross-validation')
     parser.add_argument('--fold_idx', type=int, default=1, help='If not kfold mode, which fold to run (default: 0)')
     parser.add_argument('--skip_train', action='store_true', help='Skip training and only run inference on the test set')
     parser.add_argument('--debug', action='store_true', help='Enable verbose debugging logs')
-    parser.add_argument('--num_runs', type=int, default=3, help='Number of times to repeat training for averaging metrics')
+    parser.add_argument('--num_runs', type=int, default=2, help='Number of times to repeat training for averaging metrics')
     return parser.parse_args()
 
 
 def main():
     args = parse_args()
-    device = torch.device('cuda' if args.cuda and torch.cuda.is_available() else 'cpu')
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     from collections import defaultdict
     all_metrics = defaultdict(list)
 
     log("Starting Inpainting Pipeline")
     log(f"Device: {device}")
-    log(f"Epochs: {args.epochs} | Batch size: {args.batch_size} | Stack size: {args.stack_size}")
+
+    # Print all arguments
+    log("Pipeline arguments:")
+    for arg, value in vars(args).items():
+        log(f"  {arg}: {value}")
 
     # === 1. Load Dataset ===
     log("Loading datasets...")
@@ -230,7 +233,7 @@ def main():
                 stack_size=args.stack_size,
                 transform=augment,
                 volume_transform=volume_augment,
-                dynamic=args.dynamic,
+                static_corruptions=args.static_corruptions,
                 stride=args.stride,
                 debug=args.debug
             )
@@ -240,8 +243,8 @@ def main():
                 stack_size=args.stack_size,
                 transform=None,
                 volume_transform=None,
-                dynamic=False,
-                # dynamic=True,
+                static_corruptions=True,
+                # static_corruptions=False,
                 debug=args.debug
             )
             test_dataset = OCTAInpaintingDataset(
@@ -249,7 +252,7 @@ def main():
                 stack_size=args.stack_size,
                 transform=None,
                 volume_transform=None,
-                dynamic=False
+                static_corruptions=True
             )
 
             train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=0)
@@ -263,7 +266,7 @@ def main():
                 out_channels=1,
                 features=args.features,
                 dropout_rate=args.dropout,
-                dynamic_filter=args.dynamic_filter
+                disable_dynamic_filter=args.disable_dynamic_filter
             ).to(device)
             criterion = SSIM_L1_BrightnessAwareLoss(alpha=1.0, beta=0.0, gamma=0.0)
             # criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.8, beta=0.1, gamma=0.1)
@@ -282,10 +285,10 @@ def main():
                 best_val_loss = float('inf')
 
                 for epoch in range(1, args.epochs + 1):
-                    train_loss, diagnostics = train_epoch(model, train_loader, optimizer, criterion, device, debug=args.debug, dynamic_filter=args.dynamic_filter)
+                    train_loss, diagnostics = train_epoch(model, train_loader, optimizer, criterion, device, debug=args.debug, disable_dynamic_filter=args.disable_dynamic_filter)
                     print(f"Train Loss: {train_loss:.4f} | Terms: {diagnostics}")
                     
-                    val_loss = validate_epoch(model, val_loader, criterion, device, dynamic_filter=args.dynamic_filter)
+                    val_loss = validate_epoch(model, val_loader, criterion, device, disable_dynamic_filter=args.disable_dynamic_filter)
 
                     log(f"[Epoch {epoch}] Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f}")
                     scheduler.step(val_loss)
@@ -306,7 +309,7 @@ def main():
             # === 4: Evaluate on Held-Out Test Volume ===
             log("Evaluating on held-out test volume...")
             model.load_state_dict(torch.load(best_model_path))
-            test_loss = evaluate_model_on_test(model, test_loader, criterion, device, dynamic_filter=args.dynamic_filter)
+            test_loss = evaluate_model_on_test(model, test_loader, criterion, device, disable_dynamic_filter=args.disable_dynamic_filter)
             log(f"Final test loss: {test_loss:.4f}")
             
             # === 5. Inpaint Test Volume with Trained Model ===

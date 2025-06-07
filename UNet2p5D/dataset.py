@@ -102,7 +102,7 @@ artifact_exclusion = {
 
 class OCTAInpaintingDataset(Dataset):
     def __init__(self, volume_triples: list, stack_size=5, transform=None, 
-                 volume_transform=None, dynamic=False, stride=1, debug=False):
+                 volume_transform=None, static_corruptions=False, stride=1, debug=False):
         """
         Args:
             volume_triples (list): List of tuples [(corrupted_path, clean_path, mask_path)].
@@ -111,9 +111,9 @@ class OCTAInpaintingDataset(Dataset):
                                   (intensity augmentation, etc.).
             volume_transform (callable): Optional transform to apply to whole volume 
                                          (e.g. flips, brightness) before slicing.
-            dynamic (bool): If True, use on-the-fly random dropouts (training mode). 
-                            If False, use fixed pre-corrupted data (validation/test mode).
-            stride (int): Step size between consecutive target slices in dynamic mode.
+            static_corruptions (bool): If False, use online random dropouts (training mode). 
+                            If True, use fixed pre-corrupted data (validation/test mode).
+            stride (int): Step size between consecutive target slices in online corruption mode.
                             (Default 1 for full overlap.)
         """
         assert stack_size % 2 == 1, "Stack size must be odd"
@@ -121,11 +121,11 @@ class OCTAInpaintingDataset(Dataset):
         self.pad = stack_size // 2
         self.transform = transform
         self.volume_transform = volume_transform
-        self.dynamic = dynamic
+        self.static_corruptions = static_corruptions
         self.stride = stride
         self.debug = debug
 
-        if not dynamic:
+        if static_corruptions:
             # --- Static mode: use pre-generated corrupted volumes and masks ---
             self.data = []  # will hold (stack, target) pairs
 
@@ -177,7 +177,7 @@ class OCTAInpaintingDataset(Dataset):
                     target = clean[idx]                    # shape: (H, W)
                     self.data.append((stack, target))
         else:
-            # --- Dynamic mode: build indices for on-the-fly random dropouts ---
+            # --- Online corruption mode: build indices for on-the-fly random dropouts ---
             self.clean_volumes = []   # list of clean volumes (np.uint16 arrays)
             self.padded_volumes = []  # list of padded clean volumes for easy indexing
             self.indices = []         # list of (volume_index, center_slice_idx) pairs
@@ -229,19 +229,19 @@ class OCTAInpaintingDataset(Dataset):
 
 
     def __len__(self):
-        if not self.dynamic:
+        if self.static_corruptions:
             return len(self.data)
         else:
             return len(self.indices)
 
     def __getitem__(self, idx):
-        if not self.dynamic:
+        if self.static_corruptions:
             # --- Static mode: return precomputed (stack, target) pair ---
             stack, target = self.data[idx]
             stack = torch.from_numpy(stack).float()
             target = torch.from_numpy(target).float().unsqueeze(0)
         else:
-            # --- Dynamic mode: generate stack and apply random dropouts ---
+            # --- Online corruption mode: generate stack and apply random dropouts ---
             vol_idx, center_idx = self.indices[idx]
             padded_vol = self.padded_volumes[vol_idx]
             
