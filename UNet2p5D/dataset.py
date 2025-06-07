@@ -53,22 +53,50 @@ class VolumeLevelIntensityAugment:
 # Known artifact regions to avoid (inclusive)
 artifact_exclusion = {
     "1.1_OCTA_Vol1_Processed_Cropped_gt":
-        set(range(965, 982)) | set(range(0, 2)) | set(range(998, 1000)),
+        set(range(965, 982)) | set(range(0, 6)) | set(range(994, 1000)),
     "1.2_OCTA_Vol2_Processed_Cropped_gt":
-        set(range(343, 361)) | set(range(472, 488)) | set(range(916, 929)) | set(range(0, 2)) | set(range(998, 1000)),
+        set(range(343, 361)) | set(range(472, 488)) | set(range(916, 929)) | set(range(0, 6)) | set(range(994, 1000)),
     "1.4_OCTA_Vol1_Processed_Cropped_gt": 
         set(range(518, 536)) | set(range(548, 564)) | set(range(621, 639)) |
-        set(range(656, 671)) | set(range(714, 731)) | set(range(980, 998)) | set(range(0, 2)) | set(range(998, 1000)),
+        set(range(656, 671)) | set(range(714, 731)) | set(range(980, 998)) | set(range(0, 6)) | set(range(994, 1000)),
+    "2.1_OCTA_Vol2_Processed_Cropped_gt":
+        set(range(565, 585)) | set(range(603, 621)) | set(range(0, 6)) | set(range(994, 1000)),
+    "2.2_OCTA_Vol2_Processed_Cropped_gt":
+        set(range(99, 119)) | set(range(158, 176)) | set(range(492, 510)) | set(range(0, 6)) | set(range(994, 1000)),
     "3.4_OCTA_Vol2_Processed_Cropped_gt": 
         set(range(242, 262)) | set(range(266, 286)) | set(range(607, 622)) |
-        set(range(634, 650)) | set(range(852, 871)) | set(range(881, 898)) | set(range(0, 2)) | set(range(998, 1000)),
+        set(range(634, 650)) | set(range(852, 871)) | set(range(881, 898)) | set(range(0, 6)) | set(range(994, 1000)),
     "5.3_OCTA_Vol1_Processed_Cropped_gt": 
         set(range(102, 116)) | set(range(440, 445)) | set(range(464, 488)) |
-        set(range(498, 513)) | set(range(893, 908)) | set(range(0, 2)) | set(range(998, 1000)),
-    "2.1_OCTA_Vol2_Processed_Cropped_gt":
-        set(range(565, 585)) | set(range(603, 621)) | set(range(0, 2)) | set(range(998, 1000)),
-    "2.2_OCTA_Vol2_Processed_Cropped_gt":
-        set(range(99, 119)) | set(range(158, 176)) | set(range(492, 510)) | set(range(0, 2)) | set(range(998, 1000))
+        set(range(498, 513)) | set(range(893, 908)) | set(range(0, 6)) | set(range(994, 1000)),
+    "6.3_OCTA_Vol2_Processed_Cropped_gt": 
+        set(range(229, 247)) | set(range(742, 761)) | set(range(0, 6)) | set(range(985, 1000)),
+    "9.2_OCTA_Vol1_Processed_Cropped_gt": 
+        set(range(254, 274)) | set(range(343, 363)) | set(range(761, 780)) | set(range(0, 6)) | set(range(994, 1000)),
+    "14.4_OCTA_Vol1_Processed_Cropped_gt": 
+        set(range(72, 91)) | set(range(155, 175)) | set(range(183, 202)) | set(range(0, 17)) | set(range(994, 1000)),
+    "16.3_OCTA_Vol2_Processed_Cropped_gt": 
+        set(range(127, 144)) | set(range(220, 238)) | set(range(562, 579)) |
+        set(range(618, 636)) | set(range(0, 17)) | set(range(994, 1000)),
+    "22.1_OCTA_Vol2_Processed_Cropped_gt": 
+        set(range(266, 286)) | set(range(367, 387)) | set(range(631, 651)) |
+        set(range(727, 747)) | set(range(762, 780)) | set(range(894, 912)) |
+        set(range(973, 993)) | set(range(0, 17)) | set(range(994, 1000)),
+    # "15.4_OCTA_Vol2_Processed_Cropped_gt": 
+    #     set(range(0, 18)) | set(range(218, 238)) | set(range(419, 438)) |
+    #     set(range(449, 468)) | set(range(725, 743)) | set(range(998, 1000)),
+    # "16.2_OCTA_Vol1_Processed_Cropped_gt": 
+    #     set(range(358, 376)) | set(range(0, 2)) | set(range(998, 1000)),
+    # "16.3_OCTA_Vol2_Processed_Cropped_gt":
+    #     set(range(0, 20)) | set(range(126, 145)) | set(range(221, 238)) | 
+    #     set(range(561, 579)) | set(range(618, 636)) | set(range(998, 1000)),
+    # "22.1_OCTA_Vol2_Processed_Cropped_gt":
+    #     set(range(266, 287)) | set(range(368, 388)) | set(range(631, 651)) | set(range(727, 747)) | set(range(761, 781)) | 
+    #     set(range(894, 912)) | set(range(973, 993)) | set(range(0, 2)) | set(range(998, 1000)),
+    # "25.3_OCTA_Vol1_Processed_Cropped_gt":
+    #     set(range(85, 105)) | set(range(372, 388)) | set(range(975, 994)) | set(range(0, 2)) | set(range(998, 1000)),
+    # "35.2_OCTA_Vol2_Processed_Cropped_gt": 
+    #     set(range(0, 2)) | set(range(998, 1000)),
 }
 
 

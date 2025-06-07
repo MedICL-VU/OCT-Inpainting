@@ -21,7 +21,7 @@ def train_epoch(model, dataloader, optimizer, criterion, device, debug=False, dy
 
         output = model(X, valid_mask, dynamic_filter=dynamic_filter)
 
-        if debug:
+        if debug and batch_idx < 3:
             log(f"[TRAIN] Batch shape: {X.shape} | Target shape: {y.shape}")
             for b in range(min(2, X.shape[0])):
                 valid = (X[b].sum(dim=(1, 2)) > 0).nonzero().squeeze().tolist()

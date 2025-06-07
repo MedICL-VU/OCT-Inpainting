@@ -9,6 +9,7 @@ import argparse
 from sklearn.model_selection import KFold
 import random
 from skimage.metrics import structural_similarity as skimage_ssim
+from scipy.ndimage import uniform_filter
 
 from dataset import OCTAInpaintingDataset, IntensityAugment, VolumeLevelIntensityAugment
 from model import UNet2p5D
@@ -17,71 +18,41 @@ from save_inpainted import inpaint_volume_with_model, inpaint_volume_with_model_
 from utils import log
 
 
-def evaluate_volume_metrics(gt, pred, mask):
-    assert gt.shape == pred.shape, "Volume shapes must match"
-    gt = (torch.from_numpy(gt).float() / 65535.0).numpy()
-    pred = (torch.from_numpy(pred).float() / 65535.0).numpy()
+def compute_local_ncc(a, b, window_size):
+    """Compute windowed NCC between two 2D arrays."""
+    eps = 1e-8
+    a = a.astype(np.float32)
+    b = b.astype(np.float32)
+
+    a_mean = uniform_filter(a, window_size)
+    b_mean = uniform_filter(b, window_size)
+
+    a2_mean = uniform_filter(a * a, window_size)
+    b2_mean = uniform_filter(b * b, window_size)
+    ab_mean = uniform_filter(a * b, window_size)
+
+    a_var = a2_mean - a_mean * a_mean
+    b_var = b2_mean - b_mean * b_mean
+    ab_cov = ab_mean - a_mean * b_mean
+
+    denominator = np.sqrt(a_var * b_var) + eps
+    local_ncc = ab_cov / denominator
+
+    return local_ncc  # shape: same as input, values between -1 and 1
+
+
+def evaluate_volume_metrics(gt_volume, pred_volume, mask):
+    assert gt_volume.shape == pred_volume.shape, "Volume shapes must match"
+    gt = (torch.from_numpy(gt_volume).float() / 65535.0).numpy()
+    pred = (torch.from_numpy(pred_volume).float() / 65535.0).numpy()
     mask = mask.astype(bool)
 
     D, H, W = gt.shape
     l1_vals = []
-    ssim_vals = {11: [], 17: [], 23: []}
-    ncc_vals = {11: [], 17: [], 23: []}
-    ncc_3d_vals = {11: [], 17: [], 23: []}
-
-    def local_ncc(a, b, window):
-        a, b = torch.from_numpy(a), torch.from_numpy(b)
-        pad = window // 2
-        a2 = a**2
-        b2 = b**2
-        ab = a * b
-        kernel = torch.ones((1, 1, window, window))
-        a_sum = F.conv2d(a.view(1,1,H,W), kernel, padding=pad)
-        b_sum = F.conv2d(b.view(1,1,H,W), kernel, padding=pad)
-        ab_sum = F.conv2d(ab.view(1,1,H,W), kernel, padding=pad)
-        a2_sum = F.conv2d(a2.view(1,1,H,W), kernel, padding=pad)
-        b2_sum = F.conv2d(b2.view(1,1,H,W), kernel, padding=pad)
-
-        win_size = window ** 2
-        a_mean = a_sum / win_size
-        b_mean = b_sum / win_size
-        num = ab_sum - a_mean * b_sum - b_mean * a_sum + a_mean * b_mean * win_size
-        denom = (a2_sum - a_mean * a_sum - a_mean * a_sum + a_mean * a_mean * win_size).clamp(min=1e-6).sqrt() * \
-                (b2_sum - b_mean * b_sum - b_mean * b_sum + b_mean * b_mean * win_size).clamp(min=1e-6).sqrt()
-        return (num / denom).clamp(-1, 1).mean().item()
-
-    def ncc_3d(a, b, window_size=7):
-        a, b = torch.from_numpy(a), torch.from_numpy(b)
-        assert a.shape == b.shape  # [D, H, W]
-        a = a.unsqueeze(0).unsqueeze(0)  # [1,1,D,H,W]
-        b = b.unsqueeze(0).unsqueeze(0)
-
-        pad = window_size // 2
-        kernel = torch.ones((1, 1, window_size, window_size, window_size), device=a.device)
-
-        a2 = a * a
-        b2 = b * b
-        ab = a * b
-
-        a_sum = F.conv3d(a, kernel, padding=pad)
-        b_sum = F.conv3d(b, kernel, padding=pad)
-        ab_sum = F.conv3d(ab, kernel, padding=pad)
-        a2_sum = F.conv3d(a2, kernel, padding=pad)
-        b2_sum = F.conv3d(b2, kernel, padding=pad)
-
-        win_size = window_size ** 3
-        a_mean = a_sum / win_size
-        b_mean = b_sum / win_size
-
-        num = ab_sum - a_mean * b_sum
-        var_a = a2_sum - a_mean * a_sum
-        var_b = b2_sum - b_mean * b_sum
-        denom = (var_a.clamp(min=1e-5).sqrt() * var_b.clamp(min=1e-5).sqrt())
-
-        ncc_map = num / denom
-        return ncc_map.mean().item()
-
-    num_masked = 0
+    ssim_vals = {7: [], 11: [], 17: [], 23: [], 31: []}
+    global_ncc_vals = []
+    windowed_ncc_vals = {7: [], 11: [], 17: [], 23: [], 31: []}
+    mie_vals = []
 
     for i in range(D):
         if not mask[i]:
@@ -89,37 +60,59 @@ def evaluate_volume_metrics(gt, pred, mask):
         g = gt[i]
         p = pred[i]
 
+        # L1 and Mean Intensity
         l1_vals.append(np.mean(np.abs(p - g)))
+        mie_vals.append(np.abs(p.mean() - g.mean()))
 
-        for w in [11, 17, 23]:
+        # SSIM at multiple windows
+        for w in ssim_vals.keys():
             try:
-                ssim = skimage_ssim(p, g, data_range=1.0, win_size=w)
-                ssim_vals[w].append(ssim)
-            except Exception as e:
-                log(f"SSIM failed on slice {i} with window {w}: {e}")
-                ssim_vals[w].append(float('nan'))
+                ssim_val = skimage_ssim(g, p, data_range=1.0, win_size=w)
+            except Exception:
+                ssim_val = float('nan')
+            ssim_vals[w].append(ssim_val)
 
-            ncc_vals[w].append(local_ncc(p, g, window=w))
-            ncc_3d_vals[w].append(ncc_3d(p, g, window_size=w))
+        # Global NCC (slice-wide Pearson)
+        try:
+            g_zero = g - g.mean()
+            p_zero = p - p.mean()
+            denom = np.sqrt(np.sum(g_zero**2) * np.sum(p_zero**2))
+            if denom < 1e-8:
+                ncc_val = 1.0 if np.allclose(g, p, atol=1e-6) else 0.0
+            else:
+                ncc_val = float(np.sum(g_zero * p_zero)) / denom
+        except Exception:
+            ncc_val = float('nan')
+        global_ncc_vals.append(ncc_val)
 
-        num_masked += 1
+        # Windowed NCC
+        for w in windowed_ncc_vals.keys():
+            try:
+                local_ncc = compute_local_ncc(g, p, window_size=w)
+                valid_vals = local_ncc[~np.isnan(local_ncc)].flatten()
+                if len(valid_vals) == 0:
+                    windowed_ncc_vals[w].append(float('nan'))
+                else:
+                    windowed_ncc_vals[w].append(np.median(valid_vals))
+            except Exception:
+                windowed_ncc_vals[w].append(float('nan'))
 
-    if num_masked == 0:
+    if len(l1_vals) == 0:
         return {
             "L1": None,
-            "MeanIntensityError": round(float(np.abs(pred.mean() - gt.mean())), 4),
-            "SSIM": {w: None for w in [11, 17, 23]},
-            "NCC": {w: None for w in [11, 17, 23]},
-            "NCC_3D": {w: None for w in [11, 17, 23]},
+            "MeanIntensityError": None,
+            "SSIM": {w: None for w in ssim_vals},
+            "Global_NCC": None,
+            "Windowed_NCC": {w: None for w in windowed_ncc_vals},
             "Note": "No corrupted slices to evaluate"
         }
 
     return {
-        "L1": round(sum(l1_vals) / num_masked, 4),
-        "MeanIntensityError": round(float(np.abs(pred.mean() - gt.mean())), 4),
+        "L1": round(float(np.mean(l1_vals)), 4),
+        "MeanIntensityError": round(float(np.mean(mie_vals)), 4),
         "SSIM": {w: round(np.nanmean(ssim_vals[w]), 4) for w in ssim_vals},
-        "NCC": {w: round(sum(ncc_vals[w]) / num_masked, 4) for w in ncc_vals},
-        "NCC_3D": {w: round(sum(ncc_3d_vals[w]) / num_masked, 4) for w in ncc_3d_vals},
+        "Global_NCC": round(np.nanmean(global_ncc_vals), 4),
+        "Windowed_NCC": {w: round(np.nanmean(windowed_ncc_vals[w]), 4) for w in windowed_ncc_vals},
     }
 
 
@@ -159,7 +152,6 @@ def get_kfold_splits(triplets, k=5, seed=42):
         folds.append((train_triplets, val_triplets, test_triplets))
 
     return folds
-
 
 
 def parse_args():
@@ -224,7 +216,6 @@ def main():
             log("Test volume:")
             for v in test_vols: log(f" - {os.path.basename(v[0])}")
 
-            test_corrupted_path, test_gt_path, test_mask_path = test_vols[0]
             best_model_path = f"output/best_model_fold{fold_idx + 1}.pth"
 
             log(f"Using {len(train_vols)} volumes for training, {len(val_vols)} for validation, {len(test_vols)} for testing")
@@ -320,6 +311,7 @@ def main():
             
             # === 5. Inpaint Test Volume with Trained Model ===
             log("Inpainting volume...")
+            test_corrupted_path, test_gt_path, test_mask_path = test_vols[0]
             corrupted_volume = tiff.imread(test_corrupted_path)
             mask = tiff.imread(test_mask_path)
             # Convert mask to 1D binary array if needed
@@ -370,13 +362,11 @@ def main():
             log(f"Volume Metrics for {base_name}:")
             log(f" - L1 Loss: {metrics['L1']:.4f}")
             log(f" - Mean Intensity Diff: {metrics['MeanIntensityError']}")
-
-            for w in [11, 17, 23]:
+            for w in [7, 11, 17, 23, 31]:
                 log(f" - SSIM (win={w}): {metrics['SSIM'][w]}")
-            for w in [11, 17, 23]:
-                log(f" - NCC (win={w}):  {metrics['NCC'][w]}")
-            for w in [11, 17, 23]:
-                log(f" - NCC_3D (win={w}): {metrics['NCC_3D'][w]}")
+            log(f" - Global_NCC: {metrics['Global_NCC']}")
+            for w in [7, 11, 17, 23, 31]:
+                log(f" - Windowed NCC (win={w}): {metrics['Windowed_NCC'][w]}")
 
     if args.num_runs > 1:
         log("\n===== Averaged Metrics Across Runs =====")
