@@ -167,8 +167,11 @@ def parse_args():
     parser.add_argument('--static_corruptions', action='store_true', help='Use static offline corruptions for training (default: online corruptions)')
     parser.add_argument('--disable_dynamic_filter', action='store_true', help='Disable dynamic filter scaling (default: enabled)')
     parser.add_argument('--stride', type=int, default=2, help='Stride for dynamic slicing (default: 1)')
+    parser.add_argument('--include_artifacts', action='store_true', help='Include artifacts from training/validation (default: exclude)')
     parser.add_argument('--kfold', action='store_true', help='Run full k-fold cross-validation')
+    # parser.add_argument('--fold_idx', type=int, default=0, help='If not kfold mode, which fold to run (default: 0)')
     parser.add_argument('--fold_idx', type=int, default=1, help='If not kfold mode, which fold to run (default: 0)')
+    # parser.add_argument('--fold_idx', type=int, default=5, help='If not kfold mode, which fold to run (default: 0)')
     parser.add_argument('--skip_train', action='store_true', help='Skip training and only run inference on the test set')
     parser.add_argument('--debug', action='store_true', help='Enable verbose debugging logs')
     parser.add_argument('--num_runs', type=int, default=2, help='Number of times to repeat training for averaging metrics')
@@ -195,12 +198,17 @@ def main():
     log("Loading datasets...")
     # Load and split volumes
     # volume_triplets = load_volume_triplets("/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing/")
-    volume_triplets = load_volume_triplets("/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v2/")
-    # volume_triplets = load_volume_triplets("/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v2_GaussianBlur/")
-    # volume_triplets = load_volume_triplets("/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v2_MedianFilter1px/")
+    # volume_triplets = load_volume_triplets("/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v2/")
+    volume_triplets = load_volume_triplets("/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v3/")
+    # volume_triplets = load_volume_triplets("/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v3_ExtraVols/")
+    # volume_triplets = load_volume_triplets("/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v3_FewerVols/")
+    # volume_triplets = load_volume_triplets("/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v3_GaussianBlur1px/")
+    # volume_triplets = load_volume_triplets("/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v3_MedianFilter1px/")
+    # volume_triplets = load_volume_triplets("/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v3_MedianFilter2px/")
 
     # folds = get_kfold_splits(volume_triplets, k=5)
     folds = get_kfold_splits(volume_triplets, k=7)
+    # folds = get_kfold_splits(volume_triplets, k=11)
     if args.kfold:
         fold_range = range(len(folds))
     else:
@@ -236,6 +244,7 @@ def main():
                 volume_transform=volume_augment,
                 static_corruptions=args.static_corruptions,
                 stride=args.stride,
+                include_artifacts=args.include_artifacts,
                 debug=args.debug
             )
 
@@ -269,10 +278,10 @@ def main():
                 dropout_rate=args.dropout,
                 disable_dynamic_filter=args.disable_dynamic_filter
             ).to(device)
+
             # criterion = SSIM_L1_BrightnessAwareLoss(alpha=1.0, beta=0.0, gamma=0.0)
+            # criterion = SSIM_L1_BrightnessAwareLoss(alpha=1.0, beta=0.1, gamma=0.1)
             criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.8, beta=0.1, gamma=0.1)
-            # criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.9, beta=0.3, gamma=0.3)
-            # criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.6, beta=0.3, gamma=0.3)
 
             optimizer = AdamW(model.parameters(), lr=args.lr, weight_decay=1e-5)
             scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', patience=4, factor=0.5, verbose=True)
@@ -344,10 +353,14 @@ def main():
             predicted_output_path = os.path.join(
                 # "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing",
                 # "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v2",
-                # "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v2_GaussianBlur",
-                "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v2_MedianFilter1px",
+                "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v3",
+                # "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v3_ExtraVols",
+                # "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v3_FewerVols",
+                # "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v3_GaussianBlur1px",
+                # "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v3_MedianFilter1px",
+                # "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v3_MedianFilter2px",
                 # f"{base_name}_inpainted_2p5DUNet_fold{fold_idx+1}_0531_dynamic_filter_scaling.tif"
-                f"{base_name}_MASTER_BASELINE_0608.tif"
+                f"{base_name}_MASTER_BASELINE_0608_0.8-0.1-0.1_noDynamicFilter_staticCorruptions.tif"
             )
 
             tiff.imwrite(predicted_output_path, inpainted_volume.astype(np.uint16))
@@ -357,7 +370,7 @@ def main():
             log("Evaluating inpainted volume metrics...")
 
             gt_volume = tiff.imread(test_gt_path)
-            gt_volume = tiff.imread('/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v2/1.2_OCTA_Vol2_Processed_Cropped_gt.tif')
+            gt_volume = tiff.imread('/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v3/1.2_OCTA_Vol2_Processed_Cropped_gt.tif')
             metrics = evaluate_volume_metrics(gt_volume, inpainted_volume, mask)
 
             for key, val in metrics.items():

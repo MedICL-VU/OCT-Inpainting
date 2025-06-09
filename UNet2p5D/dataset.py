@@ -73,8 +73,6 @@ artifact_exclusion = {
         set(range(229, 247)) | set(range(742, 761)) | set(range(0, 6)) | set(range(985, 1000)),
     "9.2_OCTA_Vol1_Processed_Cropped_gt": 
         set(range(254, 274)) | set(range(343, 363)) | set(range(761, 780)) | set(range(0, 6)) | set(range(994, 1000)),
-    "14.4_OCTA_Vol1_Processed_Cropped_gt": 
-        set(range(72, 91)) | set(range(155, 175)) | set(range(183, 202)) | set(range(0, 17)) | set(range(994, 1000)),
     "16.3_OCTA_Vol2_Processed_Cropped_gt": 
         set(range(127, 144)) | set(range(220, 238)) | set(range(562, 579)) |
         set(range(618, 636)) | set(range(0, 17)) | set(range(994, 1000)),
@@ -102,7 +100,7 @@ artifact_exclusion = {
 
 class OCTAInpaintingDataset(Dataset):
     def __init__(self, volume_triples: list, stack_size=5, transform=None, 
-                 volume_transform=None, static_corruptions=False, stride=1, debug=False):
+                 volume_transform=None, static_corruptions=False, stride=1, include_artifacts=True, debug=False):
         """
         Args:
             volume_triples (list): List of tuples [(corrupted_path, clean_path, mask_path)].
@@ -123,6 +121,7 @@ class OCTAInpaintingDataset(Dataset):
         self.volume_transform = volume_transform
         self.static_corruptions = static_corruptions
         self.stride = stride
+        self.include_artifacts = include_artifacts
         self.debug = debug
 
         if static_corruptions:
@@ -221,7 +220,7 @@ class OCTAInpaintingDataset(Dataset):
                 # For every valid center slice (skipping edges for full context), 
                 # step by 'stride' to create overlapping stacks
                 for idx in range(self.pad, orig_len - self.pad, self.stride):
-                    if idx in excluded:
+                    if not include_artifacts and idx in excluded:
                         continue
                     self.indices.append((vol_idx, idx))
 
