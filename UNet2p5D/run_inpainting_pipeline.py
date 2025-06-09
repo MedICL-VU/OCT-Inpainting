@@ -195,9 +195,9 @@ def main():
     log("Loading datasets...")
     # Load and split volumes
     # volume_triplets = load_volume_triplets("/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing/")
-    # volume_triplets = load_volume_triplets("/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v2/")
+    volume_triplets = load_volume_triplets("/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v2/")
     # volume_triplets = load_volume_triplets("/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v2_GaussianBlur/")
-    volume_triplets = load_volume_triplets("/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v2_MedianFilter1px/")
+    # volume_triplets = load_volume_triplets("/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v2_MedianFilter1px/")
 
     # folds = get_kfold_splits(volume_triplets, k=5)
     folds = get_kfold_splits(volume_triplets, k=7)
@@ -269,8 +269,8 @@ def main():
                 dropout_rate=args.dropout,
                 disable_dynamic_filter=args.disable_dynamic_filter
             ).to(device)
-            criterion = SSIM_L1_BrightnessAwareLoss(alpha=1.0, beta=0.0, gamma=0.0)
-            # criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.8, beta=0.1, gamma=0.1)
+            # criterion = SSIM_L1_BrightnessAwareLoss(alpha=1.0, beta=0.0, gamma=0.0)
+            criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.8, beta=0.1, gamma=0.1)
             # criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.9, beta=0.3, gamma=0.3)
             # criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.6, beta=0.3, gamma=0.3)
 
@@ -347,7 +347,7 @@ def main():
                 # "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v2_GaussianBlur",
                 "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v2_MedianFilter1px",
                 # f"{base_name}_inpainted_2p5DUNet_fold{fold_idx+1}_0531_dynamic_filter_scaling.tif"
-                f"{base_name}_TEMP.tif"
+                f"{base_name}_MASTER_BASELINE_0608.tif"
             )
 
             tiff.imwrite(predicted_output_path, inpainted_volume.astype(np.uint16))

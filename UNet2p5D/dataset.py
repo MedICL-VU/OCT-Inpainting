@@ -53,7 +53,7 @@ class VolumeLevelIntensityAugment:
 # Known artifact regions to avoid (inclusive)
 artifact_exclusion = {
     "1.1_OCTA_Vol1_Processed_Cropped_gt":
-        set(range(965, 982)) | set(range(0, 6)) | set(range(994, 1000)),
+        set(range(965, 982)) | set(range(0, 6)) | set(range(994, 1000)) | set(range(380, 630)),
     "1.2_OCTA_Vol2_Processed_Cropped_gt":
         set(range(343, 361)) | set(range(472, 488)) | set(range(916, 929)) | set(range(0, 6)) | set(range(994, 1000)),
     "1.4_OCTA_Vol1_Processed_Cropped_gt": 
