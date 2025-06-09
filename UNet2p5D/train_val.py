@@ -3,51 +3,92 @@ import torch.nn as nn
 from tqdm import tqdm
 from pytorch_msssim import ssim
 from utils import log
+import torch.nn.functional as F
 
 
-def train_epoch(model, dataloader, optimizer, criterion, device, debug=False, disable_dynamic_filter=False):
+# def train_epoch(model, dataloader, optimizer, criterion, device, debug=False, disable_dynamic_filter=False):
+#     running_loss = 0.0
+#     count = 0
+#     log_terms = {"l1": 0.0, "ssim": 0.0, "global_mean": 0.0, "neighbor_relative": 0.0}
+
+#     model.train()
+
+#     # for batch_idx, (X, y, valid_mask) in enumerate(tqdm(dataloader, desc="Training")):
+#     for batch_idx, (X, y, valid_mask) in enumerate(dataloader):
+#         X, y, valid_mask = X.to(device), y.to(device), valid_mask.to(device)
+
+#         X = X.contiguous().float()
+#         y = y.contiguous().float()
+
+#         output = model(X, valid_mask, disable_dynamic_filter)
+
+#         if debug and batch_idx < 3:
+#             log(f"[TRAIN] Batch shape: {X.shape} | Target shape: {y.shape}")
+#             for b in range(min(2, X.shape[0])):
+#                 valid = (X[b].sum(dim=(1, 2)) > 0).nonzero().squeeze().tolist()
+#                 log(f" - Sample {b}: non-zero slices: {valid}")
+#             log(f"Pred min/max: {output.min().item():.4f} / {output.max().item():.4f}")
+
+#         if output.shape != y.shape:
+#             raise ValueError(f"Output shape {output.shape} != target shape {y.shape}")
+
+#         if torch.isnan(output).any() or torch.isinf(output).any():
+#             log(f"[ERROR] Model output contains NaNs or Infs at batch {batch_idx}")
+
+#         loss, terms = criterion(output, y, X, valid_mask)  # X is stack input
+
+#         optimizer.zero_grad()
+#         loss.backward()
+#         optimizer.step()
+
+#         running_loss += loss.item() * X.size(0)
+
+#         for k in log_terms:
+#             log_terms[k] += terms.get(k, 0.0) * X.size(0)
+#         count += X.size(0)
+
+#     avg_terms = {k: round(v / count, 6) for k, v in log_terms.items()}
+
+#     return running_loss / count, avg_terms
+
+
+def train_epoch(model, dataloader, optimizer, criterion, device, debug=False, disable_dynamic_filter=False, lambda_consistency=0.1):
     running_loss = 0.0
     count = 0
-    log_terms = {"l1": 0.0, "ssim": 0.0, "global_mean": 0.0, "neighbor_relative": 0.0}
+    log_terms = {"l1": 0.0, "ssim": 0.0, "global_mean": 0.0, "neighbor_relative": 0.0, "consistency": 0.0}
 
     model.train()
 
-    # for batch_idx, (X, y, valid_mask) in enumerate(tqdm(dataloader, desc="Training")):
-    for batch_idx, (X, y, valid_mask) in enumerate(dataloader):
-        X, y, valid_mask = X.to(device), y.to(device), valid_mask.to(device)
+    for batch_idx, (X1, y, mask1, X2, mask2) in enumerate(dataloader):
+        X1, X2, y = X1.to(device), X2.to(device), y.to(device)
+        mask1, mask2 = mask1.to(device), mask2.to(device)
 
-        X = X.contiguous().float()
+        X1 = X1.contiguous().float()
+        X2 = X2.contiguous().float()
         y = y.contiguous().float()
 
-        output = model(X, valid_mask, disable_dynamic_filter)
+        pred1 = model(X1, mask1, disable_dynamic_filter)
+        pred2 = model(X2, mask2, disable_dynamic_filter)
 
-        if debug and batch_idx < 3:
-            log(f"[TRAIN] Batch shape: {X.shape} | Target shape: {y.shape}")
-            for b in range(min(2, X.shape[0])):
-                valid = (X[b].sum(dim=(1, 2)) > 0).nonzero().squeeze().tolist()
-                log(f" - Sample {b}: non-zero slices: {valid}")
-            log(f"Pred min/max: {output.min().item():.4f} / {output.max().item():.4f}")
+        loss1, terms1 = criterion(pred1, y, X1, mask1)
+        loss2, terms2 = criterion(pred2, y, X2, mask2)
 
-        if output.shape != y.shape:
-            raise ValueError(f"Output shape {output.shape} != target shape {y.shape}")
+        consistency = F.mse_loss(pred1, pred2)
 
-        if torch.isnan(output).any() or torch.isinf(output).any():
-            log(f"[ERROR] Model output contains NaNs or Infs at batch {batch_idx}")
-
-        loss, terms = criterion(output, y, X, valid_mask)  # X is stack input
+        total_loss = 0.5 * (loss1 + loss2) + lambda_consistency * consistency
 
         optimizer.zero_grad()
-        loss.backward()
+        total_loss.backward()
         optimizer.step()
 
-        running_loss += loss.item() * X.size(0)
-
+        running_loss += total_loss.item() * X1.size(0)
         for k in log_terms:
-            log_terms[k] += terms.get(k, 0.0) * X.size(0)
-        count += X.size(0)
+            if k != "consistency":
+                log_terms[k] += 0.5 * (terms1[k] + terms2[k]) * X1.size(0)
+        log_terms["consistency"] += consistency.item() * X1.size(0)
+        count += X1.size(0)
 
     avg_terms = {k: round(v / count, 6) for k, v in log_terms.items()}
-
     return running_loss / count, avg_terms
 
 
@@ -56,7 +97,8 @@ def validate_epoch(model, dataloader, criterion, device, disable_dynamic_filter=
     running_loss = 0.0
 
     with torch.no_grad():
-        for batch_idx, (X, y, valid_mask) in enumerate(dataloader):
+        # for batch_idx, (X, y, valid_mask) in enumerate(dataloader):
+        for batch_idx, (X, y, valid_mask, *_unused) in enumerate(dataloader):
             X, y, valid_mask = X.to(device), y.to(device), valid_mask.to(device)
 
             X = X.contiguous().float()
@@ -79,7 +121,8 @@ def evaluate_model_on_test(model, dataloader, criterion, device, disable_dynamic
     running_loss = 0.0
 
     with torch.no_grad():
-        for batch_idx, (X, y, valid_mask) in enumerate(tqdm(dataloader, desc="Testing")):
+        # for batch_idx, (X, y, valid_mask) in enumerate(tqdm(dataloader, desc="Testing")):
+        for batch_idx, (X, y, valid_mask, *_unused) in enumerate(tqdm(dataloader, desc="Testing")):
             X, y, valid_mask = X.to(device), y.to(device), valid_mask.to(device)
 
             X = X.contiguous().float()

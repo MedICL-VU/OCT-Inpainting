@@ -56,26 +56,58 @@ class OutConv(nn.Module):
     def forward(self, x):
         return self.out_conv(x)
     
+# class ModulatedInputConv(nn.Module):
+#     """
+#     Applies a Conv2D after channel-wise scaling of the input, conditioned on a validity mask.
+#     """
+#     def __init__(self, in_ch, out_ch):
+#         super().__init__()
+#         self.conv = nn.Conv2d(in_ch, out_ch, kernel_size=3, padding=1)
+#         self.scale_fc = nn.Linear(in_ch, in_ch)  # one scale per input channel
+
+#     def forward(self, x, validity_mask):
+#         """
+#         Args:
+#             x: (B, C, H, W) input volume
+#             validity_mask: (B, C) binary or real values indicating slice validity
+#         """
+#         B, C, H, W = x.shape
+#         scales = self.scale_fc(validity_mask)  # (B, C)
+#         scales = scales.view(B, C, 1, 1)
+#         x = x * scales
+#         return F.relu(self.conv(x))
+
 class ModulatedInputConv(nn.Module):
-    """
-    Applies a Conv2D after channel-wise scaling of the input, conditioned on a validity mask.
-    """
-    def __init__(self, in_ch, out_ch):
+    def __init__(self, in_channels, out_channels):
         super().__init__()
-        self.conv = nn.Conv2d(in_ch, out_ch, kernel_size=3, padding=1)
-        self.scale_fc = nn.Linear(in_ch, in_ch)  # one scale per input channel
+        self.base_conv = nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1, bias=False)
+        self.scale_fc = nn.Sequential(
+            nn.Linear(in_channels, in_channels * out_channels),
+            nn.ReLU()
+        )
+        self.out_channels = out_channels
+        self.in_channels = in_channels
 
     def forward(self, x, validity_mask):
         """
-        Args:
-            x: (B, C, H, W) input volume
-            validity_mask: (B, C) binary or real values indicating slice validity
+        x: [B, in_channels, H, W]
+        validity_mask: [B, in_channels]
         """
         B, C, H, W = x.shape
-        scales = self.scale_fc(validity_mask)  # (B, C)
-        scales = scales.view(B, C, 1, 1)
-        x = x * scales
-        return F.relu(self.conv(x))
+
+        # Predict scaling matrix S for each sample in the batch
+        S = self.scale_fc(validity_mask)  # Shape: [B, in_channels * out_channels]
+        S = S.view(B, self.out_channels, self.in_channels)  # [B, C_out, C_in]
+
+        # Apply scaled convolution (one per sample)
+        weight = self.base_conv.weight  # [C_out, C_in, k, k]
+        out = []
+        for b in range(B):
+            scaled_weight = S[b].unsqueeze(-1).unsqueeze(-1) * weight  # [C_out, C_in, k, k]
+            out.append(F.conv2d(x[b].unsqueeze(0), scaled_weight, padding=1))
+
+        return F.relu(torch.cat(out, dim=0))  # [B, C_out, H, W]
+
 
 class UNet2p5D(nn.Module):
     """

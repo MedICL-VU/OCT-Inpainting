@@ -176,6 +176,7 @@ def parse_args():
     parser.add_argument('--debug', action='store_true', help='Enable verbose debugging logs')
     parser.add_argument('--num_runs', type=int, default=2, help='Number of times to repeat training for averaging metrics')
     parser.add_argument('--recursive_inpaint', action='store_true', help='Use recursive inpainting method instead of single pass')
+    parser.add_argument('--file_name', type=str, help='Output file name')
     return parser.parse_args()
 
 
@@ -199,7 +200,8 @@ def main():
     # Load and split volumes
     # volume_triplets = load_volume_triplets("/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing/")
     # volume_triplets = load_volume_triplets("/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v2/")
-    volume_triplets = load_volume_triplets("/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v3/")
+    # volume_triplets = load_volume_triplets("/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v3/")
+    volume_triplets = load_volume_triplets("/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v3_LargeGaps/")
     # volume_triplets = load_volume_triplets("/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v3_ExtraVols/")
     # volume_triplets = load_volume_triplets("/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v3_FewerVols/")
     # volume_triplets = load_volume_triplets("/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v3_GaussianBlur1px/")
@@ -353,14 +355,15 @@ def main():
             predicted_output_path = os.path.join(
                 # "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing",
                 # "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v2",
-                "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v3",
+                # "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v3",
+                "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v3_LargeGaps",
                 # "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v3_ExtraVols",
                 # "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v3_FewerVols",
                 # "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v3_GaussianBlur1px",
                 # "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v3_MedianFilter1px",
                 # "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v3_MedianFilter2px",
                 # f"{base_name}_inpainted_2p5DUNet_fold{fold_idx+1}_0531_dynamic_filter_scaling.tif"
-                f"{base_name}_MASTER_BASELINE_0608_0.8-0.1-0.1_noDynamicFilter_staticCorruptions.tif"
+                f"{base_name}_MASTER_BASELINE_0608_0.8-0.1-0.1_(0,8)_NoFilterScaling_StaticCorruptions.tif"
             )
 
             tiff.imwrite(predicted_output_path, inpainted_volume.astype(np.uint16))
