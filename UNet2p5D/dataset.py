@@ -191,8 +191,6 @@ class OCTAInpaintingDataset(Dataset):
                 if self.volume_transform:
                     before_volume = clean.copy()
                     clean = self.volume_transform(clean)
-
-                    clean = self.volume_transform(clean)
                 orig_len = clean.shape[0]
 
 
@@ -306,7 +304,6 @@ class OCTAInpaintingDataset(Dataset):
                     plt.suptitle(f"Augmentation Effect for Sample idx {idx}")
                     plt.tight_layout()
                     plt.show()
-
 
 
             stack = stack.astype(np.float32)

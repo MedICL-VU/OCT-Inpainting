@@ -2,7 +2,7 @@ import torch
 import numpy as np
 
 
-def inpaint_volume_with_model(model, corrupted_volume, mask, device, stack_size=9, debug=False):
+def inpaint_volume_with_model(model, corrupted_volume, mask, device, stack_size=9, debug=False, disable_dynamic_filter=False):
     """
     Apply 2.5D model to missing slices in a volume.
     
@@ -28,7 +28,7 @@ def inpaint_volume_with_model(model, corrupted_volume, mask, device, stack_size=
 
             valid_mask = (stack_tensor.squeeze(0).sum(dim=(1, 2)) > 1e-3).float()  # shape: (stack_size,)
             valid_mask = valid_mask.unsqueeze(0).to(device)  # shape: (1, stack_size)
-            output = model(stack_tensor, valid_mask)
+            output = model(stack_tensor, valid_mask, disable_dynamic_filter)
                         
             pred = output.squeeze().cpu().numpy() * corrupted_volume.max()
             inpainted[idx] = np.clip(pred, 0, corrupted_volume.max()).astype(np.uint16)
@@ -44,7 +44,7 @@ def inpaint_volume_with_model(model, corrupted_volume, mask, device, stack_size=
     return inpainted.astype(np.uint16)
 
 
-def inpaint_volume_with_model_recursive(model, corrupted_volume, mask, device, stack_size=9):
+def inpaint_volume_with_model_recursive(model, corrupted_volume, mask, device, stack_size=9, debug=False, disable_dynamic_filter=False):
     """
     Apply 2.5D model to missing slices in a volume.
     Uses recursive updates and inpaints corrupted blocks symmetrically from outside-in.

@@ -172,6 +172,7 @@ def parse_args():
     parser.add_argument('--skip_train', action='store_true', help='Skip training and only run inference on the test set')
     parser.add_argument('--debug', action='store_true', help='Enable verbose debugging logs')
     parser.add_argument('--num_runs', type=int, default=2, help='Number of times to repeat training for averaging metrics')
+    parser.add_argument('--recursive_inpaint', action='store_true', help='Use recursive inpainting method instead of single pass')
     return parser.parse_args()
 
 
@@ -326,8 +327,12 @@ def main():
             elif mask.ndim != 1:
                 raise ValueError("Unsupported mask dimensionality")
 
-            # inpainted = inpaint_volume_with_model(model, corrupted_volume, mask, device, stack_size=args.stack_size)
-            inpainted = inpaint_volume_with_model_recursive(model, corrupted_volume, mask, device, stack_size=args.stack_size)
+            if args.recursive_inpaint:
+                log("Using recursive inpainting method...")
+                inpainted = inpaint_volume_with_model_recursive(model, corrupted_volume, mask, device, args.stack_size, args.debug, args.disable_dynamic_filter)
+            else:
+                log("Using single-pass inpainting method...")
+                inpainted = inpaint_volume_with_model(model, corrupted_volume, mask, device, args.stack_size, args.debug, args.disable_dynamic_filter)
 
             if isinstance(inpainted, tuple):
                 inpainted_volume = inpainted[0]

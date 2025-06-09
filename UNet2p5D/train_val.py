@@ -117,7 +117,7 @@ class SSIM_L1_BrightnessAwareLoss(nn.Module):
         # Global mean brightness alignment
         mean_loss = torch.abs(pred.mean() - target.mean())
 
-        # Brightness-aware neighbor term (relative)
+        # Brightness-aware neighbor term
         if stack is not None and valid_mask is not None:
             B, S, H, W = stack.shape
             stack_means = stack.view(B, S, -1).mean(dim=2)                # (B, S)
@@ -127,13 +127,7 @@ class SSIM_L1_BrightnessAwareLoss(nn.Module):
             num_valid = valid_mask.sum(dim=1, keepdim=True).clamp(min=1.0)
             neighbor_mean = valid_neighbors.sum(dim=1, keepdim=True) / num_valid
 
-            # brightness_consistency = torch.abs(pred_means - neighbor_mean).mean()
-
-            # Use relative difference
-            brightness_consistency = (
-                torch.abs(pred_means - neighbor_mean) /
-                neighbor_mean.clamp(min=1e-4)
-            ).mean()
+            brightness_consistency = torch.abs(pred_means - neighbor_mean).mean()
         else:
             brightness_consistency = torch.tensor(0.0, device=pred.device)
 
