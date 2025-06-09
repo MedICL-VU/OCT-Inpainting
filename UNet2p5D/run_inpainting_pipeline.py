@@ -40,6 +40,31 @@ def compute_local_ncc(a, b, window_size):
 
     return local_ncc  # shape: same as input, values between -1 and 1
 
+def compute_local_3d_ncc(vol1, vol2, window_size=(7, 7, 3)):
+    """Compute local 3D NCC over a volume using a sliding window."""
+    from scipy.ndimage import uniform_filter
+
+    eps = 1e-8
+    vol1 = vol1.astype(np.float32)
+    vol2 = vol2.astype(np.float32)
+
+    # Means
+    mean1 = uniform_filter(vol1, window_size)
+    mean2 = uniform_filter(vol2, window_size)
+
+    # Variances and Covariance
+    vol1_sq = uniform_filter(vol1 ** 2, window_size)
+    vol2_sq = uniform_filter(vol2 ** 2, window_size)
+    vol1_vol2 = uniform_filter(vol1 * vol2, window_size)
+
+    var1 = vol1_sq - mean1 ** 2
+    var2 = vol2_sq - mean2 ** 2
+    cov12 = vol1_vol2 - mean1 * mean2
+
+    denom = np.sqrt(var1 * var2) + eps
+    ncc = cov12 / denom
+
+    return ncc
 
 def evaluate_volume_metrics(gt_volume, pred_volume, mask):
     assert gt_volume.shape == pred_volume.shape, "Volume shapes must match"
@@ -97,6 +122,20 @@ def evaluate_volume_metrics(gt_volume, pred_volume, mask):
             except Exception:
                 windowed_ncc_vals[w].append(float('nan'))
 
+    # --- 3D NCC ---
+    try:
+        window_size_3d = (7, 7, 3)  # You can adjust this
+        ncc3d_map = compute_local_3d_ncc(gt, pred, window_size=window_size_3d)
+        # Only evaluate over corrupted slices
+        valid_vals = ncc3d_map[mask]
+        valid_vals = valid_vals[~np.isnan(valid_vals)]
+        if len(valid_vals) > 0:
+            ncc3d_mean = float(np.mean(valid_vals))
+        else:
+            ncc3d_mean = None
+    except Exception:
+        ncc3d_mean = None
+
     if len(l1_vals) == 0:
         return {
             "L1": None,
@@ -104,6 +143,7 @@ def evaluate_volume_metrics(gt_volume, pred_volume, mask):
             "SSIM": {w: None for w in ssim_vals},
             "Global_NCC": None,
             "Windowed_NCC": {w: None for w in windowed_ncc_vals},
+            "Local3D_NCC": None,
             "Note": "No corrupted slices to evaluate"
         }
 
@@ -113,6 +153,7 @@ def evaluate_volume_metrics(gt_volume, pred_volume, mask):
         "SSIM": {w: round(np.nanmean(ssim_vals[w]), 4) for w in ssim_vals},
         "Global_NCC": round(np.nanmean(global_ncc_vals), 4),
         "Windowed_NCC": {w: round(np.nanmean(windowed_ncc_vals[w]), 4) for w in windowed_ncc_vals},
+        "Local3D_NCC": round(ncc3d_mean, 4) if ncc3d_mean is not None else None,
     }
 
 
@@ -388,6 +429,7 @@ def main():
             log(f" - Global_NCC: {metrics['Global_NCC']}")
             for w in [7, 11, 17, 23, 31]:
                 log(f" - Windowed NCC (win={w}): {metrics['Windowed_NCC'][w]}")
+            log(f" - Local 3D NCC (win={7}): {metrics['Local3D_NCC']}")
 
     if args.num_runs > 1:
         log("\n===== Averaged Metrics Across Runs =====")
