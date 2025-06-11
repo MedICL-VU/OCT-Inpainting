@@ -1,198 +1,17 @@
 import os
 import torch
-import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from torch.optim import AdamW, lr_scheduler
 import tifffile as tiff
 import numpy as np
 import argparse
-from sklearn.model_selection import KFold
-import random
-from skimage.metrics import structural_similarity as skimage_ssim
-from scipy.ndimage import uniform_filter
 
 from dataset import OCTAInpaintingDataset, IntensityAugment, VolumeLevelIntensityAugment
 from model import UNet2p5D
-from train_val import train_epoch, validate_epoch, evaluate_model_on_test, EarlyStopping, SSIM_L1_BrightnessAwareLoss
+from train_val import train_epoch, validate_epoch, evaluate_model_on_test, SSIM_L1_BrightnessAwareLoss
 from save_inpainted import inpaint_volume_with_model, inpaint_volume_with_model_recursive
-from utils import log
-
-
-def compute_local_ncc(a, b, window_size):
-    """Compute windowed NCC between two 2D arrays."""
-    eps = 1e-8
-    a = a.astype(np.float32)
-    b = b.astype(np.float32)
-
-    a_mean = uniform_filter(a, window_size)
-    b_mean = uniform_filter(b, window_size)
-
-    a2_mean = uniform_filter(a * a, window_size)
-    b2_mean = uniform_filter(b * b, window_size)
-    ab_mean = uniform_filter(a * b, window_size)
-
-    a_var = a2_mean - a_mean * a_mean
-    b_var = b2_mean - b_mean * b_mean
-    ab_cov = ab_mean - a_mean * b_mean
-
-    denominator = np.sqrt(a_var * b_var) + eps
-    local_ncc = ab_cov / denominator
-
-    return local_ncc  # shape: same as input, values between -1 and 1
-
-def compute_local_3d_ncc(vol1, vol2, window_size=(7, 7, 3)):
-    """Compute local 3D NCC over a volume using a sliding window."""
-    from scipy.ndimage import uniform_filter
-
-    eps = 1e-8
-    vol1 = vol1.astype(np.float32)
-    vol2 = vol2.astype(np.float32)
-
-    # Means
-    mean1 = uniform_filter(vol1, window_size)
-    mean2 = uniform_filter(vol2, window_size)
-
-    # Variances and Covariance
-    vol1_sq = uniform_filter(vol1 ** 2, window_size)
-    vol2_sq = uniform_filter(vol2 ** 2, window_size)
-    vol1_vol2 = uniform_filter(vol1 * vol2, window_size)
-
-    var1 = vol1_sq - mean1 ** 2
-    var2 = vol2_sq - mean2 ** 2
-    cov12 = vol1_vol2 - mean1 * mean2
-
-    denom = np.sqrt(var1 * var2) + eps
-    ncc = cov12 / denom
-
-    return ncc
-
-def evaluate_volume_metrics(gt_volume, pred_volume, mask):
-    assert gt_volume.shape == pred_volume.shape, "Volume shapes must match"
-    gt = (torch.from_numpy(gt_volume).float() / 65535.0).numpy()
-    pred = (torch.from_numpy(pred_volume).float() / 65535.0).numpy()
-    mask = mask.astype(bool)
-
-    D, H, W = gt.shape
-    l1_vals = []
-    ssim_vals = {7: [], 11: [], 17: [], 23: [], 31: []}
-    global_ncc_vals = []
-    windowed_ncc_vals = {7: [], 11: [], 17: [], 23: [], 31: []}
-    mie_vals = []
-
-    for i in range(D):
-        if not mask[i]:
-            continue
-        g = gt[i]
-        p = pred[i]
-
-        # L1 and Mean Intensity
-        l1_vals.append(np.mean(np.abs(p - g)))
-        mie_vals.append(np.abs(p.mean() - g.mean()))
-
-        # SSIM at multiple windows
-        for w in ssim_vals.keys():
-            try:
-                ssim_val = skimage_ssim(g, p, data_range=1.0, win_size=w)
-            except Exception:
-                ssim_val = float('nan')
-            ssim_vals[w].append(ssim_val)
-
-        # Global NCC (slice-wide Pearson)
-        try:
-            g_zero = g - g.mean()
-            p_zero = p - p.mean()
-            denom = np.sqrt(np.sum(g_zero**2) * np.sum(p_zero**2))
-            if denom < 1e-8:
-                ncc_val = 1.0 if np.allclose(g, p, atol=1e-6) else 0.0
-            else:
-                ncc_val = float(np.sum(g_zero * p_zero)) / denom
-        except Exception:
-            ncc_val = float('nan')
-        global_ncc_vals.append(ncc_val)
-
-        # Windowed NCC
-        for w in windowed_ncc_vals.keys():
-            try:
-                local_ncc = compute_local_ncc(g, p, window_size=w)
-                valid_vals = local_ncc[~np.isnan(local_ncc)].flatten()
-                if len(valid_vals) == 0:
-                    windowed_ncc_vals[w].append(float('nan'))
-                else:
-                    windowed_ncc_vals[w].append(np.median(valid_vals))
-            except Exception:
-                windowed_ncc_vals[w].append(float('nan'))
-
-    # --- 3D NCC ---
-    try:
-        window_size_3d = (7, 7, 3)  # You can adjust this
-        ncc3d_map = compute_local_3d_ncc(gt, pred, window_size=window_size_3d)
-        # Only evaluate over corrupted slices
-        valid_vals = ncc3d_map[mask]
-        valid_vals = valid_vals[~np.isnan(valid_vals)]
-        if len(valid_vals) > 0:
-            ncc3d_mean = float(np.mean(valid_vals))
-        else:
-            ncc3d_mean = None
-    except Exception:
-        ncc3d_mean = None
-
-    if len(l1_vals) == 0:
-        return {
-            "L1": None,
-            "MeanIntensityError": None,
-            "SSIM": {w: None for w in ssim_vals},
-            "Global_NCC": None,
-            "Windowed_NCC": {w: None for w in windowed_ncc_vals},
-            "Local3D_NCC": None,
-            "Note": "No corrupted slices to evaluate"
-        }
-
-    return {
-        "L1": round(float(np.mean(l1_vals)), 4),
-        "MeanIntensityError": round(float(np.mean(mie_vals)), 4),
-        "SSIM": {w: round(np.nanmean(ssim_vals[w]), 4) for w in ssim_vals},
-        "Global_NCC": round(np.nanmean(global_ncc_vals), 4),
-        "Windowed_NCC": {w: round(np.nanmean(windowed_ncc_vals[w]), 4) for w in windowed_ncc_vals},
-        "Local3D_NCC": round(ncc3d_mean, 4) if ncc3d_mean is not None else None,
-    }
-
-
-def load_volume_triplets(data_dir):
-    """
-    Returns list of (corrupted, gt, mask) triplets from directory.
-    Assumes filenames follow pattern: {name}_corrupted.tif, {name}_gt.tif, {name}_mask.tif
-    """
-    triplets = []
-    for f in os.listdir(data_dir):
-        if f.endswith("_corrupted.tif"):
-            name = f.replace("_corrupted.tif", "")
-            corrupted = os.path.join(data_dir, f)
-            gt = os.path.join(data_dir, f"{name}_gt.tif")
-            mask = os.path.join(data_dir, f"{name}_mask.tif")
-            if os.path.exists(gt) and os.path.exists(mask):
-                triplets.append((corrupted, gt, mask))
-    return sorted(triplets)
-
-
-def get_kfold_splits(triplets, k=5, seed=42):
-    kf = KFold(n_splits=k, shuffle=True, random_state=seed)
-    folds = []
-
-    for fold_idx, (trainval_idx, test_idx) in enumerate(kf.split(triplets)):
-        trainval_triplets = [triplets[i] for i in trainval_idx]
-
-        # Reproducible shuffle for each fold
-        rng = random.Random(seed + fold_idx)
-        rng.shuffle(trainval_triplets)
-
-        val_split = max(1, int(0.2 * len(trainval_triplets)))
-        val_triplets = trainval_triplets[:val_split]
-        train_triplets = trainval_triplets[val_split:]
-        test_triplets = [triplets[i] for i in test_idx]
-
-        folds.append((train_triplets, val_triplets, test_triplets))
-
-    return folds
+from utils import log, load_volume_triplets, get_kfold_splits, evaluate_volume_metrics, \
+    visualize_ncc_slice_stacked, visualize_ssim_slice_stacked, visualize_slice_panel, EarlyStopping
 
 
 def parse_args():
@@ -326,7 +145,6 @@ def main():
 
             optimizer = AdamW(model.parameters(), lr=args.lr, weight_decay=1e-5)
             scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', patience=4, factor=0.5, verbose=True)
-            # early_stopping = EarlyStopping(patience=10, min_delta=1e-4, verbose=True)
             early_stopping = EarlyStopping(patience=10, min_delta=5e-5, verbose=True)
 
             # If skip training, load the best model directly
@@ -392,14 +210,9 @@ def main():
             # Generate output filename based on test volume name
             base_name = os.path.basename(test_corrupted_path).replace("_corrupted.tif", "")
             predicted_output_path = os.path.join(
-                # "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing",
-                # "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v2",
                 "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v3",
                 # "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v3_ExtraVols",
                 # "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v3_FewerVols",
-                # "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v3_GaussianBlur1px",
-                # "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v3_MedianFilter1px",
-                # "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v3_MedianFilter2px",
                 # f"{base_name}_inpainted_2p5DUNet_fold{fold_idx+1}_0531_dynamic_filter_scaling.tif"
                 f"{base_name}_MASTER_BASELINE_0608_0.8-0.1-0.1_noDynamicFilter_staticCorruptions.tif"
             )
@@ -430,6 +243,15 @@ def main():
             for w in [7, 11, 17, 23, 31]:
                 log(f" - Windowed NCC (win={w}): {metrics['Windowed_NCC'][w]}")
             log(f" - Local 3D NCC (win={7}): {metrics['Local3D_NCC']}")
+
+
+    # Use a specific corrupted slice
+    slice_idx = np.where(mask)[0][0]
+
+    visualize_ncc_slice_stacked(gt_volume, inpainted_volume, mask, slice_idx=slice_idx, window_sizes=[11, 17, 23])
+    visualize_ssim_slice_stacked(gt_volume, inpainted_volume, mask, slice_idx=slice_idx, window_sizes=[7, 11, 17])
+    visualize_slice_panel(gt_volume, inpainted_volume, mask, slice_indices=np.where(mask)[0][:3], ncols=3)
+
 
     if args.num_runs > 1:
         log("\n===== Averaged Metrics Across Runs =====")
