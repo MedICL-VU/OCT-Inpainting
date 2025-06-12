@@ -56,26 +56,68 @@ class OutConv(nn.Module):
     def forward(self, x):
         return self.out_conv(x)
     
+
 class ModulatedInputConv(nn.Module):
-    """
-    Applies a Conv2D after channel-wise scaling of the input, conditioned on a validity mask.
-    """
-    def __init__(self, in_ch, out_ch):
+    def __init__(self, in_channels, out_channels):
         super().__init__()
-        self.conv = nn.Conv2d(in_ch, out_ch, kernel_size=3, padding=1)
-        self.scale_fc = nn.Linear(in_ch, in_ch)  # one scale per input channel
+        self.base_conv = nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1, bias=False)
+        self.scale_fc = nn.Sequential(
+            nn.Linear(in_channels, in_channels * out_channels),
+            nn.ReLU()
+        )
+        self.out_channels = out_channels
+        self.in_channels = in_channels
 
     def forward(self, x, validity_mask):
         """
-        Args:
-            x: (B, C, H, W) input volume
-            validity_mask: (B, C) binary or real values indicating slice validity
+        x: [B, in_channels, H, W]
+        validity_mask: [B, in_channels]
         """
         B, C, H, W = x.shape
-        scales = self.scale_fc(validity_mask)  # (B, C)
-        scales = scales.view(B, C, 1, 1)
-        x = x * scales
-        return F.relu(self.conv(x))
+
+        # Predict scaling matrix S for each sample in the batch
+        S = self.scale_fc(validity_mask)  # Shape: [B, in_channels * out_channels]
+        S = S.view(B, self.out_channels, self.in_channels)  # [B, C_out, C_in]
+
+
+        # === DEBUG LOGGING ===
+        if torch.rand(1).item() < 0.01:  # ~1% of batches
+            for b in range(min(B, 2)):  # log at most 2 examples
+                print(f"\n[SCALE MATRIX DEBUG] Batch {b}")
+                print(f"  Validity Mask: {validity_mask[b].cpu().numpy()}")
+                print(f"  Scale Matrix Shape: {S[b].shape}")
+                
+                # Compute simple stats
+                S_b = S[b].detach().cpu().numpy()
+                print(f"  S Min: {S_b.min():.4f} | Max: {S_b.max():.4f} | Mean: {S_b.mean():.4f} | Std: {S_b.std():.4f}")
+                
+                # Optional: row-wise stats (per output channel)
+                for i in range(min(self.out_channels, 4)):
+                    row = S_b[i]
+                    print(f"    Output channel {i}: min={row.min():.3f}, mean={row.mean():.3f}, max={row.max():.3f}")
+
+                # Compute correlation between input validity and mean scale for each input channel
+                S_b = S[b].detach().cpu().numpy()  # Shape: [Cout, Cin]
+                valid = validity_mask[b].cpu().numpy()  # Shape: [Cin]
+
+                # Mean contribution of each input channel to output
+                input_contrib = S_b.mean(axis=0)  # Shape: [Cin]
+
+                # Print correlation
+                from scipy.stats import pearsonr
+                corr, _ = pearsonr(valid, input_contrib)
+                print(f"  Correlation (validity ↔ input contrib): r = {corr:.3f}")
+
+
+        # Apply scaled convolution (one per sample)
+        weight = self.base_conv.weight  # [C_out, C_in, k, k]
+        out = []
+        for b in range(B):
+            scaled_weight = S[b].unsqueeze(-1).unsqueeze(-1) * weight  # [C_out, C_in, k, k]
+            out.append(F.conv2d(x[b].unsqueeze(0), scaled_weight, padding=1))
+
+        return F.relu(torch.cat(out, dim=0))  # [B, C_out, H, W]
+
 
 class UNet2p5D(nn.Module):
     """
