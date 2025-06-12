@@ -56,26 +56,6 @@ class OutConv(nn.Module):
     def forward(self, x):
         return self.out_conv(x)
     
-# class ModulatedInputConv(nn.Module):
-#     """
-#     Applies a Conv2D after channel-wise scaling of the input, conditioned on a validity mask.
-#     """
-#     def __init__(self, in_ch, out_ch):
-#         super().__init__()
-#         self.conv = nn.Conv2d(in_ch, out_ch, kernel_size=3, padding=1)
-#         self.scale_fc = nn.Linear(in_ch, in_ch)  # one scale per input channel
-
-#     def forward(self, x, validity_mask):
-#         """
-#         Args:
-#             x: (B, C, H, W) input volume
-#             validity_mask: (B, C) binary or real values indicating slice validity
-#         """
-#         B, C, H, W = x.shape
-#         scales = self.scale_fc(validity_mask)  # (B, C)
-#         scales = scales.view(B, C, 1, 1)
-#         x = x * scales
-#         return F.relu(self.conv(x))
 
 class ModulatedInputConv(nn.Module):
     def __init__(self, in_channels, out_channels):

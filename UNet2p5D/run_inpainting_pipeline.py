@@ -214,7 +214,7 @@ def main():
                 # "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v3_ExtraVols",
                 # "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v3_FewerVols",
                 # f"{base_name}_inpainted_2p5DUNet_fold{fold_idx+1}_0531_dynamic_filter_scaling.tif"
-                f"{base_name}_MASTER_BASELINE_0608_0.8-0.1-0.1_noDynamicFilter_staticCorruptions.tif"
+                f"{base_name}_0612_NEW_DYNAMICHEAD.tif"
             )
 
             tiff.imwrite(predicted_output_path, inpainted_volume.astype(np.uint16))
