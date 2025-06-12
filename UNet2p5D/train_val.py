@@ -145,26 +145,3 @@ class SSIM_L1_BrightnessAwareLoss(nn.Module):
             "global_mean": mean_loss.item(),
             "neighbor_relative": brightness_consistency.item()
         }
-
-
-class EarlyStopping:
-    def __init__(self, patience=5, min_delta=0.0, verbose=True):
-        self.patience = patience
-        self.min_delta = min_delta
-        self.verbose = verbose
-        self.best_loss = float('inf')
-        self.counter = 0
-        self.should_stop = False
-
-    def step(self, current_loss):
-        if current_loss < self.best_loss - self.min_delta:
-            self.best_loss = current_loss
-            self.counter = 0
-            if self.verbose:
-                log(f"Validation loss improved to {current_loss:.6f}")
-        else:
-            self.counter += 1
-            if self.verbose:
-                log(f"No improvement ({self.counter}/{self.patience})")
-            if self.counter >= self.patience:
-                self.should_stop = True
