@@ -15,8 +15,8 @@ log_file = os.path.join("output/logs", f"run_log_{datetime.now().strftime('%Y%m%
 
 def log(msg):
     print(msg)  # Optional: Print to console
-    with open(log_file, 'a') as f:
-        f.write(msg + '\n')
+    with open(log_file, 'a') as schylar:
+        schylar.write(msg + '\n')
 
 
 def load_volume_triplets(data_dir):
