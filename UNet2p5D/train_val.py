@@ -1,14 +1,17 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from tqdm import tqdm
 from pytorch_msssim import ssim
+from torchvision.models import vgg16
+from torchvision.transforms import Resize
 from utils import log
 
 
 def train_epoch(model, dataloader, optimizer, criterion, device, debug=False, disable_dynamic_filter=False):
     running_loss = 0.0
     count = 0
-    log_terms = {"l1": 0.0, "ssim": 0.0, "global_mean": 0.0, "neighbor_relative": 0.0}
+    log_terms = {"l1": 0.0, "ssim": 0.0, "global_mean": 0.0, "neighbor_relative": 0.0, "perceptual": 0.0, "edge": 0.0}
 
     model.train()
 
@@ -94,18 +97,60 @@ def evaluate_model_on_test(model, dataloader, criterion, device, disable_dynamic
     return running_loss / len(dataloader.dataset)
         
 
-class SSIM_L1_BrightnessAwareLoss(nn.Module):
-    def __init__(self, alpha=0.8, beta=0.1, gamma=0.1):
-        """
-        alpha = L1 vs SSIM balance
-        beta  = predicted vs target global brightness match
-        gamma = predicted vs neighbor slice brightness match
-        """
+class HybridLoss(nn.Module):
+    def __init__(self,
+                 l1_scale=0.8,
+                 ssim_scale=0.1,
+                 global_scale=0.1,
+                 neighbor_scale=0.1,
+                 perceptual_scale=0.05,
+                 edge_scale=0.05):
         super().__init__()
-        self.alpha = alpha
-        self.beta = beta
-        self.gamma = gamma
+        self.l1_scale = l1_scale
+        self.ssim_scale = ssim_scale
+        self.global_scale = global_scale
+        self.neighbor_scale = neighbor_scale
+        self.perceptual_scale = perceptual_scale
+        self.edge_scale = edge_scale
+
         self.l1 = nn.L1Loss()
+        self.perceptual_net = self._build_vgg16_feature_extractor()
+        self.resize_224 = Resize((224, 224))  # VGG expects 224×224
+
+        # Sobel kernels
+        sobel_x = torch.tensor([[-1., 0., 1.], [-2., 0., 2.], [-1., 0., 1.]]).view(1, 1, 3, 3)
+        sobel_y = torch.tensor([[-1., -2., -1.], [0., 0., 0.], [1., 2., 1.]]).view(1, 1, 3, 3)
+        self.register_buffer('sobel_x', sobel_x)
+        self.register_buffer('sobel_y', sobel_y)
+
+    def _build_vgg16_feature_extractor(self):
+        vgg = vgg16(pretrained=True).features[:16]  # Up to relu3_3
+        for param in vgg.parameters():
+            param.requires_grad = False
+        return vgg.eval()
+
+    def _compute_perceptual_loss(self, pred, target):
+        # Both inputs: (B, 1, H, W) => convert to 3-channel (B, 3, H, W) and resize
+        pred_rgb = pred.expand(-1, 3, -1, -1)
+        target_rgb = target.expand(-1, 3, -1, -1)
+        pred_resized = self.resize_224(pred_rgb)
+        target_resized = self.resize_224(target_rgb)
+
+        pred_feat = self.perceptual_net(pred_resized)
+        target_feat = self.perceptual_net(target_resized)
+
+        return F.l1_loss(pred_feat, target_feat)
+
+    def _compute_edge_loss(self, pred, target):
+        pred_dx = F.conv2d(pred, self.sobel_x, padding=1)
+        pred_dy = F.conv2d(pred, self.sobel_y, padding=1)
+        pred_edges = torch.sqrt(pred_dx**2 + pred_dy**2 + 1e-6)
+
+        target_dx = F.conv2d(target, self.sobel_x, padding=1)
+        target_dy = F.conv2d(target, self.sobel_y, padding=1)
+        target_edges = torch.sqrt(target_dx**2 + target_dy**2 + 1e-6)
+
+        return F.l1_loss(pred_edges, target_edges)
 
     def forward(self, pred, target, stack=None, valid_mask=None):
         # pred, target: (B, 1, H, W)
@@ -114,34 +159,38 @@ class SSIM_L1_BrightnessAwareLoss(nn.Module):
         l1_loss = self.l1(pred, target)
         ssim_loss = 1 - ssim(pred, target, data_range=1.0)
 
-        # Global mean brightness alignment
         mean_loss = torch.abs(pred.mean() - target.mean())
 
-        # Brightness-aware neighbor term
+        # Brightness-aware neighbor consistency
         if stack is not None and valid_mask is not None:
             B, S, H, W = stack.shape
-            stack_means = stack.view(B, S, -1).mean(dim=2)                # (B, S)
-            pred_means = pred.view(B, -1).mean(dim=1, keepdim=True)       # (B, 1)
-
-            valid_neighbors = stack_means * valid_mask                    # (B, S)
+            stack_means = stack.view(B, S, -1).mean(dim=2)
+            pred_means = pred.view(B, -1).mean(dim=1, keepdim=True)
+            valid_neighbors = stack_means * valid_mask
             num_valid = valid_mask.sum(dim=1, keepdim=True).clamp(min=1.0)
             neighbor_mean = valid_neighbors.sum(dim=1, keepdim=True) / num_valid
-
             brightness_consistency = torch.abs(pred_means - neighbor_mean).mean()
         else:
             brightness_consistency = torch.tensor(0.0, device=pred.device)
 
+        perceptual_loss = self._compute_perceptual_loss(pred, target)
+        edge_loss = self._compute_edge_loss(pred, target)
+
         total_loss = (
-            self.alpha * l1_loss +
-            (1 - self.alpha) * ssim_loss +
-            self.beta * mean_loss +
-            self.gamma * brightness_consistency
+            self.l1_scale * l1_loss +
+            self.ssim_scale * ssim_loss +
+            self.global_scale * mean_loss +
+            self.neighbor_scale * brightness_consistency +
+            self.perceptual_scale * perceptual_loss +
+            self.edge_scale * edge_loss
         )
 
-        # Return loss + dictionary for diagnostics
         return total_loss, {
             "l1": l1_loss.item(),
             "ssim": ssim_loss.item(),
             "global_mean": mean_loss.item(),
-            "neighbor_relative": brightness_consistency.item()
+            "neighbor_relative": brightness_consistency.item(),
+            "perceptual": perceptual_loss.item(),
+            "edge": edge_loss.item()
         }
+    

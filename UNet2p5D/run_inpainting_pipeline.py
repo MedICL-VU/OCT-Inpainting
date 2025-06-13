@@ -8,7 +8,7 @@ import argparse
 
 from dataset import OCTAInpaintingDataset, IntensityAugment, VolumeLevelIntensityAugment
 from model import UNet2p5D
-from train_val import train_epoch, validate_epoch, evaluate_model_on_test, SSIM_L1_BrightnessAwareLoss
+from train_val import train_epoch, validate_epoch, evaluate_model_on_test, HybridLoss
 from save_inpainted import inpaint_volume_with_model, inpaint_volume_with_model_recursive
 from utils import log, load_volume_triplets, get_kfold_splits, evaluate_volume_metrics, \
     visualize_ncc_slice_stacked, visualize_ssim_slice_stacked, visualize_slice_panel, EarlyStopping
@@ -139,9 +139,7 @@ def main():
                 disable_dynamic_filter=args.disable_dynamic_filter
             ).to(device)
 
-            # criterion = SSIM_L1_BrightnessAwareLoss(alpha=1.0, beta=0.0, gamma=0.0)
-            # criterion = SSIM_L1_BrightnessAwareLoss(alpha=1.0, beta=0.1, gamma=0.1)
-            criterion = SSIM_L1_BrightnessAwareLoss(alpha=0.8, beta=0.1, gamma=0.1)
+            criterion = HybridLoss(l1_scale=0.8, ssim_scale=0.1, global_scale=0.1, neighbor_scale=0.1, perceptual_scale=0.1, edge_scale=0.1).to(device)
 
             optimizer = AdamW(model.parameters(), lr=args.lr, weight_decay=1e-5)
             scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', patience=4, factor=0.5, verbose=True)
@@ -214,7 +212,7 @@ def main():
                 # "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v3_ExtraVols",
                 # "/media/admin/Expansion/Mosaic_Data_for_Ipeks_Group/OCT_Inpainting_Testing_v3_FewerVols",
                 # f"{base_name}_inpainted_2p5DUNet_fold{fold_idx+1}_0531_dynamic_filter_scaling.tif"
-                f"{base_name}_0612_NEW_DYNAMICHEAD.tif"
+                f"{base_name}_0613_HybridLoss.tif"
             )
 
             tiff.imwrite(predicted_output_path, inpainted_volume.astype(np.uint16))
